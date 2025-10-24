@@ -1,9 +1,10 @@
 // InMidia/backend/services/placaService.js
-const { v4: uuidv4 } = require('uuid'); // Ainda usado para gerar prefixo de API Key, mas não para ID da Placa
+const { v4: uuidv4 } = require('uuid'); // Ainda pode ser usado para outras coisas, mas não para ID da Placa
 const Placa = require('../models/Placa'); // Modelo Placa Mongoose
 const Regiao = require('../models/Regiao'); // Necessário para populate
 const Aluguel = require('../models/Aluguel'); // Necessário para verificar disponibilidade
 const mediaService = require('./midiaService'); // Serviço de mídia (R2)
+const mongoose = require('mongoose'); // Necessário para ObjectId e queries
 
 class PlacaService {
     // constructor não precisa mais do 'db'
@@ -19,7 +20,7 @@ class PlacaService {
         let sortColumn = allowedSortBy.includes(sortBy) ? sortBy : 'createdAt'; // Default sort
         const sortOrder = (order.toLowerCase() === 'asc') ? 1 : -1;
 
-        let queryFilter = { empresa: empresa_id }; // Filtro base por empresa
+        let queryFilter = { empresa: new mongoose.Types.ObjectId(empresa_id) }; // Filtro base por empresa (converte para ObjectId)
 
         // Aplica filtros adicionais
         if (search) {
@@ -30,7 +31,13 @@ class PlacaService {
             ];
         }
         if (regiao_id && regiao_id !== 'todas') {
-            queryFilter.regiao = regiao_id; // Filtra pelo ObjectId da região
+             try {
+                // Tenta converter regiao_id para ObjectId para o filtro
+                queryFilter.regiao = new mongoose.Types.ObjectId(regiao_id);
+             } catch (e) {
+                 console.warn(`[PlacaService - getAll] ID de região inválido recebido: ${regiao_id}`);
+                 // Ignora o filtro se o ID for inválido
+             }
         }
         if (disponivel === 'true' || disponivel === 'false') {
             queryFilter.disponivel = disponivel === 'true';
@@ -39,31 +46,30 @@ class PlacaService {
         // --- Consulta Principal ---
         const placasQuery = Placa.find(queryFilter)
             .populate('regiao', 'nome') // Popula o campo 'regiao' buscando o 'nome' do documento Regiao
-            // Nota: Não estamos populando aluguel/cliente ativo aqui para manter a query mais simples.
-            // Isso pode ser adicionado depois se necessário, possivelmente com aggregate/$lookup.
             .sort({ [sortColumn]: sortOrder })
             .skip(skip)
-            .limit(parseInt(limit));
+            .limit(parseInt(limit))
+            .select('-__v') // Exclui __v (opcional, já que toJSON/lean fazem isso)
+            .lean(); // <-- Adicionado .lean()
 
         // --- Consulta de Contagem (para paginação) ---
         const totalItems = await Placa.countDocuments(queryFilter);
 
         // Executa a consulta principal
-        const placas = await placasQuery.exec();
+        const placas = await placasQuery.exec(); // exec() ainda necessário
         const totalPages = Math.ceil(totalItems / limit);
 
-        // Mapeia o resultado para um formato consistente (opcional, mas pode ser útil para o frontend)
+        // Mapeia o resultado (necessário apenas se a transformação global toJSON não estiver ativa ou para ajustar a estrutura)
         const data = placas.map(p => ({
-            id: p._id, // Renomeia _id para id
-            numero_placa: p.numero_placa,
-            nomeDaRua: p.nomeDaRua,
-            imagem: p.imagem,
-            regiao: p.regiao ? p.regiao.nome : null, // Acessa o nome da região populada
-            disponivel: p.disponivel,
-            // Campos de aluguel ativo (cliente_nome, aluguel_data_fim) omitidos nesta versão
-            createdAt: p.createdAt,
-            updatedAt: p.updatedAt,
+            ...p, // Inclui todos os campos do objeto lean
+            id: p._id, // Mapeia _id para id (se toJSON global não estiver ativo ou para garantir)
+            regiao: p.regiao ? p.regiao.nome : null, // Extrai nome da região populada
+            // Remove _id original se mapeou para id
+            // _id: undefined
         }));
+         // Remove _id se existir após spread
+         data.forEach(p => delete p._id);
+
 
         return {
             data: data,
@@ -72,9 +78,10 @@ class PlacaService {
     }
 
     async getById(id, empresa_id) {
-        // Busca por _id e empresa, populando a região
+        // Adiciona .lean() para retornar um objeto simples
         const placa = await Placa.findOne({ _id: id, empresa: empresa_id })
-                                 .populate('regiao', 'nome') // Popula nome da região
+                                 .populate('regiao', 'nome')
+                                 .lean() // <-- Adicionado .lean()
                                  .exec();
 
         if (!placa) {
@@ -83,65 +90,52 @@ class PlacaService {
             throw error;
         }
 
-        // Lógica para adicionar dados do aluguel ativo (se necessário)
-        // const hoje = new Date();
-        // hoje.setHours(0, 0, 0, 0); // Zera hora para comparar apenas data
-        // const aluguelAtivo = await Aluguel.findOne({
-        //     placa: placa._id,
-        //     data_inicio: { $lte: hoje },
-        //     data_fim: { $gte: hoje }
-        // }).populate('cliente', 'nome').exec();
+        // Adiciona dados do aluguel ativo (opcional, como antes)
+        // const hoje = ...; const aluguelAtivo = ...;
 
-        // Converte para objeto simples para poder adicionar propriedades
-        const placaObj = placa.toObject();
-        // if (aluguelAtivo) {
-        //     placaObj.cliente_nome = aluguelAtivo.cliente ? aluguelAtivo.cliente.nome : 'Cliente não encontrado';
-        //     placaObj.aluguel_data_fim = aluguelAtivo.data_fim;
-        // } else {
-             placaObj.cliente_nome = null;
-             placaObj.aluguel_data_fim = null;
-        // }
+        // Formata a resposta (placa já é um objeto simples)
+        placa.id = placa._id; // Mapeia _id para id (se toJSON global não estiver ativo ou para garantir)
+        placa.regiao_id = placa.regiao?._id; // Mantém regiao_id para compatibilidade com frontend
+        placa.regiao = placa.regiao?.nome; // Mantém apenas o nome em 'regiao'
+        delete placa._id; // Remove _id original
+        // delete placa.__v; // .lean() já remove __v
 
-        // Renomeia _id para id e regiao._id para regiao_id para consistência (opcional)
-        placaObj.id = placaObj._id;
-        placaObj.regiao_id = placaObj.regiao?._id; // ID da região
-        placaObj.regiao = placaObj.regiao?.nome; // Apenas o nome da região
-        delete placaObj._id;
-        // delete placaObj.__v; // Remove versão do Mongoose
+        // Lógica para adicionar cliente_nome e aluguel_data_fim se necessário...
 
-        return placaObj;
+        return placa;
     }
 
     async create(placaData, empresa_id) {
         let savedImageData = null;
         try {
             let imagemPath = null;
-            // 1. Salva imagem se existir (lógica mediaService inalterada)
-            if (placaData.imagemFileObject) { // Assumindo que o controller passa o file object aqui
+            // 1. Salva imagem se existir
+            if (placaData.imagemFileObject) {
                 savedImageData = await mediaService.saveImage(placaData.imagemFileObject);
                 imagemPath = savedImageData.path;
             }
 
-            // 2. Prepara dados para o Mongoose (regiao_id vira regiao)
+            // 2. Prepara dados para o Mongoose (usa placaData.regiao)
             const novaPlacaData = {
                 numero_placa: placaData.numero_placa,
                 coordenadas: placaData.coordenadas || null,
                 nomeDaRua: placaData.nomeDaRua || null,
                 tamanho: placaData.tamanho || null,
-                regiao: placaData.regiao_id || null, // Usa o ObjectId da região
-                imagem: imagemPath, // URL do R2 ou null
-                empresa: empresa_id, // ObjectId da empresa
+                regiao: placaData.regiao || null, // <<< Usa 'regiao' diretamente
+                imagem: imagemPath,
+                empresa: empresa_id,
                 disponivel: true
             };
 
-            // 3. Cria e salva a placa
+            // 3. Cria e salva a placa (NÃO usar .lean())
             const novaPlaca = new Placa(novaPlacaData);
             const placaCriada = await novaPlaca.save();
-            return placaCriada; // Retorna o documento Mongoose
+             // A transformação toJSON global (se configurada) tratará _id -> id na resposta
+            return placaCriada;
 
         } catch (error) {
-            // 4. Se erro, apaga imagem carregada (lógica mediaService inalterada)
-            if (savedImageData && savedImageData.path) {
+            // 4. Se erro, apaga imagem carregada
+             if (savedImageData && savedImageData.path) {
                 console.log(`Erro ao criar placa (${error.message}), removendo imagem carregada: ${savedImageData.path}`);
                 mediaService.deleteImage(savedImageData.path).catch(deleteErr => {
                     console.error(`Erro ao tentar apagar imagem ${savedImageData.path} após falha na criação da placa:`, deleteErr);
@@ -154,8 +148,7 @@ class PlacaService {
                  uniqueError.status = 409;
                  throw uniqueError;
             }
-            // Re-lança outros erros
-            throw error;
+            throw error; // Re-lança outros erros
         }
     }
 
@@ -164,139 +157,170 @@ class PlacaService {
         let imagemAntigaPath = null;
 
         try {
-            // 1. Busca placa atual para verificar posse e obter URL da imagem antiga
-            const placaAtual = await Placa.findOne({ _id: id, empresa: empresa_id }).exec();
+            // 1. Busca placa atual
+            // Adiciona .lean() pois só precisamos dos dados para comparação e imagem antiga
+            const placaAtual = await Placa.findOne({ _id: id, empresa: empresa_id })
+                                           .lean() // <-- Adicionado .lean()
+                                           .exec();
             if (!placaAtual) {
                 // Se carregou nova imagem mas placa não existe, apaga nova imagem
                 if (newImageFileObject) {
-                     const tempImageData = await mediaService.saveImage(newImageFileObject);
-                     await mediaService.deleteImage(tempImageData.path);
+                     // Precisamos salvar temporariamente para poder deletar? Não ideal.
+                     // A lógica aqui pode precisar de ajuste dependendo de como o mediaService lida com erros.
+                     // Vamos assumir que o controller já trataria isso ou que o erro 404 é suficiente.
                 }
                 const error = new Error('Placa a ser atualizada não encontrada.');
-                error.status = 404;
-                throw error;
+                error.status = 404; throw error;
             }
-            imagemAntigaPath = placaAtual.imagem; // Guarda URL antiga
+            imagemAntigaPath = placaAtual.imagem;
 
-            // 2. Prepara dados para atualização Mongoose
+            // 2. Prepara dados para atualização
             const updateData = {};
             if (placaData.numero_placa !== undefined) updateData.numero_placa = placaData.numero_placa;
             if (placaData.coordenadas !== undefined) updateData.coordenadas = placaData.coordenadas || null;
             if (placaData.nomeDaRua !== undefined) updateData.nomeDaRua = placaData.nomeDaRua || null;
             if (placaData.tamanho !== undefined) updateData.tamanho = placaData.tamanho || null;
-            if (placaData.regiao_id !== undefined) updateData.regiao = placaData.regiao_id || null; // Atualiza a referência ObjectId
-            // Não atualiza 'disponivel' aqui, é feito pelo toggleDisponibilidade
-            // delete updateData.disponivel; // Garante que não atualize
+             // <<< Usa placaData.regiao diretamente >>>
+            if (placaData.regiao !== undefined) updateData.regiao = placaData.regiao || null;
 
             // 3. Lida com a imagem
             if (newImageFileObject) {
                 newImageData = await mediaService.saveImage(newImageFileObject);
-                updateData.imagem = newImageData.path; // Define nova URL
+                updateData.imagem = newImageData.path;
             } else if (placaData.hasOwnProperty('imagem') && !placaData.imagem) {
-                // Permite remover a imagem enviando imagem: null ou ''
                 updateData.imagem = null;
             }
-            // Se nem newImageFileObject nem placaData.imagem foram enviados, o campo 'imagem' não é incluído em updateData
 
-            // 4. Tenta atualizar a placa
-            const placaAtualizada = await Placa.findByIdAndUpdate(
-                id,
-                { $set: updateData },
-                { new: true, runValidators: true } // Retorna o novo doc, roda validadores
-            ).exec();
+            // 4. Verifica duplicidade antes de atualizar (usando 'regiao')
+             if (updateData.numero_placa !== undefined || updateData.regiao !== undefined) {
+                 const numeroParaVerificar = updateData.numero_placa !== undefined ? updateData.numero_placa : placaAtual.numero_placa;
+                 // Garante que regiaoParaVerificar seja ObjectId ou null
+                 let regiaoParaVerificar = updateData.regiao !== undefined ? updateData.regiao : placaAtual.regiao;
+                 // Converte para ObjectId se for uma string válida, senão mantém null
+                 if (regiaoParaVerificar && typeof regiaoParaVerificar === 'string' && mongoose.Types.ObjectId.isValid(regiaoParaVerificar)) {
+                     regiaoParaVerificar = new mongoose.Types.ObjectId(regiaoParaVerificar);
+                 } else if (regiaoParaVerificar && typeof regiaoParaVerificar !== 'object') { // Se não for ObjectId nem null
+                    regiaoParaVerificar = null; // Trata como inválido/nulo
+                 }
 
-            // Verifica se a atualização ocorreu (findByIdAndUpdate retorna null se não encontrar)
-             if (!placaAtualizada) {
-                 // Caso raro (deletado entre findOne e findByIdAndUpdate)
+
+                 if (numeroParaVerificar && regiaoParaVerificar !== undefined) { // Permite regiao null na verificação
+                    // Adiciona .lean() à verificação de duplicidade
+                    const placaExistente = await Placa.findOne({
+                        numero_placa: numeroParaVerificar,
+                        empresa: empresa_id,
+                        regiao: regiaoParaVerificar, // <<< Usa 'regiao' (ObjectId ou null)
+                        _id: { $ne: id }
+                    }).lean().exec(); // <-- Adicionado .lean()
+                    if (placaExistente) {
+                        if (newImageData && newImageData.path) await mediaService.deleteImage(newImageData.path);
+                        const error = new Error('Já existe outra placa cadastrada com este número nesta região.');
+                        error.status = 409; throw error;
+                    }
+                }
+             }
+
+            // 5. Tenta atualizar a placa
+            // NÃO usar .lean() aqui para retornar o documento Mongoose atualizado
+            const placaAtualizada = await Placa.findByIdAndUpdate(id, { $set: updateData }, { new: true, runValidators: true }).exec();
+            if (!placaAtualizada) {
                  if (newImageData && newImageData.path) await mediaService.deleteImage(newImageData.path);
                  throw new Error('Placa não encontrada durante a atualização.');
              }
 
-
-            // 5. Se atualização OK, lida com a imagem antiga
-            const imagemMudou = updateData.hasOwnProperty('imagem'); // Verifica se o campo imagem estava no $set
+            // 6. Se atualização OK, lida com a imagem antiga
+            const imagemMudou = updateData.hasOwnProperty('imagem');
             if (imagemMudou && imagemAntigaPath && imagemAntigaPath !== updateData.imagem) {
-                await mediaService.deleteImage(imagemAntigaPath);
+                 await mediaService.deleteImage(imagemAntigaPath);
             }
-
-            return placaAtualizada; // Retorna o documento atualizado
+            // A transformação toJSON global (se configurada) tratará _id -> id na resposta
+            return placaAtualizada;
 
         } catch (error) {
-            // 6. Se erro, apaga a *nova* imagem carregada, se houver
+            // 7. Se erro, apaga a *nova* imagem carregada, se houver
             if (newImageData && newImageData.path) {
                  console.log(`Erro ao atualizar placa (${error.message}), removendo nova imagem carregada: ${newImageData.path}`);
-                 mediaService.deleteImage(newImageData.path).catch(deleteErr => {
-                    console.error(`Erro ao tentar apagar nova imagem ${newImageData.path} após falha na atualização da placa:`, deleteErr);
-                });
+                 mediaService.deleteImage(newImageData.path).catch(deleteErr => { console.error("Erro ao apagar nova imagem após falha:", deleteErr); });
             }
             // Trata erro de índice único
              if (error.code === 11000) {
                  const uniqueError = new Error('Já existe outra placa cadastrada com este número nesta região.');
-                 uniqueError.status = 409;
-                 throw uniqueError;
+                 uniqueError.status = 409; throw uniqueError;
             }
-            // Re-lança outros erros
-            throw error;
+            throw error; // Re-lança outros erros
         }
     }
 
     async delete(id, empresa_id) {
-        // 1. Busca a placa para pegar a URL da imagem e verificar posse
-        const placaParaApagar = await Placa.findOne({ _id: id, empresa: empresa_id }).exec();
+        // 1. Busca a placa
+        // Adiciona .lean() pois só precisamos da URL da imagem
+        const placaParaApagar = await Placa.findOne({ _id: id, empresa: empresa_id })
+                                           .select('imagem') // Seleciona apenas a imagem
+                                           .lean() // <-- Adicionado .lean()
+                                           .exec();
         if (!placaParaApagar) {
             const error = new Error('Placa não encontrada para exclusão.');
-            error.status = 404;
-            throw error;
+            error.status = 404; throw error;
         }
-        const imagemPath = placaParaApagar.imagem; // URL da imagem no R2
+        const imagemPath = placaParaApagar.imagem;
 
-        // 2. Apaga a placa do MongoDB
-        const result = await Placa.deleteOne({ _id: id }).exec(); // _id já garante a unicidade
+        // 2. Apaga a placa (deleteOne não precisa de .lean())
+        const result = await Placa.deleteOne({ _id: id }).exec();
 
-        // 3. Se apagou com sucesso e tinha imagem, apaga do R2
+        // 3. Se apagou e tinha imagem, apaga do R2
         if (result.deletedCount > 0 && imagemPath) {
             await mediaService.deleteImage(imagemPath);
         } else if (result.deletedCount === 0) {
-            // Segurança extra, embora o findOne inicial já devesse ter falhado
              throw new Error('Placa não encontrada para exclusão (no deleteOne).');
         }
-
         return { success: true };
     }
 
     async toggleDisponibilidade(id, empresa_id) {
-        // Verifica se há aluguel ATIVO HOJE para esta placa
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0); // Zera a hora para comparar apenas a data
+        const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
 
+        // Verifica se há aluguel ativo HOJE
+        // Adiciona .lean() pois só precisamos saber se existe
         const aluguelAtivo = await Aluguel.findOne({
-            placa: id,
-            empresa: empresa_id, // Garante que o aluguel é da mesma empresa
-            data_inicio: { $lte: hoje }, // Começou hoje ou antes
-            data_fim: { $gte: hoje }      // Termina hoje ou depois
-        }).exec();
+            placa: id, empresa: empresa_id,
+            data_inicio: { $lte: hoje }, data_fim: { $gte: hoje }
+        }).lean().exec(); // <-- Adicionado .lean()
 
         if (aluguelAtivo) {
-            // Se está ativamente alugada, não permite a troca manual
             const error = new Error('Não é possível alterar a disponibilidade. A placa está ativamente alugada.');
-            error.status = 409; // Conflict
-            throw error;
+            error.status = 409; throw error;
         }
 
-        // Se não houver aluguel ativo, permite a troca manual
-        const placaAtual = await Placa.findOne({ _id: id, empresa: empresa_id }).exec();
+        // Busca placa atual para obter status atual
+        // Adiciona .lean() pois só precisamos do campo 'disponivel'
+        const placaAtual = await Placa.findOne({ _id: id, empresa: empresa_id })
+                                      .select('disponivel') // Seleciona apenas 'disponivel'
+                                      .lean() // <-- Adicionado .lean()
+                                      .exec();
         if (!placaAtual) {
             const error = new Error('Placa não encontrada.');
-            error.status = 404;
-            throw error;
+            error.status = 404; throw error;
         }
 
-        // Alterna o status e salva
         const novoStatus = !placaAtual.disponivel;
+        // updateOne não precisa de .lean()
         await Placa.updateOne({ _id: id }, { $set: { disponivel: novoStatus } });
 
         return { message: 'Disponibilidade atualizada com sucesso!', disponivel: novoStatus };
     }
-}
+
+    // Método adicionado para a rota /placas/locations
+    async getAllPlacaLocations(empresa_id) {
+        // Adiciona .lean() para performance
+        return await Placa.find({
+                empresa: new mongoose.Types.ObjectId(empresa_id), // Converte para ObjectId
+                coordenadas: { $ne: null, $ne: '' } // Apenas onde coordenadas não são nulas ou vazias
+            })
+            .select('_id numero_placa coordenadas nomeDaRua') // Seleciona campos relevantes
+            .lean() // <-- Adicionado .lean()
+            .exec();
+    }
+
+} // Fim da classe
 
 module.exports = PlacaService;

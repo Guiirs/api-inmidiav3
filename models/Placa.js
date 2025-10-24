@@ -8,9 +8,9 @@ const placaSchema = new Schema({
   nomeDaRua: String,
   tamanho: String,
   imagem: String, // URL da imagem (do R2)
-  disponivel: { type: Boolean, default: true },
-  regiao: { type: Schema.Types.ObjectId, ref: 'Regiao', index: true }, // Referência opcional à Regiao (pode ser null se a região for apagada)
-  empresa: { type: Schema.Types.ObjectId, ref: 'Empresa', required: true, index: true }, // Referência à Empresa
+    disponivel: { type: Boolean, default: true, index: true }, // Adicionado index: true
+    regiao: { type: Schema.Types.ObjectId, ref: 'Regiao', index: true }, // Adicionado index: true
+    empresa: { type: Schema.Types.ObjectId, ref: 'Empresa', required: true, index: true }, // Adicionado index: trueesa
   // Timestamps adicionados automaticamente
 }, {
   timestamps: true
@@ -20,6 +20,5 @@ const placaSchema = new Schema({
 // Atenção: MongoDB trata `null` como um valor único em índices unique sparse.
 // Se precisar permitir múltiplos `null` em regiao, pode precisar de abordagem diferente ou não usar unique index aqui.
 // Por simplicidade, vamos manter assim, assumindo que regiao_id era obrigatório no SQL.
-placaSchema.index({ empresa: 1, regiao: 1, numero_placa: 1 }, { unique: true });
-
+placaSchema.index({ empresa: 1, regiao: 1, numero_placa: 1 }, { unique: true }); // Índice unique mantido
 module.exports = mongoose.model('Placa', placaSchema);

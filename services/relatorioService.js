@@ -10,7 +10,7 @@ class RelatorioService {
     async placasPorRegiao(empresa_id) {
         // Usa o Aggregation Pipeline do MongoDB para agrupar e contar
         const results = await Placa.aggregate([
-            // 1. Filtra as placas pela empresa
+            // 1. Filtra as placas pela empresa (converte string para ObjectId)
             { $match: { empresa: new mongoose.Types.ObjectId(empresa_id) } },
             // 2. Faz o "join" com a coleção de Regioes
             {
@@ -27,7 +27,8 @@ class RelatorioService {
             // 4. Agrupa pelo nome da região (ou um valor padrão se não houver região)
             {
                 $group: {
-                    _id: { regiaoNome: { $ifNull: ['$regiaoInfo.nome', 'Sem Região'] } }, // Agrupa por nome, ou 'Sem Região'
+                    // Agrupa pelo nome da região, usando 'Sem Região' se regiaoInfo for nulo/vazio
+                    _id: { regiaoNome: { $ifNull: ['$regiaoInfo.nome', 'Sem Região'] } },
                     total_placas: { $sum: 1 } // Conta os documentos em cada grupo
                 }
             },
@@ -41,22 +42,23 @@ class RelatorioService {
             },
             // 6. Ordena pelo nome da região (opcional)
             { $sort: { regiao: 1 } }
-        ]);
+        ]).exec(); // Executa a agregação
 
-        return results;
+        return results; // Retorna o array de objetos simples
     }
 
     async getDashboardSummary(empresa_id) {
-        // Converte para ObjectId se não for (necessário para $match)
+        // Converte para ObjectId se não for (necessário para $match e contagens)
         const empresaObjectId = new mongoose.Types.ObjectId(empresa_id);
 
-        // 1. Contagem total de placas
+        // 1. Contagem total de placas (countDocuments não retorna documento Mongoose)
         const totalPlacasPromise = Placa.countDocuments({ empresa: empresaObjectId });
 
-        // 2. Contagem de placas disponíveis
+        // 2. Contagem de placas disponíveis (countDocuments não retorna documento Mongoose)
         const placasDisponiveisPromise = Placa.countDocuments({ empresa: empresaObjectId, disponivel: true });
 
         // 3. Encontra a região principal usando Aggregation Pipeline
+        //    (.aggregate() já retorna objetos simples)
         const regiaoPrincipalPromise = Placa.aggregate([
             // Filtra pela empresa
             { $match: { empresa: empresaObjectId } },
@@ -91,7 +93,7 @@ class RelatorioService {
                     nome: '$_id.regiaoNome'
                 }
             }
-        ]);
+        ]).exec(); // Executa a agregação
 
         // Executa todas as promessas em paralelo
         const [totalPlacasResult, placasDisponiveisResult, regiaoPrincipalResultArray] = await Promise.all([

@@ -8,25 +8,30 @@ class ClienteService {
     constructor() {}
 
     // Auxiliar para buscar cliente e verificar posse (usado em getById, update, delete)
+    // Adiciona .lean() pois geralmente só precisamos dos dados aqui
     async _findClienteByIdAndEmpresa(id, empresa_id) {
-        const cliente = await Cliente.findOne({ _id: id, empresa: empresa_id }).exec();
+        // Adiciona .lean()
+        const cliente = await Cliente.findOne({ _id: id, empresa: empresa_id }).lean().exec(); // <-- Adicionado .lean()
         if (!cliente) {
             const error = new Error('Cliente não encontrado.');
             error.status = 404;
             throw error;
         }
-        return cliente;
+        // A transformação global toJSON/toObject (se configurada) tratará _id -> id
+        return cliente; // Retorna objeto simples
     }
 
     async getAll(empresa_id) {
         // Busca todos os clientes da empresa, ordenados por nome
+        // Adiciona .lean() para performance
         return await Cliente.find({ empresa: empresa_id })
-                            .sort({ nome: 1 }) // 1 para ascendente
+                            .sort({ nome: 1 })
+                            .lean() // <-- Adicionado .lean()
                             .exec();
     }
 
     async getById(id, empresa_id) {
-        // Usa a função auxiliar
+        // Usa a função auxiliar que já tem .lean()
         return await this._findClienteByIdAndEmpresa(id, empresa_id);
     }
 
@@ -49,8 +54,10 @@ class ClienteService {
 
         // 2. Verifica duplicidade de CNPJ (só se o CNPJ for enviado)
         if (cnpj) {
-            // Verifica se existe outro cliente na mesma empresa com o mesmo CNPJ (não nulo)
-            const existing = await Cliente.findOne({ cnpj: cnpj, empresa: empresa_id }).exec();
+            // Adiciona .lean() pois só precisamos saber se existe
+            const existing = await Cliente.findOne({ cnpj: cnpj, empresa: empresa_id })
+                                          .lean() // <-- Adicionado .lean()
+                                          .exec();
             if (existing) {
                 // Se já existe e carregamos um logo, apaga o logo do R2
                 if (logo_url) await mediaService.deleteImage(logo_url);
@@ -71,8 +78,10 @@ class ClienteService {
 
         try {
             // Tenta salvar o novo cliente no MongoDB
+            // .save() opera no documento Mongoose, NÃO usar .lean() antes
             const clienteSalvo = await novoCliente.save();
-            return clienteSalvo; // Retorna o documento salvo
+            // A transformação toJSON/toObject tratará _id -> id na resposta
+            return clienteSalvo;
         } catch (error) {
             // Se o save falhar (ex: erro de validação do Mongoose ou erro de índice único não capturado antes)
             // e carregamos um logo, apaga o logo do R2
@@ -91,7 +100,7 @@ class ClienteService {
     async update(id, clienteData, empresa_id, fileObject) {
         const { nome, cnpj, telefone } = clienteData;
 
-        // Busca o cliente atual para obter dados e verificar posse
+        // Busca o cliente atual (já usa .lean() via _findClienteByIdAndEmpresa)
         const clienteAtual = await this._findClienteByIdAndEmpresa(id, empresa_id);
         const imagemAntigaPath = clienteAtual.logo_url; // URL antiga
         let logo_url = imagemAntigaPath; // Mantém o logo antigo por defeito
@@ -115,11 +124,12 @@ class ClienteService {
         // 2. Verifica duplicidade de CNPJ (se CNPJ foi fornecido, não é nulo/vazio E é diferente do atual)
         const checkCnpj = cnpj && cnpj !== clienteAtual.cnpj;
         if (checkCnpj) {
+            // Adiciona .lean() pois só precisamos saber se existe
             const existing = await Cliente.findOne({
                 cnpj: cnpj,
                 empresa: empresa_id,
                 _id: { $ne: id } // Exclui o próprio cliente da verificação ($ne = not equal)
-            }).exec();
+            }).lean().exec(); // <-- Adicionado .lean()
 
             if (existing) {
                 // Se deu erro de duplicidade e carregamos um novo logo, apaga o novo logo do R2
@@ -140,8 +150,9 @@ class ClienteService {
 
         try {
             // Atualiza o cliente no MongoDB, retornando o *novo* documento
+            // findByIdAndUpdate retorna o documento Mongoose por padrão, NÃO usar .lean()
             const clienteAtualizado = await Cliente.findByIdAndUpdate(
-                id, // O _id já inclui a verificação de empresa feita no início
+                id,
                 { $set: updateData },
                 { new: true, runValidators: true } // Retorna o novo, executa validadores
             ).exec();
@@ -163,7 +174,7 @@ class ClienteService {
                     await mediaService.deleteImage(imagemAntigaPath);
                 }
             }
-
+            // A transformação toJSON/toObject tratará _id -> id na resposta
             return clienteAtualizado;
 
         } catch (error) {
@@ -182,15 +193,11 @@ class ClienteService {
     }
 
     async delete(id, empresa_id) {
-        // TODO: Futuramente, verificar se o cliente está em uso na coleção 'alugueis'
-        // const aluguelExistente = await Aluguel.findOne({ cliente: id, empresa: empresa_id }).exec();
-        // if (aluguelExistente) { ... }
-
-        // Busca o cliente para pegar a URL do logo e verificar posse
+        // Busca o cliente (já usa .lean() via _findClienteByIdAndEmpresa)
         const cliente = await this._findClienteByIdAndEmpresa(id, empresa_id);
         const logoPath = cliente.logo_url; // URL do logo no R2
 
-        // Apaga o cliente do MongoDB
+        // Apaga o cliente do MongoDB (deleteOne não precisa de .lean())
         const result = await Cliente.deleteOne({ _id: id }).exec(); // _id já garante a unicidade
 
         // Se apagou do DB (deletedCount > 0) e tinha um logo, remove o logo do R2
@@ -198,7 +205,6 @@ class ClienteService {
             await mediaService.deleteImage(logoPath);
         } else if (result.deletedCount === 0) {
              // Caso não tenha encontrado para deletar (já tinha sido deletado?)
-             // A busca inicial já teria dado erro 404, mas é uma segurança extra.
              throw new Error('Cliente não encontrado para exclusão.');
         }
 

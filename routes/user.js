@@ -2,10 +2,12 @@
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
+const userController = require('../controllers/userController');
+const authenticateToken = require('../middlewares/authMiddleware');
+// Reutiliza o handler de erros de validação
+const { handleValidationErrors } = require('../validators/authValidator');
 
 module.exports = () => {
-    const userController = require('../controllers/userController');
-    const authenticateToken = require('../middlewares/authMiddleware');
 
     router.get(
         '/me',
@@ -13,8 +15,6 @@ module.exports = () => {
         userController.getUserProfile
     );
 
-        // --- ADICIONE ESTA NOVA ROTA ---
-    // Rota para obter os detalhes da empresa
     router.get(
         '/me/empresa',
         authenticateToken,
@@ -24,26 +24,53 @@ module.exports = () => {
     router.put(
         '/me',
         authenticateToken,
-        [
-            body('email').optional().isEmail().withMessage('O e-mail fornecido não é válido.').normalizeEmail(),
-            body('username').optional().isLength({ min: 3 }).withMessage('O nome de usuário precisa ter no mínimo 3 caracteres.').trim().escape(),
-            body('password').optional().isLength({ min: 6 }).withMessage('A nova senha precisa ter no mínimo 6 caracteres.'),
-            // --- LINHAS ADICIONADAS ---
-            body('nome').optional().trim().escape(),
-            body('sobrenome').optional().trim().escape(),
-            body('avatar_url').optional().isURL().withMessage('A URL do avatar fornecida não é válida.')
+        [ // Array de validações/sanitizações
+            body('email')
+                .optional() // Permite não enviar
+                .isEmail().withMessage('O e-mail fornecido não é válido.')
+                .normalizeEmail() // Normaliza/Sanitiza email
+                .isLength({ max: 100 }).withMessage('E-mail muito longo (máx 100 caracteres).'),
+
+            body('username')
+                .optional()
+                .trim() // Remove espaços
+                .isLength({ min: 3, max: 50 }).withMessage('O nome de utilizador deve ter entre 3 e 50 caracteres.')
+                .escape(), // <-- Adiciona escape
+
+            body('password') // Senha NÃO é escapada
+                .optional()
+                .isLength({ min: 6 }).withMessage('A nova senha precisa ter no mínimo 6 caracteres.'),
+
+            body('nome')
+                .optional()
+                .trim()
+                .isLength({ max: 100 }).withMessage('Nome muito longo (máx 100 caracteres).')
+                .escape(), // <-- Adiciona escape
+
+            body('sobrenome')
+                .optional()
+                .trim()
+                .isLength({ max: 100 }).withMessage('Sobrenome muito longo (máx 100 caracteres).')
+                .escape(), // <-- Adiciona escape
+
+            body('avatar_url') // URL geralmente não precisa de escape, mas validação é boa
+                .optional({ checkFalsy: true }) // Permite "" ou null
+                .trim()
+                .isURL().withMessage('A URL do avatar fornecida não é válida.')
         ],
-        userController.updateUserProfile
+        handleValidationErrors, // Verifica os erros após validação/sanitização
+        userController.updateUserProfile // Controller
     );
 
     router.post(
         '/me/empresa/regenerate-api-key',
-        authenticateToken, // Requer que o utilizador esteja logado
+        authenticateToken,
         [
-            // Valida que a senha foi enviada
+            // Senha NÃO é escapada
             body('password').notEmpty().withMessage('A sua senha atual é obrigatória para regenerar a chave.')
         ],
-        userController.regenerateEmpresaApiKey // Nova função no controlador
+        handleValidationErrors, // Verifica se a senha foi enviada
+        userController.regenerateEmpresaApiKey
     );
 
     return router;

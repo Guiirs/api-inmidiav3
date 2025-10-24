@@ -11,9 +11,10 @@ class UserService {
 
     async getProfile(userId) {
         // Busca o utilizador pelo _id e seleciona os campos desejados
-        // Mongoose exclui a senha por padrão se não for selecionada explicitamente.
+        // Adiciona .lean() para retornar um objeto simples
         const user = await User.findById(userId)
                                .select('username email nome sobrenome avatar_url') // Exclui _id se não quiser, mas é útil
+                               .lean() // <-- Adicionado .lean()
                                .exec();
 
         if (!user) {
@@ -21,7 +22,8 @@ class UserService {
             error.status = 404;
             throw error;
         }
-        return user; // Retorna o documento Mongoose (pode chamar .toObject() se preferir um objeto simples)
+        // A transformação toJSON global (se configurada) tratará _id -> id
+        return user; // Retorna o objeto simples
     }
 
     async updateProfile(userId, userData) {
@@ -43,6 +45,7 @@ class UserService {
         try {
             // Encontra o utilizador pelo _id e atualiza-o, retornando o *novo* documento atualizado
             // Seleciona os campos a serem retornados após a atualização
+            // NÃO usar .lean() aqui pois findByIdAndUpdate retorna o doc Mongoose por padrão com { new: true }
             const updatedUser = await User.findByIdAndUpdate(userId, { $set: updateData }, { new: true })
                                           .select('username email nome sobrenome avatar_url')
                                           .exec();
@@ -52,8 +55,8 @@ class UserService {
                 error.status = 404;
                 throw error;
             }
-
-            return updatedUser; // Retorna o documento atualizado (sem a senha)
+            // A transformação toJSON global tratará _id -> id na resposta
+            return updatedUser;
         } catch (error) {
              // Trata erro de chave duplicada (username ou email)
             if (error.code === 11000) {
@@ -77,8 +80,10 @@ class UserService {
         }
 
         // Busca a empresa pelo _id e seleciona os campos desejados
+        // Adiciona .lean() para retornar um objeto simples
         const empresa = await Empresa.findById(empresa_id)
                                      .select('nome api_key_prefix status_assinatura') // Seleciona os campos relevantes
+                                     .lean() // <-- Adicionado .lean()
                                      .exec();
 
         if (!empresa) {
@@ -86,9 +91,11 @@ class UserService {
             error.status = 404;
             throw error;
         }
-        return empresa;
+         // A transformação toJSON global (se configurada) tratará _id -> id
+        return empresa; // Retorna o objeto simples
     }
 
+    // --- NOVA FUNÇÃO ADICIONADA ---
     async regenerateApiKey(userId, empresaId, userRole, userPassword) {
         // 1. Apenas Admins podem regenerar chaves (lógica inalterada)
         if (userRole !== 'admin') {
@@ -99,7 +106,11 @@ class UserService {
 
         // 2. Verificar a senha do administrador
         // Busca o admin pelo _id e empresa, selecionando a senha para comparação
-        const user = await User.findOne({ _id: userId, empresa: empresaId }).select('+password').exec();
+        // Adiciona .lean() aqui, pois só precisamos da senha para comparar
+        const user = await User.findOne({ _id: userId, empresa: empresaId })
+                               .select('+password') // Pede a senha
+                               .lean() // <-- Adicionado .lean()
+                               .exec();
         if (!user) {
             // Este caso não deveria acontecer se o token JWT for válido, mas é uma verificação extra
             const error = new Error('Utilizador administrador não encontrado para esta empresa.');
@@ -115,7 +126,11 @@ class UserService {
         }
 
         // 3. Senha correta. Buscar a empresa para obter o nome (para o prefixo)
-        const empresa = await Empresa.findById(empresaId).exec();
+        // Adiciona .lean() aqui, pois só precisamos do nome
+        const empresa = await Empresa.findById(empresaId)
+                                     .select('nome') // Seleciona apenas o nome
+                                     .lean() // <-- Adicionado .lean()
+                                     .exec();
         if (!empresa) {
              const error = new Error('Empresa associada não encontrada.');
             error.status = 404;
@@ -130,6 +145,7 @@ class UserService {
         const newFullApiKey = `${newApiKeyPrefix}_${newApiKeySecret}`;
 
         // 5. Atualizar a empresa com os novos valores usando Mongoose
+        // updateOne não retorna documento, .lean() não se aplica
         const updateResult = await Empresa.updateOne(
             { _id: empresaId },
             { $set: { api_key_hash: newApiKeyHash, api_key_prefix: newApiKeyPrefix } }

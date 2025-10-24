@@ -2,17 +2,16 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
 const userSchema = new Schema({
-  username: { type: String, required: true, unique: true, index: true },
-  email: { type: String, required: true, unique: true, index: true },
-  password: { type: String, required: true }, // Armazenará o hash
-  nome: { type: String, required: true },
-  sobrenome: { type: String, required: true },
-  role: { type: String, default: 'user', enum: ['user', 'admin'] }, // Define papéis permitidos
-  avatar_url: String,
+  username: { type: String, required: true, unique: true, index: true, trim: true, minlength: 3, maxlength: 50 },
+  email: { type: String, required: true, unique: true, index: true, trim: true, lowercase: true, match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
+  password: { type: String, required: true }, // Min length pode ser validado antes do hash
+  nome: { type: String, required: true, trim: true, maxlength: 100 },
+  sobrenome: { type: String, required: true, trim: true, maxlength: 100 },
+  role: { type: String, default: 'user', enum: ['user', 'admin'] },
+  avatar_url: { type: String, trim: true },
   resetToken: String,
   tokenExpiry: Date, // Use Date para expiração
-  empresa: { type: Schema.Types.ObjectId, ref: 'Empresa', required: true, index: true }, // Referência à Empresa
-  // Timestamps adicionados automaticamente
+        empresa: { type: Schema.Types.ObjectId, ref: 'Empresa', required: true, index: true }, // Adicionado index: true      // Timestamps adicionados automaticamente
 }, {
   timestamps: true
 });

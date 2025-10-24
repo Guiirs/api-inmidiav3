@@ -1,42 +1,42 @@
 // services/publicApiService.js
 const Placa = require('../models/Placa'); // Importa o modelo Placa Mongoose
 const Regiao = require('../models/Regiao'); // Importa o modelo Regiao para populate
+const mongoose = require('mongoose'); // Importa mongoose para ObjectId
 
 class PublicApiService {
-    // constructor não precisa mais do 'db'
     constructor() {}
 
     /**
      * Obtém todas as placas disponíveis para uma empresa específica.
      * @param {string | mongoose.Types.ObjectId} empresa_id - O ID da empresa.
-     * @returns {Promise<Array>} - Uma promessa que resolve para um array de placas disponíveis.
+     * @returns {Promise<Array>} - Uma promessa que resolve para um array de placas disponíveis (objetos simples).
      */
     async getAvailablePlacas(empresa_id) {
         if (!empresa_id) {
-            // Lança um erro se o ID da empresa não for fornecido
             throw new Error('O ID da empresa é obrigatório.');
         }
 
-        // Busca as placas usando Mongoose
+        // Busca as placas disponíveis
         const placasDisponiveis = await Placa.find({
-                empresa: empresa_id,   // Filtra pela empresa (ObjectId)
-                disponivel: true       // Filtra apenas as disponíveis
+                // Converte para ObjectId para garantir a correspondência correta
+                empresa: new mongoose.Types.ObjectId(empresa_id),
+                disponivel: true
             })
-            // Popula o campo 'regiao', selecionando apenas o campo 'nome' do documento Regiao
-            .populate('regiao', 'nome')
-            // Seleciona os campos desejados do documento Placa
-            // Exclui o _id e __v por padrão, inclui os outros listados
-            .select('numero_placa coordenadas nomeDaRua tamanho imagem regiao -_id')
-            .exec(); // Executa a query
+            .populate('regiao', 'nome') // Popula nome da região
+            // Seleciona campos e exclui _id e __v
+            .select('numero_placa coordenadas nomeDaRua tamanho imagem regiao -_id -__v')
+            .lean() // <-- Adicionado .lean() para retornar objetos simples
+            .exec();
 
-        // Mapeia o resultado para incluir o nome da região no nível superior (opcional, mas igual ao Knex)
+        // Mapeia o resultado para formatar o campo 'regiao'
         return placasDisponiveis.map(placa => ({
             numero_placa: placa.numero_placa,
             coordenadas: placa.coordenadas,
             nomeDaRua: placa.nomeDaRua,
             tamanho: placa.tamanho,
             imagem: placa.imagem,
-            regiao: placa.regiao ? placa.regiao.nome : null // Extrai o nome da região populada
+            // Acessa o nome da região populada (que é um objeto simples devido ao .lean())
+            regiao: placa.regiao ? placa.regiao.nome : null
         }));
     }
 }
