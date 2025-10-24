@@ -1,20 +1,15 @@
 // routes/publicApiRoutes.js
 const express = require('express');
 const router = express.Router();
-// 1. Importe a instância do banco de dados
-const db = require('../config/database');
+// const db = require('../config/database'); // <-- Remova esta linha
 
 module.exports = () => {
-    // 2. Importe os módulos necessários
     const publicApiController = require('../controllers/publicApiController');
-    // 3. Passe a instância 'db' ao chamar o middleware
-    const apiKeyAuth = require('../middlewares/apiKeyAuthMiddleware')(db); // <<< CORREÇÃO AQUI
+    // Chama o middleware diretamente, sem passar 'db'
+    const apiKeyAuth = require('../middlewares/apiKeyAuthMiddleware')(); // <-- CORREÇÃO AQUI
 
-    // Todas as rotas neste ficheiro são protegidas pela chave de API
-    router.use(apiKeyAuth);
+    router.use(apiKeyAuth); // Aplica o middleware refatorado
 
-    // Endpoint para obter as placas disponíveis
-    // Ex: GET /api/v1/placas/disponiveis
     router.get('/placas/disponiveis', publicApiController.getAvailablePlacas);
 
     return router;

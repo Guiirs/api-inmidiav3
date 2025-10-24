@@ -1,21 +1,18 @@
 // InMidia/backend/controllers/relatorioController.js
+// const db = require('../config/database'); // <-- Remova esta linha
+const RelatorioService = require('../services/relatorioService'); // Serviço Mongoose
 
-const db = require('../config/database');
-const RelatorioService = require('../services/relatorioService');
-
-// Usamos uma função auto-invocada para garantir que tudo é inicializado corretamente
 const createRelatorioController = () => {
     const controller = {};
-    // --- CORREÇÃO APLICADA AQUI ---
-    // A instância do serviço é criada e atribuída à variável 'relatorioService'
-    // que fica disponível para todas as funções do controlador.
-    const relatorioService = new RelatorioService(db);
+    // Instancia o serviço sem passar 'db'
+    const relatorioService = new RelatorioService(); // <-- Alteração aqui
 
     controller.getPlacasPorRegiao = async (req, res, next) => {
         try {
-            const empresa_id = req.user.empresa_id;
+            const empresa_id = req.user.empresa_id; // ID da empresa do token
+            // Chama o serviço refatorado
             const data = await relatorioService.placasPorRegiao(empresa_id);
-            res.status(200).json(data);
+            res.status(200).json(data); // Serviço retorna o resultado da agregação
         } catch (err) {
             next(err);
         }
@@ -23,9 +20,10 @@ const createRelatorioController = () => {
 
     controller.getDashboardSummary = async (req, res, next) => {
         try {
-            const empresa_id = req.user.empresa_id;
+            const empresa_id = req.user.empresa_id; // ID da empresa do token
+             // Chama o serviço refatorado
             const summary = await relatorioService.getDashboardSummary(empresa_id);
-            res.status(200).json(summary);
+            res.status(200).json(summary); // Serviço retorna o objeto de sumário
         } catch (err) {
             next(err);
         }
@@ -34,5 +32,4 @@ const createRelatorioController = () => {
     return controller;
 };
 
-// Exporta o objeto controlador já pronto e configurado
 module.exports = createRelatorioController();

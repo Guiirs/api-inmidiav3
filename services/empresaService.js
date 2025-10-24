@@ -1,32 +1,36 @@
+// services/empresaService.js
 const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
+const mongoose = require('mongoose'); // Importa mongoose para transações
+const Empresa = require('../models/Empresa'); // Importa o modelo Empresa
+const User = require('../models/User'); // Importa o modelo User
+const saltRounds = 10; // Definido aqui se não estiver global
 
 class EmpresaService {
-    constructor(db) {
-        this.db = db;
-    }
+    // constructor não precisa mais do 'db'
+    constructor() {}
 
     async register(empresaData) {
         const { nome_empresa, cnpj, adminUser } = empresaData;
 
         // 1. Verifica se o objeto adminUser e a senha existem
         if (!adminUser || !adminUser.password) {
-            const error = new Error('A senha do administrador é obrigatória e não foi fornecida ao serviço.');
+            const error = new Error('A senha do administrador é obrigatória.');
             error.status = 400;
             throw error;
         }
 
         const { username, email, password, nome, sobrenome } = adminUser;
 
-        // Verifica se a empresa ou o utilizador já existem
-        const existingEmpresa = await this.db('empresas').where({ cnpj }).first();
+        // Verifica se a empresa ou o utilizador já existem usando Mongoose
+        const existingEmpresa = await Empresa.findOne({ cnpj });
         if (existingEmpresa) {
             const error = new Error('Uma empresa com este CNPJ já está registada.');
             error.status = 409;
             throw error;
         }
 
-        const existingUser = await this.db('users').where({ email }).orWhere({ username }).first();
+        const existingUser = await User.findOne({ $or: [{ email }, { username }] });
         if (existingUser) {
             const error = new Error('Um utilizador com este e-mail ou nome de utilizador já existe.');
             error.status = 409;
@@ -34,45 +38,72 @@ class EmpresaService {
         }
 
         // Encripta a senha do utilizador
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(password, saltRounds); // Use saltRounds
 
-        // --- GERAÇÃO DA NOVA API KEY HÍBRIDA ---
-        // Cria um prefixo curto, ex: 'nome_a1b2' (primeiras 4 letras + 4 chars aleatórios)
-        const prefixBase = nome_empresa.substring(0, 4).toLowerCase().replace(/[^a-z]/g, '') || 'emp'; // Garante prefixo
+        // --- GERAÇÃO DA NOVA API KEY HÍBRIDA (lógica inalterada) ---
+        const prefixBase = nome_empresa.substring(0, 4).toLowerCase().replace(/[^a-z]/g, '') || 'emp';
         const apiKeyPrefix = `${prefixBase}_${uuidv4().split('-')[0].substring(0, 4)}`;
-        const apiKeySecret = uuidv4(); // A parte secreta longa
-        const apiKeyHash = await bcrypt.hash(apiKeySecret, 10); // O hash que vai para o DB
-        const fullApiKey = `${apiKeyPrefix}_${apiKeySecret}`; // A chave completa para mostrar ao utilizador *apenas uma vez*
+        const apiKeySecret = uuidv4();
+        const apiKeyHash = await bcrypt.hash(apiKeySecret, saltRounds); // Use saltRounds
+        const fullApiKey = `${apiKeyPrefix}_${apiKeySecret}`;
         // --- FIM DA GERAÇÃO ---
 
-        // Inicia a transação
-        return this.db.transaction(async trx => {
-            const [newEmpresa] = await trx('empresas').insert({
+        // Inicia a sessão para transação
+        const session = await mongoose.startSession();
+        session.startTransaction();
+        try {
+            // Cria a empresa dentro da transação
+            const [newEmpresa] = await Empresa.create([{
                 nome: nome_empresa,
                 cnpj,
-                api_key_hash: apiKeyHash, // Guarda o hash
-                api_key_prefix: apiKeyPrefix, // Guarda o prefixo
+                api_key_hash: apiKeyHash,
+                api_key_prefix: apiKeyPrefix,
                 status_assinatura: 'active'
-            }).returning('*'); // Retorna todos os dados da nova empresa
+            }], { session });
 
-            const [newAdmin] = await trx('users').insert({
+            // Cria o utilizador admin dentro da transação
+            const [newAdmin] = await User.create([{
                 username,
                 email,
                 password: hashedPassword,
                 nome,
                 sobrenome,
                 role: 'admin',
-                empresa_id: newEmpresa.id // Associa o admin à empresa
-            }).returning(['id', 'username', 'email', 'role']);
+                empresa: newEmpresa._id // Associa o admin à empresa usando o _id do MongoDB
+            }], { session });
 
+            // Se tudo correu bem, confirma a transação
+            await session.commitTransaction();
+
+            // Retorna a resposta (sem a senha, claro)
             return {
                 message: 'Empresa e utilizador administrador registados com sucesso!',
-                empresa: { id: newEmpresa.id, nome: newEmpresa.nome },
-                user: newAdmin,
-                // RETORNA A CHAVE COMPLETA AQUI - ÚNICA OPORTUNIDADE
-                fullApiKey: fullApiKey
+                empresa: { id: newEmpresa._id, nome: newEmpresa.nome }, // Usa _id
+                user: { // Retorna dados seguros do user
+                    id: newAdmin._id,
+                    username: newAdmin.username,
+                    email: newAdmin.email,
+                    role: newAdmin.role
+                },
+                fullApiKey: fullApiKey // Retorna a chave completa (única vez)
             };
-        });
+        } catch (error) {
+            // Se algo falhar, aborta a transação
+            await session.abortTransaction();
+            // Trata erros específicos (como duplicação, que pode ocorrer apesar da verificação inicial devido a concorrência)
+             if (error.code === 11000) { // Código de erro de chave duplicada do MongoDB
+                let field = Object.keys(error.keyValue)[0];
+                field = field === 'cnpj' ? 'CNPJ' : (field === 'email' ? 'e-mail' : (field === 'username' ? 'nome de utilizador' : field));
+                 const duplicateError = new Error(`Já existe um registo com este ${field}.`);
+                duplicateError.status = 409;
+                throw duplicateError;
+            }
+            // Re-lança outros erros
+            throw error;
+        } finally {
+            // Termina a sessão
+            session.endSession();
+        }
     }
 }
 

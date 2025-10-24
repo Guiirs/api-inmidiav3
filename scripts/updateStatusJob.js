@@ -1,69 +1,83 @@
 // scripts/updateStatusJob.js
-const logger = require('../config/logger'); //
+const logger = require('../config/logger'); // Logger existente
+const Placa = require('../models/Placa'); // Modelo Placa Mongoose
+const Aluguel = require('../models/Aluguel'); // Modelo Aluguel Mongoose
+const mongoose = require('mongoose'); // Necessário para ObjectId, se aplicável (não diretamente aqui)
 
 /**
- * Lógica da tarefa agendada (Cron Job) para atualizar o status das placas.
- * @param {object} db - A instância do Knex (base de dados).
+ * Lógica da tarefa agendada (Cron Job) para atualizar o status das placas com Mongoose.
+ * @param {object} db - Parâmetro 'db' não é mais necessário. Removido.
  */
-const updatePlacaStatusJob = async (db) => {
-    logger.info('[CRON JOB] Iniciando a verificação de status de alugueis...');
-    const hoje = new Date().toISOString().split('T')[0]; // Data de hoje, ex: '2025-10-20'
+const updatePlacaStatusJob = async () => {
+    logger.info('[CRON JOB - Mongoose] Iniciando a verificação de status de alugueis...');
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0); // Zera hora, minuto, segundo, ms para comparar apenas a data
 
     try {
-        // --- LÓGICA 1: TORNAR PLACAS INDISPONÍVEIS (Aluguel começou hoje) ---
-        
-        // 1. Encontra todas as placas que deveriam estar 'disponivel: true'
-        //    mas que têm um aluguel que começa ou está ativo hoje.
-        const placasParaIndisponibilizar = await db('placas')
-            .select('placas.id')
-            .join('alugueis', 'placas.id', 'alugueis.placa_id')
-            .where('placas.disponivel', true) // Que estão marcadas como disponíveis
-            .andWhere('alugueis.data_inicio', '<=', hoje) // Cujo aluguel começou
-            .andWhere('alugueis.data_fim', '>=', hoje)   // E ainda não terminou
-            .distinct('placas.id');
-        
-        if (placasParaIndisponibilizar.length > 0) {
-            const ids = placasParaIndisponibilizar.map(p => p.id);
-            logger.info(`[CRON JOB] Marcando ${ids.length} placas como INDISPONÍVEIS (aluguel iniciado). IDs: ${ids.join(', ')}`);
-            await db('placas').whereIn('id', ids).update({ disponivel: false });
+        // --- LÓGICA 1: TORNAR PLACAS INDISPONÍVEIS (Aluguel ativo hoje) ---
+
+        // 1. Encontra IDs de placas que têm um aluguel ativo hoje
+        const placasComAluguelAtivoIds = await Aluguel.distinct('placa', {
+            data_inicio: { $lte: hoje },
+            data_fim: { $gte: hoje }
+        }).exec();
+
+        // 2. Marca essas placas como indisponíveis (disponivel: false),
+        //    mas *apenas* se elas estiverem atualmente marcadas como disponíveis.
+        if (placasComAluguelAtivoIds.length > 0) {
+            const updateIndisponivelResult = await Placa.updateMany(
+                {
+                    _id: { $in: placasComAluguelAtivoIds }, // Placas com aluguel ativo
+                    disponivel: true                      // Que ainda estão marcadas como disponíveis
+                },
+                { $set: { disponivel: false } }
+            );
+            if (updateIndisponivelResult.modifiedCount > 0) {
+                 logger.info(`[CRON JOB - Mongoose] Marcadas ${updateIndisponivelResult.modifiedCount} placas como INDISPONÍVEIS (aluguel iniciado/ativo).`);
+            }
         }
 
-        // --- LÓGICA 2: TORNAR PLACAS DISPONÍVEIS (Aluguel terminou) ---
+        // --- LÓGICA 2: TORNAR PLACAS DISPONÍVEIS (Nenhum aluguel ativo hoje) ---
 
-        // 1. Encontra todas as placas que estão 'disponivel: false'
-        const placasIndisponiveis = await db('placas')
-            .select('id')
-            .where('disponivel', false);
-        
-        if (placasIndisponiveis.length === 0) {
-            logger.info('[CRON JOB] Nenhuma placa indisponível encontrada. Encerrando.');
-            return;
+        // 1. Encontra IDs de todas as placas que estão atualmente indisponíveis
+        const placasIndisponiveisIds = await Placa.distinct('_id', {
+            disponivel: false
+        });
+
+        if (placasIndisponiveisIds.length === 0) {
+            logger.info('[CRON JOB - Mongoose] Nenhuma placa indisponível encontrada para verificar.');
+             logger.info('[CRON JOB - Mongoose] Verificação de status concluída.');
+            return; // Sai se não houver placas indisponíveis
         }
 
-        const placasIndisponiveisIds = placasIndisponiveis.map(p => p.id);
+        // 2. Dentre as indisponíveis, encontra os IDs daquelas que AINDA TÊM aluguel ativo hoje
+        //    (Reutiliza a lógica do passo 1, mas filtrando apenas pelas indisponíveis)
+        const placasIndisponiveisAindaAtivasIds = await Aluguel.distinct('placa', {
+            placa: { $in: placasIndisponiveisIds }, // Apenas entre as indisponíveis
+            data_inicio: { $lte: hoje },
+            data_fim: { $gte: hoje }
+        }).exec();
 
-        // 2. Dessas placas, descobre quais ainda têm alugueis ativos ou futuros
-        const placasAindaReservadas = await db('alugueis')
-            .whereIn('placa_id', placasIndisponiveisIds)
-            .andWhere('data_fim', '>=', hoje) // Que terminam hoje ou no futuro
-            .distinct('placa_id');
-        
-        const placasAindaReservadasIds = new Set(placasAindaReservadas.map(p => p.placa_id));
-
-        // 3. Determina quais placas devem voltar a ser 'disponiveis: true'
-        const placasParaDisponibilizarIds = placasIndisponiveisIds.filter(id => 
-            !placasAindaReservadasIds.has(id)
+        // 3. Determina quais placas indisponíveis NÃO estão na lista de ativas (devem voltar a ser disponíveis)
+        const placasParaDisponibilizarIds = placasIndisponiveisIds.filter(id =>
+            !placasIndisponiveisAindaAtivasIds.some(activeId => activeId.equals(id)) // Compara ObjectIds corretamente
         );
 
+        // 4. Marca essas placas como disponíveis (disponivel: true)
         if (placasParaDisponibilizarIds.length > 0) {
-            logger.info(`[CRON JOB] Marcando ${placasParaDisponibilizarIds.length} placas como DISPONÍVEIS (alugueis expirados). IDs: ${placasParaDisponibilizarIds.join(', ')}`);
-            await db('placas').whereIn('id', placasParaDisponibilizarIds).update({ disponivel: true });
+             const updateDisponivelResult = await Placa.updateMany(
+                { _id: { $in: placasParaDisponibilizarIds } },
+                { $set: { disponivel: true } }
+            );
+             if (updateDisponivelResult.modifiedCount > 0) {
+                 logger.info(`[CRON JOB - Mongoose] Marcadas ${updateDisponivelResult.modifiedCount} placas como DISPONÍVEIS (nenhum aluguel ativo).`);
+             }
         }
 
-        logger.info('[CRON JOB] Verificação de status concluída.');
+        logger.info('[CRON JOB - Mongoose] Verificação de status concluída.');
 
     } catch (error) {
-        logger.error(`[CRON JOB] Erro ao executar a tarefa de atualização de status: ${error.message}`);
+        logger.error(`[CRON JOB - Mongoose] Erro ao executar a tarefa de atualização de status: ${error.message}`, error);
     }
 };
 

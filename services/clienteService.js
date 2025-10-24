@@ -1,17 +1,15 @@
 // services/clienteService.js
-const mediaService = require('./midiaService'); // Reutilizamos o nosso gestor de média
+const Cliente = require('../models/Cliente'); // Importa o modelo Cliente Mongoose
+// O midiaService continua a ser usado da mesma forma para R2
+const mediaService = require('./midiaService');
 
 class ClienteService {
-    constructor(db) {
-        this.db = db;
-    }
+    // constructor não precisa mais do 'db'
+    constructor() {}
 
-    async getAll(empresa_id) {
-        return this.db('clientes').where({ empresa_id }).select('*').orderBy('nome', 'asc');
-    }
-
-    async getById(id, empresa_id) {
-        const cliente = await this.db('clientes').where({ id, empresa_id }).first();
+    // Auxiliar para buscar cliente e verificar posse (usado em getById, update, delete)
+    async _findClienteByIdAndEmpresa(id, empresa_id) {
+        const cliente = await Cliente.findOne({ _id: id, empresa: empresa_id }).exec();
         if (!cliente) {
             const error = new Error('Cliente não encontrado.');
             error.status = 404;
@@ -20,111 +18,190 @@ class ClienteService {
         return cliente;
     }
 
+    async getAll(empresa_id) {
+        // Busca todos os clientes da empresa, ordenados por nome
+        return await Cliente.find({ empresa: empresa_id })
+                            .sort({ nome: 1 }) // 1 para ascendente
+                            .exec();
+    }
+
+    async getById(id, empresa_id) {
+        // Usa a função auxiliar
+        return await this._findClienteByIdAndEmpresa(id, empresa_id);
+    }
+
     async create(clienteData, empresa_id, fileObject) {
         const { nome, cnpj, telefone } = clienteData;
         let logo_url = null;
+        let savedImageData = null; // Para guardar dados da imagem salva
 
-        // 1. Salva o logo, se existir
+        // 1. Salva o logo, se existir (usando midiaService, lógica inalterada)
         if (fileObject) {
             try {
-                // O mediaService já trata de salvar o ficheiro e retornar o caminho
-                const imageData = await mediaService.saveImage(fileObject);
-                logo_url = imageData.path;
+                savedImageData = await mediaService.saveImage(fileObject);
+                logo_url = savedImageData.path; // URL completa do R2
             } catch (uploadError) {
                 console.error("Erro ao salvar logo do cliente:", uploadError);
+                // Não precisa apagar imagem aqui, pois ainda não foi salva no R2 se deu erro
                 throw new Error('Erro ao processar o upload do logo.');
             }
         }
 
         // 2. Verifica duplicidade de CNPJ (só se o CNPJ for enviado)
         if (cnpj) {
-            const existing = await this.db('clientes').where({ cnpj, empresa_id }).first();
+            // Verifica se existe outro cliente na mesma empresa com o mesmo CNPJ (não nulo)
+            const existing = await Cliente.findOne({ cnpj: cnpj, empresa: empresa_id }).exec();
             if (existing) {
-                // Se já existe, apaga o logo que acabámos de carregar
+                // Se já existe e carregamos um logo, apaga o logo do R2
                 if (logo_url) await mediaService.deleteImage(logo_url);
                 const error = new Error('Um cliente com este CNPJ já existe na sua empresa.');
-                error.status = 409;
+                error.status = 409; // Conflict
                 throw error;
             }
         }
 
-        // 3. Cria o cliente
-        const [novoCliente] = await this.db('clientes').insert({
+        // 3. Cria o cliente com Mongoose
+        const novoCliente = new Cliente({
             nome,
             cnpj: cnpj || null, // Guarda null se for vazio
             telefone: telefone || null, // Guarda null se for vazio
-            logo_url,
-            empresa_id
-        }).returning('*');
+            logo_url, // URL do logo ou null
+            empresa: empresa_id // ObjectId da empresa
+        });
 
-        return novoCliente;
+        try {
+            // Tenta salvar o novo cliente no MongoDB
+            const clienteSalvo = await novoCliente.save();
+            return clienteSalvo; // Retorna o documento salvo
+        } catch (error) {
+            // Se o save falhar (ex: erro de validação do Mongoose ou erro de índice único não capturado antes)
+            // e carregamos um logo, apaga o logo do R2
+            if (logo_url) await mediaService.deleteImage(logo_url);
+
+            // Re-lança o erro original ou um erro específico se necessário
+            if (error.code === 11000 && error.keyPattern && error.keyPattern.cnpj) {
+                 const uniqueError = new Error('Um cliente com este CNPJ já existe na sua empresa (erro no save).');
+                 uniqueError.status = 409;
+                 throw uniqueError;
+            }
+            throw error;
+        }
     }
 
     async update(id, clienteData, empresa_id, fileObject) {
         const { nome, cnpj, telefone } = clienteData;
-        
-        const clienteAtual = await this.getById(id, empresa_id); // Verifica posse e obtém dados
-        const imagemAntigaPath = clienteAtual.logo_url;
-        let logo_url = imagemAntigaPath; // Mantém o logo antigo por defeito
 
-        // 1. Verifica se um novo logo foi enviado
+        // Busca o cliente atual para obter dados e verificar posse
+        const clienteAtual = await this._findClienteByIdAndEmpresa(id, empresa_id);
+        const imagemAntigaPath = clienteAtual.logo_url; // URL antiga
+        let logo_url = imagemAntigaPath; // Mantém o logo antigo por defeito
+        let newImageData = null;
+
+        // 1. Verifica se um novo logo foi enviado (lógica do midiaService inalterada)
         if (fileObject) {
             try {
-                const imageData = await mediaService.saveImage(fileObject);
-                logo_url = imageData.path; // Define o novo caminho do logo
+                newImageData = await mediaService.saveImage(fileObject);
+                logo_url = newImageData.path; // Define a nova URL do logo
             } catch (uploadError) {
+                console.error("Erro ao processar novo logo do cliente:", uploadError);
                 throw new Error('Erro ao processar o novo logo.');
             }
+        } else if (clienteData.hasOwnProperty('logo_url') && !clienteData.logo_url) {
+            // Permite remover o logo enviando logo_url: null ou ''
+            logo_url = null;
         }
 
-        // 2. Verifica duplicidade de CNPJ (se CNPJ foi fornecido e é diferente do atual)
-        if (cnpj && cnpj !== clienteAtual.cnpj) {
-            const existing = await this.db('clientes')
-                .where({ cnpj, empresa_id })
-                .whereNot({ id }) // Exclui o próprio cliente
-                .first();
+
+        // 2. Verifica duplicidade de CNPJ (se CNPJ foi fornecido, não é nulo/vazio E é diferente do atual)
+        const checkCnpj = cnpj && cnpj !== clienteAtual.cnpj;
+        if (checkCnpj) {
+            const existing = await Cliente.findOne({
+                cnpj: cnpj,
+                empresa: empresa_id,
+                _id: { $ne: id } // Exclui o próprio cliente da verificação ($ne = not equal)
+            }).exec();
+
             if (existing) {
-                // Se deu erro de duplicidade, apaga o novo logo carregado (se houver)
-                if (fileObject && logo_url) await mediaService.deleteImage(logo_url);
+                // Se deu erro de duplicidade e carregamos um novo logo, apaga o novo logo do R2
+                if (newImageData && newImageData.path) await mediaService.deleteImage(newImageData.path);
                 const error = new Error('Um cliente com este CNPJ já existe na sua empresa.');
-                error.status = 409;
+                error.status = 409; // Conflict
                 throw error;
             }
         }
-        
-        // 3. Atualiza o cliente
-        const [clienteAtualizado] = await this.db('clientes')
-            .where({ id, empresa_id })
-            .update({
-                nome,
-                cnpj: cnpj || null,
-                telefone: telefone || null,
-                logo_url
-            })
-            .returning('*');
 
-        // 4. Se a atualização foi bem-sucedida e um novo logo foi carregado, apaga o antigo
-        if (fileObject && imagemAntigaPath && imagemAntigaPath !== logo_url) {
-            await mediaService.deleteImage(imagemAntigaPath);
+        // 3. Prepara dados para atualização
+        const updateData = {
+            nome,
+            cnpj: cnpj || null,
+            telefone: telefone || null,
+            logo_url // Nova URL ou null
+        };
+
+        try {
+            // Atualiza o cliente no MongoDB, retornando o *novo* documento
+            const clienteAtualizado = await Cliente.findByIdAndUpdate(
+                id, // O _id já inclui a verificação de empresa feita no início
+                { $set: updateData },
+                { new: true, runValidators: true } // Retorna o novo, executa validadores
+            ).exec();
+
+            if (!clienteAtualizado) {
+                 // Caso raro, mas se o cliente for deletado entre a busca inicial e o update
+                 if (newImageData && newImageData.path) await mediaService.deleteImage(newImageData.path);
+                 throw new Error('Cliente não encontrado durante a atualização.'); // Lança erro 404
+            }
+
+
+            // 4. Se a atualização foi bem-sucedida E
+            //    (um novo logo foi carregado OU o logo foi explicitamente removido) E
+            //    havia um logo antigo
+            const logoMudou = (newImageData || (clienteData.hasOwnProperty('logo_url') && !clienteData.logo_url));
+            if (logoMudou && imagemAntigaPath) {
+                // E o logo antigo é diferente do novo (caso tenha carregado um novo)
+                if(imagemAntigaPath !== logo_url) {
+                    await mediaService.deleteImage(imagemAntigaPath);
+                }
+            }
+
+            return clienteAtualizado;
+
+        } catch (error) {
+            // Se o update falhar (ex: erro de validação, erro de índice único não capturado antes)
+            // e carregamos um novo logo, apaga o novo logo do R2
+            if (newImageData && newImageData.path) await mediaService.deleteImage(newImageData.path);
+
+             if (error.code === 11000 && error.keyPattern && error.keyPattern.cnpj) {
+                 const uniqueError = new Error('Um cliente com este CNPJ já existe na sua empresa (erro no update).');
+                 uniqueError.status = 409;
+                 throw uniqueError;
+            }
+            // Re-lança outros erros
+            throw error;
         }
-
-        return clienteAtualizado;
     }
 
     async delete(id, empresa_id) {
-        // TODO: Futuramente, verificar se o cliente está em uso na tabela 'alugueis'
-        // const aluguelExistente = await this.db('alugueis').where({ cliente_id: id, empresa_id }).first();
+        // TODO: Futuramente, verificar se o cliente está em uso na coleção 'alugueis'
+        // const aluguelExistente = await Aluguel.findOne({ cliente: id, empresa: empresa_id }).exec();
         // if (aluguelExistente) { ... }
 
-        const cliente = await this.getById(id, empresa_id); // Verifica posse e obtém dados
-        const logoPath = cliente.logo_url;
-        
-        const count = await this.db('clientes').where({ id, empresa_id }).del();
-        
-        if (count > 0 && logoPath) {
-            // Se apagou do DB, remove o logo associado
+        // Busca o cliente para pegar a URL do logo e verificar posse
+        const cliente = await this._findClienteByIdAndEmpresa(id, empresa_id);
+        const logoPath = cliente.logo_url; // URL do logo no R2
+
+        // Apaga o cliente do MongoDB
+        const result = await Cliente.deleteOne({ _id: id }).exec(); // _id já garante a unicidade
+
+        // Se apagou do DB (deletedCount > 0) e tinha um logo, remove o logo do R2
+        if (result.deletedCount > 0 && logoPath) {
             await mediaService.deleteImage(logoPath);
+        } else if (result.deletedCount === 0) {
+             // Caso não tenha encontrado para deletar (já tinha sido deletado?)
+             // A busca inicial já teria dado erro 404, mas é uma segurança extra.
+             throw new Error('Cliente não encontrado para exclusão.');
         }
+
         return { success: true };
     }
 }
