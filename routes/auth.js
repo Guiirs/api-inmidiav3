@@ -1,70 +1,80 @@
-// routes/auth.js
+// routes/auth.js (CORRIGIDO NOVAMENTE)
 
 const express = require('express');
 const router = express.Router();
-const rateLimit = require('express-rate-limit'); // Importa a função
-const logger = require('../config/logger'); // Adiciona logger
+const rateLimit = require('express-rate-limit');
+const logger = require('../config/logger');
 
-// Importa os controllers
-let authController, empresaController; // Assumindo que empresaController também é usado aqui
-try {
-    authController = require('../controllers/authController');
-    // Se a rota de registo estiver aqui e não em empresaRoutes, descomente:
-    // empresaController = require('../controllers/empresaController');
-    logger.info('[Routes Auth] Controllers carregados com sucesso.');
-} catch (error) {
-    logger.error('[Routes Auth] ERRO CRÍTICO ao carregar controllers:', error);
-    throw new Error('Falha ao carregar controllers de Autenticação.');
-}
+// <<< ALTERADO: Removido o try...catch temporariamente para expor erros >>>
+// Tenta importar os controllers diretamente
+const {
+    login,
+    forgotPassword,
+    resetPassword,
+    verifyResetToken
+} = require('../controllers/authController');
+// Adiciona um log para verificar se a importação retornou algo
+logger.info(`[Routes Auth] Resultado da importação de authController: login (${typeof login}), forgotPassword (${typeof forgotPassword}), resetPassword (${typeof resetPassword}), verifyResetToken (${typeof verifyResetToken})`);
 
-// <<< CORREÇÃO: Cria a instância do limitador UMA VEZ AQUI >>>
+
+// Cria a instância do limitador UMA VEZ
 const loginLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000, // 15 minutos
 	max: 10, // Limita cada IP a 10 requisições por janela
-	message: { message: 'Muitas tentativas de login a partir deste IP, por favor tente novamente após 15 minutos' }, // Envia JSON
-	standardHeaders: true, // Retorna info do rate limit nos headers `RateLimit-*`
-	legacyHeaders: false, // Desabilita os headers `X-RateLimit-*`
-    keyGenerator: (req, res) => { // Usa X-Forwarded-For se existir (proxy reverso)
-        return req.headers['x-forwarded-for'] || req.ip;
-    },
-    handler: (req, res, next, options) => { // Loga quando o limite é atingido
-        logger.warn(`[RateLimit] Limite de taxa atingido para login do IP: ${req.ip} (ou X-Forwarded-For: ${req.headers['x-forwarded-for']})`);
+	message: { message: 'Muitas tentativas de login a partir deste IP, por favor tente novamente após 15 minutos' },
+	standardHeaders: true,
+	legacyHeaders: false,
+    // <<< ALTERADO: Removido keyGenerator personalizado para usar o padrão >>>
+    // keyGenerator: (req, res) => {
+    //     return req.headers['x-forwarded-for'] || req.ip; // Pode causar aviso IPv6
+    // },
+    handler: (req, res, next, options) => { // Mantém o log de aviso
+        // Tenta obter o IP da forma mais confiável possível (considerando proxies)
+        const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket?.remoteAddress || req.ip;
+        logger.warn(`[RateLimit] Limite de taxa atingido para login do IP: ${ip}`);
         res.status(options.statusCode).send(options.message);
     }
 });
-
-// Opcional: Criar um limitador separado para registo, se necessário
-// const registerLimiter = rateLimit({ ... configurações diferentes ... });
 
 logger.info('[Routes Auth] Definindo rotas de Autenticação...');
 
 // --- Rotas de Autenticação ---
 
 // POST /api/auth/login - Login do Utilizador
-// <<< CORREÇÃO: Usa a instância criada 'loginLimiter' como middleware >>>
-router.post('/login', loginLimiter, authController.login);
+// Verifica se 'login' é uma função antes de usar
+if (typeof login !== 'function') {
+    logger.error('[Routes Auth] ERRO CRÍTICO: authController.login não é uma função!');
+    throw new Error('Handler da rota /login inválido.');
+}
+router.post('/login', loginLimiter, login);
 logger.debug('[Routes Auth] Rota POST /login definida.');
 
 // POST /api/auth/forgot-password - Pedido de redefinição de senha
-// Pode adicionar um limitador aqui também, se desejar
-router.post('/forgot-password', authController.forgotPassword);
+if (typeof forgotPassword !== 'function') {
+    logger.error('[Routes Auth] ERRO CRÍTICO: authController.forgotPassword não é uma função!');
+    throw new Error('Handler da rota /forgot-password inválido.');
+}
+router.post('/forgot-password', forgotPassword);
 logger.debug('[Routes Auth] Rota POST /forgot-password definida.');
 
 // POST /api/auth/reset-password/:token - Redefinição de senha com token
-// Pode adicionar um limitador aqui também
-router.post('/reset-password/:token', authController.resetPassword);
+if (typeof resetPassword !== 'function') {
+    logger.error('[Routes Auth] ERRO CRÍTICO: authController.resetPassword não é uma função!');
+    throw new Error('Handler da rota /reset-password/:token inválido.');
+}
+router.post('/reset-password/:token', resetPassword);
 logger.debug('[Routes Auth] Rota POST /reset-password/:token definida.');
 
 // GET /api/auth/verify-token/:token - Verifica token de redefinição (GET request)
-// Geralmente não precisa de rate limit tão estrito aqui
-router.get('/verify-token/:token', authController.verifyResetToken);
+// <<< Linha 60 referenciada no erro >>>
+if (typeof verifyResetToken !== 'function') {
+    logger.error('[Routes Auth] ERRO CRÍTICO: authController.verifyResetToken não é uma função!');
+    throw new Error('Handler da rota /verify-token/:token inválido.'); // Lança erro se não for função
+}
+router.get('/verify-token/:token', verifyResetToken);
 logger.debug('[Routes Auth] Rota GET /verify-token/:token definida.');
 
-
-// Se a rota de registo estiver aqui (em vez de em empresaRoutes):
-// router.post('/register', registerLimiter, empresaController.registerEmpresa); // Use um registerLimiter?
-// logger.debug('[Routes Auth] Rota POST /register definida.');
-
+// Nota: A rota de registo está em empresaRoutes.js
 
 logger.info('[Routes Auth] Rotas de Autenticação definidas com sucesso.');
 
