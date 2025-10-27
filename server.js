@@ -2,8 +2,6 @@
 
 require('dotenv').config(); // Carrega variáveis de ambiente do .env
 const express = require('express');
- // Confia no primeiro hop do proxy (adequado para Square Cloud)
-
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
@@ -13,42 +11,39 @@ const connectDB = require('./config/dbMongo'); // Função de conexão com Mongo
 const logger = require('./config/logger'); // Winston logger
 const errorHandler = require('./middlewares/errorHandler'); // Middleware de tratamento de erros
 
-// Importação das rotas
+// Importação das rotas (Assumindo que os ficheiros de rota exportam uma função)
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const empresaRoutes = require('./routes/empresaRoutes');
 const regiaoRoutes = require('./routes/regiaoRoutes');
-const placaRoutes = require('./routes/placas'); // <<< IMPORTAÇÃO DAS ROTAS DE PLACAS
+const placaRoutes = require('./routes/placas'); 
 const clienteRoutes = require('./routes/clienteRoutes');
 const aluguelRoutes = require('./routes/aluguelRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const relatoriosRoutes = require('./routes/relatoriosRoutes');
-const publicApiRoutes = require('./routes/publicApiRoutes'); // Rotas da API pública
+const publicApiRoutes = require('./routes/publicApiRoutes'); 
 
-// Log para depuração da importação de placaRoutes
-console.log('--- server.js: placaRoutes importado:', typeof placaRoutes, placaRoutes); // <<< LOG DE DEPURAÇÃO ADICIONADO >>>
-logger.info(`[Server] placaRoutes importado. Tipo: ${typeof placaRoutes}`);
-
+logger.info('[Server] Rotas importadas com sucesso.');
 
 // Inicializa a aplicação Express
 const app = express();
 
+// >>> 1. CORREÇÃO ESSENCIAL PARA AMBIENTES COM PROXY (SQUARE CLOUD) <<<
+app.set('trust proxy', 1); 
+
 // Conecta à Base de Dados MongoDB
 connectDB();
 
-// Configuração do CORS (ajuste as origens permitidas conforme necessário)
+// Configuração do CORS (Ajustada para o ambiente Square Cloud e local)
 const allowedOrigins = [
-    'http://localhost:5500',
-    'http://localhost:52946', // Live Server (exemplo)
-    'http://127.0.0.1:5500', // Live Server (exemplo)
-    'http://localhost:4000',
-    'http://localhost:3000', // Frontend em desenvolvimento (ADICIONE SE APLICÁVEL)
-    'https://inmidia.squareweb.app', // A sua API (mantém)
-    // 'https://SEU_FRONTEND_PUBLICADO.com' // ADICIONE A URL DO FRONTEND PUBLICADO
+    'http://localhost:5500', // Exemplo: Live Server
+    'http://127.0.0.1:5500', // Exemplo: Live Server
+    'http://localhost:3000', // Exemplo: Frontend dev
+    'http://localhost:4000', // ADICIONADO: Sua porta local
+    'https://inmidia.squareweb.app' // SEU FRONTEND EM PRODUÇÃO (ou URL API)
 ];
 const corsOptions = {
   origin: function (origin, callback) {
-    // Permite requisições sem 'origin' (ex: Postman, mobile apps) OU se a origem estiver na lista
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -57,41 +52,56 @@ const corsOptions = {
     }
   },
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true, // Se precisar enviar cookies ou cabeçalhos de autorização
+  credentials: true,
   optionsSuccessStatus: 204
 };
 app.use(cors(corsOptions));
 
 
 // Middlewares Essenciais
-app.set('trust proxy', 1);
 app.use(express.json()); // Para fazer parse do body de requisições JSON
 app.use(express.urlencoded({ extended: true })); // Para fazer parse de formulários URL-encoded
 
-// Servir ficheiros estáticos (se houver, ex: uploads locais - NÃO RECOMENDADO PARA R2)
-// app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
-// Configuração das Rotas da API
-
-app.use('/api/auth', authRoutes);
-app.use('/api/user', userRoutes);
-app.use('/api/empresas', empresaRoutes); // Rota pública para registo
-app.use('/api/regioes', regiaoRoutes);
-app.use('/api/placas', placaRoutes); // <<< USO DAS ROTAS DE PLACAS (Linha 23 nos erros anteriores)
-app.use('/api/clientes', clienteRoutes);
-app.use('/api/alugueis', aluguelRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/relatorios', relatoriosRoutes);
-app.use('/api/public', publicApiRoutes); // API pública (requer apiKeyAuthMiddleware nas rotas específicas)
+// Configuração das Rotas da API (Chamando a função exportada de cada router)
+app.use('/api/auth', authRoutes()); 
+app.use('/api/user', userRoutes());
+app.use('/api/empresas', empresaRoutes()); 
+app.use('/api/regioes', regiaoRoutes());
+app.use('/api/placas', placaRoutes()); 
+app.use('/api/clientes', clienteRoutes());
+app.use('/api/alugueis', aluguelRoutes());
+app.use('/api/admin', adminRoutes());
+app.use('/api/relatorios', relatoriosRoutes());
+app.use('/api/public', publicApiRoutes()); 
 
 
 // Rota para a documentação Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 logger.info('[Server] Rota /api-docs para Swagger UI configurada.');
 
-// Rota de Teste Simples
+// >>> 2. CORREÇÃO DE ROTEAMENTO: Rota de Teste Simples na base /api (Fixa Cannot GET /api) <<<
+app.get('/api', (req, res) => {
+    // Resposta JSON para confirmar que o API_BASE_URL está correto
+    res.status(200).json({ 
+        message: 'API InMidia está a funcionar na base /api. Use as rotas /auth, /placas, etc.', 
+        status: 'ok' 
+    });
+});
+logger.info('[Server] Rota /api para teste de base configurada.');
+
+// Rota de Teste Simples (para o root do domínio)
 app.get('/', (req, res) => {
-    res.send('API InMidia está a funcionar!');
+    res.send('API InMidia está a funcionar!'); // Não HTML!
+});
+
+
+// >>> 3. TRATAMENTO DE ERRO 404 (Último antes do errorHandler) <<<
+// Este middleware captura qualquer requisição que não encontrou rota e garante que o erro é JSON
+app.use((req, res, next) => {
+    const error = new Error(`Não Encontrado: A rota ${req.originalUrl} não existe na API.`);
+    error.status = 404;
+    next(error); // Passa para o errorHandler
 });
 
 // Middleware de Tratamento de Erros (deve ser o último middleware)
@@ -105,7 +115,7 @@ app.listen(PORT, () => {
   logger.info(`[Server] Documentação API disponível em /api-docs`);
 });
 
-// Tratamento para Encerramento Gracioso (opcional mas recomendado)
+// Tratamento para Encerramento Gracioso
 process.on('SIGINT', async () => {
     logger.info('[Server] Recebido SIGINT. A desligar graciosamente...');
     try {
