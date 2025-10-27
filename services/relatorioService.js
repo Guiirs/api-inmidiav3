@@ -2,115 +2,142 @@
 const Placa = require('../models/Placa'); // Modelo Placa Mongoose
 const Regiao = require('../models/Regiao'); // Modelo Regiao Mongoose
 const mongoose = require('mongoose'); // Necessário para ObjectId
+const logger = require('../config/logger'); // Importa o logger
 
 class RelatorioService {
-    // constructor não precisa mais do 'db'
     constructor() {}
 
+    /**
+     * Gera um relatório de contagem de placas por região para uma empresa.
+     * @param {string} empresa_id - ObjectId da empresa.
+     * @returns {Promise<Array<object>>} - Array com objetos { regiao: string, total_placas: number }.
+     * @throws {Error} - Lança erro 500 em caso de falha na agregação.
+     */
     async placasPorRegiao(empresa_id) {
-        // Usa o Aggregation Pipeline do MongoDB para agrupar e contar
-        const results = await Placa.aggregate([
-            // 1. Filtra as placas pela empresa (converte string para ObjectId)
-            { $match: { empresa: new mongoose.Types.ObjectId(empresa_id) } },
-            // 2. Faz o "join" com a coleção de Regioes
-            {
-                $lookup: {
-                    from: Regiao.collection.name, // Nome da coleção de Regioes
-                    localField: 'regiao',         // Campo na coleção Placa (ObjectId)
-                    foreignField: '_id',          // Campo na coleção Regiao (_id)
-                    as: 'regiaoInfo'              // Nome do novo array que conterá a região encontrada
-                }
-            },
-            // 3. Desconstrói o array regiaoInfo (haverá 0 ou 1 elemento)
-            //    preserveNullAndEmptyArrays: true -> mantém placas sem região (regiaoInfo será [])
-            { $unwind: { path: '$regiaoInfo', preserveNullAndEmptyArrays: true } },
-            // 4. Agrupa pelo nome da região (ou um valor padrão se não houver região)
-            {
-                $group: {
-                    // Agrupa pelo nome da região, usando 'Sem Região' se regiaoInfo for nulo/vazio
-                    _id: { regiaoNome: { $ifNull: ['$regiaoInfo.nome', 'Sem Região'] } },
-                    total_placas: { $sum: 1 } // Conta os documentos em cada grupo
-                }
-            },
-            // 5. Formata a saída
-            {
-                $project: {
-                    _id: 0, // Remove o campo _id do grupo
-                    regiao: '$_id.regiaoNome', // Renomeia _id.regiaoNome para regiao
-                    total_placas: 1 // Mantém o total_placas
-                }
-            },
-            // 6. Ordena pelo nome da região (opcional)
-            { $sort: { regiao: 1 } }
-        ]).exec(); // Executa a agregação
+        logger.info(`[RelatorioService] Iniciando agregação 'placasPorRegiao' para empresa ${empresa_id}.`);
+        const startTime = Date.now(); // Marca o início
 
-        return results; // Retorna o array de objetos simples
+        try {
+            // Usa o Aggregation Pipeline do MongoDB para agrupar e contar
+            const aggregationPipeline = [
+                // 1. Filtra as placas pela empresa (converte string para ObjectId se necessário)
+                { $match: { empresa: new mongoose.Types.ObjectId(empresa_id) } },
+                // 2. Faz o "join" com a coleção de Regioes
+                {
+                    $lookup: {
+                        from: Regiao.collection.name, // Nome da coleção de Regioes
+                        localField: 'regiao',         // Campo na coleção Placa (ObjectId)
+                        foreignField: '_id',          // Campo na coleção Regiao (_id)
+                        as: 'regiaoInfo'              // Nome do novo array
+                    }
+                },
+                // 3. Desconstrói o array regiaoInfo
+                { $unwind: { path: '$regiaoInfo', preserveNullAndEmptyArrays: true } },
+                // 4. Agrupa pelo nome da região
+                {
+                    $group: {
+                        _id: { regiaoNome: { $ifNull: ['$regiaoInfo.nome', 'Sem Região'] } },
+                        total_placas: { $sum: 1 } // Conta os documentos
+                    }
+                },
+                // 5. Formata a saída
+                {
+                    $project: {
+                        _id: 0, // Remove o campo _id do grupo
+                        regiao: '$_id.regiaoNome', // Renomeia
+                        total_placas: 1 // Mantém o total
+                    }
+                },
+                // 6. Ordena pelo nome da região
+                { $sort: { regiao: 1 } }
+            ];
+
+            logger.debug(`[RelatorioService] Executando pipeline de agregação 'placasPorRegiao'.`);
+            const results = await Placa.aggregate(aggregationPipeline).exec();
+            const endTime = Date.now();
+            logger.info(`[RelatorioService] Agregação 'placasPorRegiao' concluída em ${endTime - startTime}ms. ${results.length} resultados.`);
+
+            return results; // Retorna o array de objetos simples
+
+        } catch (error) {
+            const endTime = Date.now();
+            logger.error(`[RelatorioService] Erro na agregação 'placasPorRegiao' (tempo: ${endTime - startTime}ms): ${error.message}`, { stack: error.stack });
+            const serviceError = new Error(`Erro interno ao gerar relatório de placas por região: ${error.message}`);
+            serviceError.status = 500;
+            throw serviceError;
+        }
     }
 
+    /**
+     * Gera um resumo para o dashboard (total de placas, disponíveis, região principal).
+     * @param {string} empresa_id - ObjectId da empresa.
+     * @returns {Promise<object>} - Objeto com { totalPlacas, placasDisponiveis, regiaoPrincipal }.
+     * @throws {Error} - Lança erro 500 em caso de falha nas queries.
+     */
     async getDashboardSummary(empresa_id) {
-        // Converte para ObjectId se não for (necessário para $match e contagens)
-        const empresaObjectId = new mongoose.Types.ObjectId(empresa_id);
+        logger.info(`[RelatorioService] Iniciando 'getDashboardSummary' para empresa ${empresa_id}.`);
+        const startTime = Date.now(); // Marca o início
 
-        // 1. Contagem total de placas (countDocuments não retorna documento Mongoose)
-        const totalPlacasPromise = Placa.countDocuments({ empresa: empresaObjectId });
+        try {
+            // Converte para ObjectId uma vez
+            const empresaObjectId = new mongoose.Types.ObjectId(empresa_id);
 
-        // 2. Contagem de placas disponíveis (countDocuments não retorna documento Mongoose)
-        const placasDisponiveisPromise = Placa.countDocuments({ empresa: empresaObjectId, disponivel: true });
+            // Define as promessas
+            logger.debug(`[RelatorioService] Iniciando query countDocuments para totalPlacas.`);
+            const totalPlacasPromise = Placa.countDocuments({ empresa: empresaObjectId });
 
-        // 3. Encontra a região principal usando Aggregation Pipeline
-        //    (.aggregate() já retorna objetos simples)
-        const regiaoPrincipalPromise = Placa.aggregate([
-            // Filtra pela empresa
-            { $match: { empresa: empresaObjectId } },
-            // Considera apenas placas com região definida
-            { $match: { regiao: { $ne: null } } },
-            // Faz o "join" com Regioes
-            {
-                $lookup: {
-                    from: Regiao.collection.name,
-                    localField: 'regiao',
-                    foreignField: '_id',
-                    as: 'regiaoInfo'
-                }
-            },
-            // Desconstrói o array (haverá sempre 1 elemento aqui devido ao $match anterior)
-            { $unwind: '$regiaoInfo' },
-            // Agrupa pelo nome da região e conta
-            {
-                $group: {
-                    _id: { regiaoNome: '$regiaoInfo.nome' },
-                    count: { $sum: 1 }
-                }
-            },
-            // Ordena pela contagem descendente
-            { $sort: { count: -1 } },
-            // Pega apenas o primeiro resultado (o maior)
-            { $limit: 1 },
-            // Formata a saída para pegar apenas o nome
-            {
-                $project: {
-                    _id: 0,
-                    nome: '$_id.regiaoNome'
-                }
-            }
-        ]).exec(); // Executa a agregação
+            logger.debug(`[RelatorioService] Iniciando query countDocuments para placasDisponiveis.`);
+            const placasDisponiveisPromise = Placa.countDocuments({ empresa: empresaObjectId, disponivel: true });
 
-        // Executa todas as promessas em paralelo
-        const [totalPlacasResult, placasDisponiveisResult, regiaoPrincipalResultArray] = await Promise.all([
-            totalPlacasPromise,
-            placasDisponiveisPromise,
-            regiaoPrincipalPromise
-        ]);
+            logger.debug(`[RelatorioService] Iniciando pipeline de agregação para regiaoPrincipal.`);
+            const regiaoPrincipalPipeline = [
+                { $match: { empresa: empresaObjectId } },
+                { $match: { regiao: { $ne: null } } }, // Apenas placas com região
+                {
+                    $lookup: {
+                        from: Regiao.collection.name, localField: 'regiao',
+                        foreignField: '_id', as: 'regiaoInfo'
+                    }
+                },
+                { $unwind: '$regiaoInfo' },
+                { $group: { _id: { regiaoNome: '$regiaoInfo.nome' }, count: { $sum: 1 } } },
+                { $sort: { count: -1 } },
+                { $limit: 1 },
+                { $project: { _id: 0, nome: '$_id.regiaoNome' } }
+            ];
+            const regiaoPrincipalPromise = Placa.aggregate(regiaoPrincipalPipeline).exec();
 
-        // Extrai o nome da região principal (ou N/A se não houver placas com região)
-        const regiaoPrincipal = regiaoPrincipalResultArray.length > 0 ? regiaoPrincipalResultArray[0].nome : 'N/A';
+            // Executa todas as promessas em paralelo
+            const [totalPlacasResult, placasDisponiveisResult, regiaoPrincipalResultArray] = await Promise.all([
+                totalPlacasPromise,
+                placasDisponiveisPromise,
+                regiaoPrincipalPromise
+            ]);
+            const endTimeQueries = Date.now();
+            logger.debug(`[RelatorioService] Queries 'getDashboardSummary' concluídas em ${endTimeQueries - startTime}ms.`);
+            logger.debug(`[RelatorioService] Resultados - Total: ${totalPlacasResult}, Disponíveis: ${placasDisponiveisResult}, Região Agg: ${JSON.stringify(regiaoPrincipalResultArray)}`);
 
-        return {
-            totalPlacas: totalPlacasResult || 0,
-            placasDisponiveis: placasDisponiveisResult || 0,
-            regiaoPrincipal: regiaoPrincipal,
-        };
+
+            // Extrai o nome da região principal
+            const regiaoPrincipal = regiaoPrincipalResultArray.length > 0 ? regiaoPrincipalResultArray[0].nome : 'N/A';
+            const finalResult = {
+                totalPlacas: totalPlacasResult || 0,
+                placasDisponiveis: placasDisponiveisResult || 0,
+                regiaoPrincipal: regiaoPrincipal,
+            };
+            const endTime = Date.now();
+            logger.info(`[RelatorioService] 'getDashboardSummary' concluído em ${endTime - startTime}ms.`);
+
+            return finalResult;
+
+        } catch (error) {
+            const endTime = Date.now();
+            logger.error(`[RelatorioService] Erro nas queries 'getDashboardSummary' (tempo: ${endTime - startTime}ms): ${error.message}`, { stack: error.stack });
+            const serviceError = new Error(`Erro interno ao gerar resumo do dashboard: ${error.message}`);
+            serviceError.status = 500;
+            throw serviceError;
+        }
     }
 }
 
-module.exports = RelatorioService;
+module.exports = RelatorioService; // Exporta a classe

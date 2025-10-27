@@ -1,42 +1,53 @@
 // controllers/clienteController.js
 
-// <<< ALTERADO: Importa as funções específicas do serviço >>>
+const { validationResult } = require('express-validator'); // Para validação (se usar nas rotas)
+const mongoose = require('mongoose'); // Para validar ObjectId
 const {
     createCliente,
     updateCliente,
     getAllClientes,
     getClienteById,
     deleteCliente
-} = require('../services/clienteService');
-const logger = require('../config/logger');
-
-// --- Cliente Controllers ---
+} = require('../services/clienteService'); // Importa as funções específicas do serviço
+const logger = require('../config/logger'); // Importa o logger
 
 /**
  * Controller para criar um novo cliente.
  */
 exports.createClienteController = async (req, res, next) => {
+    // Verifica se req.user e req.user.empresaId existem
+    if (!req.user || !req.user.empresaId) {
+        logger.error('[ClienteController] createCliente: Informações do utilizador (empresaId) em falta no token.');
+        return res.status(401).json({ message: 'Autorização inválida ou dados em falta.' });
+    }
+    const empresaId = req.user.empresaId;
+    const adminUserId = req.user.id; // ID do utilizador que está a criar (para log)
+
+    logger.info(`[ClienteController] Utilizador ${adminUserId} requisitou createCliente para empresa ${empresaId}.`);
+    // Log do body pode ser útil, mas cuidado com dados sensíveis se houver
+    logger.debug(`[ClienteController] Dados recebidos (body): ${JSON.stringify(req.body)}`);
+    // Log do ficheiro (se existir)
+    logger.debug(`[ClienteController] Ficheiro recebido (logo): ${req.file ? req.file.key : 'Nenhum'}`);
+
+    // Validação de entrada (se usar express-validator nas rotas, verificar aqui)
+    // const errors = validationResult(req);
+    // if (!errors.isEmpty()) {
+    //     const firstError = errors.array({ onlyFirstError: true })[0].msg;
+    //     logger.warn(`[ClienteController] createCliente: Erro de validação: ${firstError}`);
+    //     return res.status(400).json({ message: firstError });
+    // }
+
     try {
-        // Verifica se req.user e req.user.empresaId existem
-        if (!req.user || !req.user.empresaId) {
-            logger.error('[ClienteController] Erro: Informações do utilizador (empresaId) em falta no token.');
-            return res.status(401).json({ message: 'Autorização inválida ou em falta.' });
-        }
-        const empresaId = req.user.empresaId;
-
-        logger.info(`[ClienteController] Recebida requisição para criar cliente. Empresa ID: ${empresaId}`);
-        logger.debug(`[ClienteController] Dados recebidos (body): ${JSON.stringify(req.body)}`);
-        logger.debug(`[ClienteController] Ficheiro recebido (logo): ${req.file ? req.file.key : 'Nenhum'}`);
-
-        // <<< REMOVIDO: const clienteService = new ClienteService(); >>>
-        // <<< ALTERADO: Chama a função importada diretamente >>>
+        // Chama a função do serviço diretamente
         const novoCliente = await createCliente(req.body, req.file, empresaId);
 
-        logger.info(`[ClienteController] Cliente criado com sucesso. ID: ${novoCliente._id}`);
-        res.status(201).json(novoCliente);
+        logger.info(`[ClienteController] Cliente ${novoCliente.nome} (ID: ${novoCliente.id}) criado com sucesso por ${adminUserId}.`);
+        res.status(201).json(novoCliente); // Retorna o documento criado
     } catch (error) {
-        logger.error(`[ClienteController] Erro ao criar cliente: ${error.message}`, { stack: error.stack, body: req.body, file: req.file });
-        next(error); // Passa para o errorHandler
+        // Loga o erro recebido do serviço antes de passar para o errorHandler
+        logger.error(`[ClienteController] Erro ao chamar clienteService.createCliente: ${error.message}`, { status: error.status, stack: error.stack });
+        // O errorHandler tratará o status (400, 409, 500) vindo do serviço
+        next(error);
     }
 };
 
@@ -44,61 +55,68 @@ exports.createClienteController = async (req, res, next) => {
  * Controller para atualizar um cliente existente.
  */
 exports.updateClienteController = async (req, res, next) => {
+    // Verifica se req.user e req.user.empresaId existem
+    if (!req.user || !req.user.empresaId) {
+        logger.error('[ClienteController] updateCliente: Informações do utilizador (empresaId) em falta no token.');
+        return res.status(401).json({ message: 'Autorização inválida ou dados em falta.' });
+    }
+    const empresaId = req.user.empresaId;
+    const adminUserId = req.user.id;
+    const { id: clienteIdToUpdate } = req.params; // ID do cliente a atualizar
+
+    logger.info(`[ClienteController] Utilizador ${adminUserId} requisitou updateCliente para ID: ${clienteIdToUpdate} na empresa ${empresaId}.`);
+    logger.debug(`[ClienteController] Dados recebidos (body): ${JSON.stringify(req.body)}`);
+    logger.debug(`[ClienteController] Ficheiro recebido (logo): ${req.file ? req.file.key : 'Nenhum/Manter/Remover'}`);
+
+    // Validação do ID do cliente (formato ObjectId)
+    if (!mongoose.Types.ObjectId.isValid(clienteIdToUpdate)) {
+        logger.warn(`[ClienteController] updateCliente: ID do cliente inválido (${clienteIdToUpdate}).`);
+        return res.status(400).json({ message: 'ID do cliente inválido.' });
+    }
+
+    // Validação de entrada (se usar express-validator nas rotas)
+    // const errors = validationResult(req);
+    // if (!errors.isEmpty()) { ... }
+
     try {
-        const { id } = req.params;
-        // Verifica se req.user e req.user.empresaId existem
-        if (!req.user || !req.user.empresaId) {
-            logger.error('[ClienteController] Erro: Informações do utilizador (empresaId) em falta no token.');
-            return res.status(401).json({ message: 'Autorização inválida ou em falta.' });
-        }
-        const empresaId = req.user.empresaId;
+        // Chama a função do serviço diretamente
+        const clienteAtualizado = await updateCliente(clienteIdToUpdate, req.body, req.file, empresaId);
 
-        logger.info(`[ClienteController] Recebida requisição para atualizar cliente ID: ${id}. Empresa ID: ${empresaId}`);
-        logger.debug(`[ClienteController] Dados recebidos (body): ${JSON.stringify(req.body)}`);
-        logger.debug(`[ClienteController] Ficheiro recebido (logo): ${req.file ? req.file.key : 'Nenhum/Manter/Remover'}`);
-
-        // <<< REMOVIDO: const clienteService = new ClienteService(); >>>
-        // <<< ALTERADO: Chama a função importada diretamente >>>
-        const clienteAtualizado = await updateCliente(id, req.body, req.file, empresaId);
-
-        if (!clienteAtualizado) {
-             logger.warn(`[ClienteController] Cliente ID ${id} não encontrado para atualização (retorno do serviço foi null).`);
-             return res.status(404).json({ message: 'Cliente não encontrado.' });
-        }
-
-        logger.info(`[ClienteController] Cliente ID ${id} atualizado com sucesso.`);
-        res.status(200).json(clienteAtualizado);
+        // O serviço lança 404 se não encontrar, então não precisamos verificar null aqui explicitamente
+        logger.info(`[ClienteController] Cliente ID ${clienteIdToUpdate} atualizado com sucesso por ${adminUserId}.`);
+        res.status(200).json(clienteAtualizado); // Retorna o documento atualizado
     } catch (error) {
-        logger.error(`[ClienteController] Erro ao atualizar cliente ID ${req.params.id}: ${error.message}`, { stack: error.stack, body: req.body, file: req.file });
-        // Se for erro específico do serviço (ex: Cliente não encontrado)
-        if (error.message === 'Cliente não encontrado.') {
-            return res.status(404).json({ message: error.message });
-        }
+        // Loga o erro recebido do serviço
+        logger.error(`[ClienteController] Erro ao chamar clienteService.updateCliente (ID: ${clienteIdToUpdate}): ${error.message}`, { status: error.status, stack: error.stack });
+        // O errorHandler tratará o status (400, 404, 409, 500) vindo do serviço
         next(error);
     }
 };
 
 /**
- * Controller para buscar todos os clientes.
+ * Controller para buscar todos os clientes da empresa.
  */
 exports.getAllClientesController = async (req, res, next) => {
-    try {
-        // Verifica se req.user e req.user.empresaId existem
-        if (!req.user || !req.user.empresaId) {
-            logger.error('[ClienteController] Erro: Informações do utilizador (empresaId) em falta no token.');
-            return res.status(401).json({ message: 'Autorização inválida ou em falta.' });
-        }
-        const empresaId = req.user.empresaId;
-        logger.info(`[ClienteController] Recebida requisição para buscar clientes. Empresa ID: ${empresaId}`);
+    // Verifica se req.user e req.user.empresaId existem
+    if (!req.user || !req.user.empresaId) {
+        logger.error('[ClienteController] getAllClientes: Informações do utilizador (empresaId) em falta no token.');
+        return res.status(401).json({ message: 'Autorização inválida ou dados em falta.' });
+    }
+    const empresaId = req.user.empresaId;
+    const userId = req.user.id;
 
-        // <<< REMOVIDO: const clienteService = new ClienteService(); >>>
-        // <<< ALTERADO: Chama a função importada diretamente >>>
+    logger.info(`[ClienteController] Utilizador ${userId} requisitou getAllClientes para empresa ${empresaId}.`);
+
+    try {
+        // Chama a função do serviço diretamente
         const clientes = await getAllClientes(empresaId);
 
-        logger.info(`[ClienteController] Busca de clientes concluída. Retornando ${clientes.length} clientes.`);
-        res.status(200).json(clientes);
+        logger.info(`[ClienteController] getAllClientes retornou ${clientes.length} clientes para empresa ${empresaId}.`);
+        res.status(200).json(clientes); // Retorna a lista de objetos simples
     } catch (error) {
-         logger.error(`[ClienteController] Erro ao buscar clientes: ${error.message}`, { stack: error.stack });
+         // Loga o erro recebido do serviço
+        logger.error(`[ClienteController] Erro ao chamar clienteService.getAllClientes: ${error.message}`, { status: error.status, stack: error.stack });
+        // O errorHandler tratará o status (provavelmente 500) vindo do serviço
         next(error);
     }
 };
@@ -107,32 +125,34 @@ exports.getAllClientesController = async (req, res, next) => {
  * Controller para buscar um cliente específico pelo ID.
  */
 exports.getClienteByIdController = async (req, res, next) => {
+     // Verifica se req.user e req.user.empresaId existem
+     if (!req.user || !req.user.empresaId) {
+        logger.error('[ClienteController] getClienteById: Informações do utilizador (empresaId) em falta no token.');
+        return res.status(401).json({ message: 'Autorização inválida ou dados em falta.' });
+    }
+     const empresaId = req.user.empresaId;
+     const userId = req.user.id;
+     const { id: clienteIdToGet } = req.params; // ID do cliente a buscar
+
+     logger.info(`[ClienteController] Utilizador ${userId} requisitou getClienteById para ID: ${clienteIdToGet} na empresa ${empresaId}.`);
+
+     // Validação do ID do cliente
+     if (!mongoose.Types.ObjectId.isValid(clienteIdToGet)) {
+        logger.warn(`[ClienteController] getClienteById: ID do cliente inválido (${clienteIdToGet}).`);
+        return res.status(400).json({ message: 'ID do cliente inválido.' });
+     }
+
      try {
-         const { id } = req.params;
-         // Verifica se req.user e req.user.empresaId existem
-         if (!req.user || !req.user.empresaId) {
-            logger.error('[ClienteController] Erro: Informações do utilizador (empresaId) em falta no token.');
-            return res.status(401).json({ message: 'Autorização inválida ou em falta.' });
-        }
-         const empresaId = req.user.empresaId;
-         logger.info(`[ClienteController] Recebida requisição para buscar cliente ID: ${id}. Empresa ID: ${empresaId}`);
+         // Chama a função do serviço diretamente
+         const cliente = await getClienteById(clienteIdToGet, empresaId);
 
-         // <<< REMOVIDO: const clienteService = new ClienteService(); >>>
-         // <<< ALTERADO: Chama a função importada diretamente >>>
-         const cliente = await getClienteById(id, empresaId);
-
-         if (!cliente) {
-              logger.warn(`[ClienteController] Cliente ID ${id} não encontrado na busca por ID (retorno do serviço foi null).`);
-              return res.status(404).json({ message: 'Cliente não encontrado.' });
-         }
-
-         logger.info(`[ClienteController] Cliente ID ${id} encontrado.`);
-         res.status(200).json(cliente);
+         // O serviço lança 404 se não encontrar
+         logger.info(`[ClienteController] Cliente ID ${clienteIdToGet} encontrado com sucesso.`);
+         res.status(200).json(cliente); // Retorna o objeto simples do cliente
      } catch (error) {
-         logger.error(`[ClienteController] Erro ao buscar cliente ID ${req.params.id}: ${error.message}`, { stack: error.stack });
-         if (error.message === 'Cliente não encontrado.') {
-            return res.status(404).json({ message: error.message });
-         }
+         // Loga o erro recebido do serviço
+         logger.error(`[ClienteController] Erro ao chamar clienteService.getClienteById (ID: ${clienteIdToGet}): ${error.message}`, { status: error.status, stack: error.stack });
+         // O errorHandler tratará o status (404, 500) vindo do serviço
          next(error);
      }
  };
@@ -141,31 +161,33 @@ exports.getClienteByIdController = async (req, res, next) => {
  * Controller para apagar um cliente.
  */
  exports.deleteClienteController = async (req, res, next) => {
+     // Verifica se req.user e req.user.empresaId existem
+     if (!req.user || !req.user.empresaId) {
+        logger.error('[ClienteController] deleteCliente: Informações do utilizador (empresaId) em falta no token.');
+        return res.status(401).json({ message: 'Autorização inválida ou dados em falta.' });
+    }
+     const empresaId = req.user.empresaId;
+     const adminUserId = req.user.id;
+     const { id: clienteIdToDelete } = req.params; // ID do cliente a apagar
+
+     logger.info(`[ClienteController] Utilizador ${adminUserId} requisitou deleteCliente para ID: ${clienteIdToDelete} na empresa ${empresaId}.`);
+
+      // Validação do ID do cliente
+     if (!mongoose.Types.ObjectId.isValid(clienteIdToDelete)) {
+        logger.warn(`[ClienteController] deleteCliente: ID do cliente inválido (${clienteIdToDelete}).`);
+        return res.status(400).json({ message: 'ID do cliente inválido.' });
+     }
+
      try {
-         const { id } = req.params;
-         // Verifica se req.user e req.user.empresaId existem
-         if (!req.user || !req.user.empresaId) {
-            logger.error('[ClienteController] Erro: Informações do utilizador (empresaId) em falta no token.');
-            return res.status(401).json({ message: 'Autorização inválida ou em falta.' });
-        }
-         const empresaId = req.user.empresaId;
-         logger.info(`[ClienteController] Recebida requisição para apagar cliente ID: ${id}. Empresa ID: ${empresaId}`);
+         // Chama a função do serviço diretamente
+         await deleteCliente(clienteIdToDelete, empresaId);
 
-         // <<< REMOVIDO: const clienteService = new ClienteService(); >>>
-         // <<< ALTERADO: Chama a função importada diretamente >>>
-         await deleteCliente(id, empresaId);
-
-         logger.info(`[ClienteController] Cliente ID ${id} apagado com sucesso.`);
+         logger.info(`[ClienteController] Cliente ID ${clienteIdToDelete} apagado com sucesso por ${adminUserId}.`);
          res.status(204).send(); // No content
      } catch (error) {
-          logger.error(`[ClienteController] Erro ao apagar cliente ID ${req.params.id}: ${error.message}`, { stack: error.stack });
-         if (error.message === 'Cliente não encontrado.') {
-            return res.status(404).json({ message: error.message });
-         }
-         // Se for erro por alugueis existentes, retorna 409 (Conflict)
-         if (error.message.includes('alugueis ativos ou agendados')) {
-             return res.status(409).json({ message: error.message });
-         }
+         // Loga o erro recebido do serviço
+         logger.error(`[ClienteController] Erro ao chamar clienteService.deleteCliente (ID: ${clienteIdToDelete}): ${error.message}`, { status: error.status, stack: error.stack });
+         // O errorHandler tratará o status (404, 409 - aluguel ativo, 500) vindo do serviço
          next(error);
      }
  };

@@ -1,33 +1,43 @@
 // controllers/publicApiController.js
 const PublicApiService = require('../services/publicApiService'); // Serviço Mongoose
-// const db = require('../config/database'); // <-- Remova esta linha
+const logger = require('../config/logger'); // Importa o logger
+const mongoose = require('mongoose'); // Para validar ObjectId (se necessário, embora o middleware já deva tratar)
 
+// Instancia o serviço fora das funções do controller
+const publicApiService = new PublicApiService();
 
-    const createPublicApiController = () => {
-    const controller = {};
-    // Instancia o serviço sem passar 'db'
-    const publicApiService = new PublicApiService(); // <-- Alteração aqui
+/**
+ * Controller para obter as placas disponíveis para a empresa autenticada via API Key.
+ */
+exports.getAvailablePlacas = async (req, res, next) => {
+    logger.info(`[PublicApiController] Recebida requisição GET /public/placas/disponiveis.`);
 
-    controller.getAvailablePlacas = async (req, res, next) => {
-        try {
-            // Assume que apiKeyAuthMiddleware coloca a empresa encontrada em req.empresa
-            // E que req.empresa.id contém o ObjectId (como string ou ObjectId)
-            // Se o middleware não foi atualizado, req.empresa.id virá do Knex (número?) - ISSO PRECISARÁ SER CORRIGIDO NA PARTE 5
-            if (!req.empresa || !req.empresa.id) { // Ajuste para _id se o middleware for atualizado
-                 const error = new Error('Informação da empresa não encontrada após validação da API Key.');
-                 error.status = 500; // Erro interno, pois o middleware deveria ter adicionado
-                 throw error;
-            }
-            const empresa_id = req.empresa.id; // <-- Ponto de atenção para Parte 5
-            // Chama o serviço refatorado
-            const placas = await publicApiService.getAvailablePlacas(empresa_id);
-            res.status(200).json(placas); // Serviço retorna a lista formatada
-        } catch (err) {
-            next(err);
-        }
-    };
+    // Verifica se req.empresa existe e tem _id (adicionado pelo apiKeyAuthMiddleware)
+    // O middleware apiKeyAuthMiddleware já deve ter validado a chave e encontrado a empresa
+    if (!req.empresa || !req.empresa._id) { // Verifica a propriedade _id do documento Mongoose
+        // Este erro não deveria acontecer se o middleware funcionou, indicando um problema interno
+        logger.error('[PublicApiController] getAvailablePlacas: Informações da empresa (req.empresa._id) em falta após apiKeyAuthMiddleware.');
+        // Retorna 500 Internal Server Error, pois é uma falha inesperada na pipeline
+        return res.status(500).json({ message: 'Erro interno: Falha ao identificar a empresa associada à chave API.' });
+    }
+    const empresa_id = req.empresa._id; // Obtém o ObjectId da empresa
+    const empresaNome = req.empresa.nome; // Para logging
 
-    return controller;
+    logger.info(`[PublicApiController] Chave API validada para empresa: ${empresaNome} (ID: ${empresa_id}). Buscando placas disponíveis.`);
+
+    try {
+        // Chama o serviço refatorado (que já tem validação de ID e tratamento de erros DB)
+        const placas = await publicApiService.getAvailablePlacas(empresa_id);
+
+        logger.info(`[PublicApiController] getAvailablePlacas retornou ${placas.length} placas disponíveis para empresa ${empresa_id}.`);
+        res.status(200).json(placas); // Serviço retorna a lista formatada (objetos simples)
+    } catch (err) {
+        // Loga o erro recebido do serviço antes de passar para o errorHandler
+        logger.error(`[PublicApiController] Erro ao chamar publicApiService.getAvailablePlacas para empresa ${empresa_id}: ${err.message}`, { status: err.status, stack: err.stack });
+        // O errorHandler tratará o status (400 - ID inválido no serviço, 500) vindo do serviço
+        next(err);
+    }
 };
 
-module.exports = createPublicApiController();
+// Removido createPublicApiController pois exportamos diretamente
+// module.exports = createPublicApiController();

@@ -1,10 +1,10 @@
-// routes/clienteRoutes.js (CORRIGIDO)
+// routes/clienteRoutes.js (CORRIGIDO E ROBUSTO)
 
 const express = require('express');
 const router = express.Router();
 const logger = require('../config/logger'); // Adiciona logger
 
-// <<< ALTERADO: Importa as funções específicas do controller >>>
+// 1. Importa as funções específicas do controller (com verificação de existência)
 let createClienteController, updateClienteController, getAllClientesController, getClienteByIdController, deleteClienteController;
 try {
     ({
@@ -14,23 +14,27 @@ try {
         getClienteByIdController,
         deleteClienteController
     } = require('../controllers/clienteController')); //
+    // Verifica se pelo menos uma função importante foi importada
+    if (typeof getAllClientesController !== 'function') {
+        logger.error('[Routes Clientes] ERRO CRÍTICO: Controllers de Cliente não são funções válidas.');
+        throw new Error('Falha ao carregar controllers de Cliente.');
+    }
     logger.info('[Routes Clientes] Controllers de Cliente carregados com sucesso.');
 } catch (error) {
     logger.error('[Routes Clientes] ERRO CRÍTICO ao carregar clienteController:', error);
     throw new Error('Falha ao carregar controllers de Cliente.');
 }
 
-// <<< ALTERADO: Importa authMiddleware (se ainda não estiver) >>>
-let authMiddleware;
+// 2. Importa middlewares
+let authenticateToken;
 try {
-    authMiddleware = require('../middlewares/authMiddleware'); //
+    authenticateToken = require('../middlewares/authMiddleware'); //
     logger.info('[Routes Clientes] Middleware de Autenticação carregado com sucesso.');
 } catch (error) {
     logger.error('[Routes Clientes] ERRO CRÍTICO ao carregar authMiddleware:', error);
     throw new Error('Falha ao carregar middleware de Autenticação.');
 }
 
-// <<< ALTERADO: Importa upload (se ainda não estiver) >>>
 let upload;
 try {
     ({ upload } = require('../middlewares/uploadMiddleware')); //
@@ -47,34 +51,41 @@ try {
 
 logger.info('[Routes Clientes] Definindo rotas de Clientes...');
 
+// --- Middleware de Autenticação para todas as rotas ---
+router.use(authenticateToken);
+logger.debug('[Routes Clientes] Middleware de Autenticação aplicado a /clientes/*.');
+
 // --- Rotas de Clientes ---
 
 // GET /api/clientes - Busca todos os clientes da empresa logada
-// <<< ALTERADO: Usa a função importada diretamente >>>
-router.get('/', authMiddleware, getAllClientesController);
-logger.debug('[Routes Clientes] Rota GET / definida.');
+router.get('/', getAllClientesController);
+logger.debug('[Routes Clientes] Rota GET / definida (Listar Clientes).');
 
 // GET /api/clientes/:id - Busca um cliente por ID
-// <<< ALTERADO: Usa a função importada diretamente >>>
-router.get('/:id', authMiddleware, getClienteByIdController);
-logger.debug('[Routes Clientes] Rota GET /:id definida.');
+router.get('/:id', getClienteByIdController);
+logger.debug('[Routes Clientes] Rota GET /:id definida (Buscar Cliente por ID).');
 
-// POST /api/clientes - Cria um novo cliente
-// <<< ALTERADO: Usa a função importada diretamente >>>
-router.post('/', authMiddleware, upload.single('logo'), createClienteController); // 'logo' deve corresponder ao nome do campo no form-data
-logger.debug('[Routes Clientes] Rota POST / definida.');
+// POST /api/clientes - Cria um novo cliente (com upload opcional de logo)
+router.post(
+    '/', 
+    upload.single('logo'), // 'logo' deve corresponder ao nome do campo no form-data
+    createClienteController
+); //
+logger.debug('[Routes Clientes] Rota POST / definida (Criar Cliente com Upload).');
 
-// PUT /api/clientes/:id - Atualiza um cliente existente
-// <<< ALTERADO: Usa a função importada diretamente >>>
-router.put('/:id', authMiddleware, upload.single('logo'), updateClienteController);
-logger.debug('[Routes Clientes] Rota PUT /:id definida.');
+// PUT /api/clientes/:id - Atualiza um cliente existente (com upload opcional de novo logo)
+router.put(
+    '/:id', 
+    upload.single('logo'), 
+    updateClienteController
+); //
+logger.debug('[Routes Clientes] Rota PUT /:id definida (Atualizar Cliente com Upload).');
 
 // DELETE /api/clientes/:id - Apaga um cliente
-// <<< ALTERADO: Usa a função importada diretamente >>>
-router.delete('/:id', authMiddleware, deleteClienteController);
-logger.debug('[Routes Clientes] Rota DELETE /:id definida.');
+router.delete('/:id', deleteClienteController);
+logger.debug('[Routes Clientes] Rota DELETE /:id definida (Apagar Cliente).');
 
 logger.info('[Routes Clientes] Rotas de Clientes definidas com sucesso.');
 
-module.exports = router;
-logger.debug('[Routes Clientes] Router exportado.');
+module.exports = router; // Exporta o router configurado
+logger.debug('[Routes Clientes] Router exportado.'); // Confirma a exportação

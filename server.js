@@ -38,8 +38,10 @@ connectDB();
 
 // Configuração do CORS (ajuste as origens permitidas conforme necessário)
 const allowedOrigins = [
-    'http://localhost:5500', // Live Server (exemplo)
+    'http://localhost:5500',
+    'http://localhost:52946', // Live Server (exemplo)
     'http://127.0.0.1:5500', // Live Server (exemplo)
+    'http://localhost:4000',
     'http://localhost:3000', // Frontend em desenvolvimento (ADICIONE SE APLICÁVEL)
     'https://inmidia.squareweb.app', // A sua API (mantém)
     // 'https://SEU_FRONTEND_PUBLICADO.com' // ADICIONE A URL DO FRONTEND PUBLICADO
@@ -70,6 +72,7 @@ app.use(express.urlencoded({ extended: true })); // Para fazer parse de formulá
 // app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // Configuração das Rotas da API
+
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/empresas', empresaRoutes); // Rota pública para registo
