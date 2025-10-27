@@ -38,10 +38,11 @@ connectDB();
 
 // Configuração do CORS (ajuste as origens permitidas conforme necessário)
 const allowedOrigins = [
-    'http://localhost:5500', // Exemplo: Live Server
-    'http://127.0.0.1:5500', // Exemplo: Live Server
-    'http://localhost:3000', // Exemplo: Frontend dev
-    'https://inmidia.squareweb.app/api' // <<< SEU FRONTEND EM PRODUÇÃO >>>
+    'http://localhost:5500', // Live Server (exemplo)
+    'http://127.0.0.1:5500', // Live Server (exemplo)
+    'http://localhost:3000', // Frontend em desenvolvimento (ADICIONE SE APLICÁVEL)
+    'https://inmidia.squareweb.app', // A sua API (mantém)
+    // 'https://SEU_FRONTEND_PUBLICADO.com' // ADICIONE A URL DO FRONTEND PUBLICADO
 ];
 const corsOptions = {
   origin: function (origin, callback) {
