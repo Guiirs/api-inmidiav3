@@ -2,6 +2,8 @@
 
 require('dotenv').config(); // Carrega variáveis de ambiente do .env
 const express = require('express');
+ // Confia no primeiro hop do proxy (adequado para Square Cloud)
+
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
@@ -59,6 +61,7 @@ app.use(cors(corsOptions));
 
 
 // Middlewares Essenciais
+app.set('trust proxy', 1);
 app.use(express.json()); // Para fazer parse do body de requisições JSON
 app.use(express.urlencoded({ extended: true })); // Para fazer parse de formulários URL-encoded
 
