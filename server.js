@@ -11,7 +11,7 @@ const connectDB = require('./config/dbMongo'); // Função de conexão com Mongo
 const logger = require('./config/logger'); // Winston logger
 const errorHandler = require('./middlewares/errorHandler'); // Middleware de tratamento de erros
 
-// Importação das rotas (Assumindo que os ficheiros de rota exportam uma função)
+// Importação das rotas (Assumindo que os ficheiros de rota exportam o router ou uma função)
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const empresaRoutes = require('./routes/empresaRoutes');
@@ -36,11 +36,11 @@ connectDB();
 
 // Configuração do CORS (Ajustada para o ambiente Square Cloud e local)
 const allowedOrigins = [
-    'http://localhost:5500', // Exemplo: Live Server
-    'http://127.0.0.1:5500', // Exemplo: Live Server
-    'http://localhost:3000', // Exemplo: Frontend dev
-    'http://localhost:4000', // ADICIONADO: Sua porta local
-    'https://inmidia.squareweb.app' // SEU FRONTEND EM PRODUÇÃO (ou URL API)
+    'http://localhost:5500', 
+    'http://127.0.0.1:5500', 
+    'http://localhost:3000', 
+    'http://localhost:4000', // Sua porta local
+    'https://inmidia.squareweb.app' // SEU FRONTEND EM PRODUÇÃO
 ];
 const corsOptions = {
   origin: function (origin, callback) {
@@ -63,26 +63,27 @@ app.use(express.json()); // Para fazer parse do body de requisições JSON
 app.use(express.urlencoded({ extended: true })); // Para fazer parse de formulários URL-encoded
 
 
-// Configuração das Rotas da API (Chamando a função exportada de cada router)
-app.use('/api/auth', authRoutes()); 
+// >>> 2. MONTAGEM CORRIGIDA DAS ROTAS (Mistura de Funções e Objetos) <<<
+// ROTAS QUE EXPORTAM O OBJETO ROUTER DIRETAMENTE (SEM [])
+app.use('/api/auth', authRoutes);
+app.use('/api/placas', placaRoutes); 
+app.use('/api/clientes', clienteRoutes);
+
+// ROTAS QUE EXPORTAM UMA FUNÇÃO (COM [])
 app.use('/api/user', userRoutes());
 app.use('/api/empresas', empresaRoutes()); 
 app.use('/api/regioes', regiaoRoutes());
-app.use('/api/placas', placaRoutes()); 
-app.use('/api/clientes', clienteRoutes());
 app.use('/api/alugueis', aluguelRoutes());
 app.use('/api/admin', adminRoutes());
 app.use('/api/relatorios', relatoriosRoutes());
 app.use('/api/public', publicApiRoutes()); 
 
-
 // Rota para a documentação Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 logger.info('[Server] Rota /api-docs para Swagger UI configurada.');
 
-// >>> 2. CORREÇÃO DE ROTEAMENTO: Rota de Teste Simples na base /api (Fixa Cannot GET /api) <<<
+// 3. Rota de Teste Simples na base /api (Fixa Cannot GET /api)
 app.get('/api', (req, res) => {
-    // Resposta JSON para confirmar que o API_BASE_URL está correto
     res.status(200).json({ 
         message: 'API InMidia está a funcionar na base /api. Use as rotas /auth, /placas, etc.', 
         status: 'ok' 
@@ -96,8 +97,7 @@ app.get('/', (req, res) => {
 });
 
 
-// >>> 3. TRATAMENTO DE ERRO 404 (Último antes do errorHandler) <<<
-// Este middleware captura qualquer requisição que não encontrou rota e garante que o erro é JSON
+// 4. TRATAMENTO DE ERRO 404 (Último antes do errorHandler)
 app.use((req, res, next) => {
     const error = new Error(`Não Encontrado: A rota ${req.originalUrl} não existe na API.`);
     error.status = 404;
