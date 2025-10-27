@@ -39,7 +39,7 @@ const allowedOrigins = [
     'http://localhost:5500', // Exemplo: Live Server
     'http://127.0.0.1:5500', // Exemplo: Live Server
     'http://localhost:3000', // Exemplo: Frontend dev
-    'https://inmidia.squareweb.app' // <<< SEU FRONTEND EM PRODUÇÃO >>>
+    'https://inmidia.squareweb.app/api' // <<< SEU FRONTEND EM PRODUÇÃO >>>
 ];
 const corsOptions = {
   origin: function (origin, callback) {
