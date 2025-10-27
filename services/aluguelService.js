@@ -15,40 +15,68 @@ class AluguelService {
      * @returns {Promise<Array<object>>} - Array com os dados dos alugueis (populados com cliente).
      * @throws {Error} - Lança erro com status 500 em caso de falha na DB.
      */
-    async getAlugueisByPlaca(placa_id, empresa_id) {
-        logger.info(`[AluguelService] Buscando alugueis para placa ${placa_id} na empresa ${empresa_id}.`);
+async getAlugueisByPlaca(placa_id, empresa_id) {
+        logger.info(`[AluguelService] Iniciando getAlugueisByPlaca para placa ${placa_id} na empresa ${empresa_id}.`);
+
+        // <<< NOVO: Validação explícita do ID da placa >>>
+        if (!placa_id || !mongoose.Types.ObjectId.isValid(placa_id)) {
+            const error = new Error(`ID da placa inválido fornecido: ${placa_id}`);
+            error.status = 400; // Bad Request
+            logger.error(`[AluguelService] ${error.message}`);
+            // Lança o erro para ser capturado pelo errorHandler (evita query inválida)
+            throw error; 
+        }
+        // <<< FIM DA VALIDAÇÃO >>>
+
         try {
-            const alugueis = await Aluguel.find({ placa: placa_id, empresa: empresa_id })
-                                          .populate('cliente', 'nome logo_url') // Popula dados do cliente
-                                          .sort({ data_inicio: -1 }) // Ordena pelos mais recentes primeiro
-                                          .lean() // Retorna objetos simples
-                                          .exec();
-            logger.info(`[AluguelService] Encontrados ${alugueis.length} alugueis para placa ${placa_id}.`);
+            let alugueis;
+            try {
+                logger.debug('[AluguelService] Executando Aluguel.find()...');
+                // Executa a query Mongoose
+                alugueis = await Aluguel.find({ placa: placa_id, empresa: empresa_id })
+                                            .populate('cliente', 'nome logo_url')
+                                            .sort({ data_inicio: -1 })
+                                            .lean()
+                                            .exec();
+                logger.info(`[AluguelService] Query concluída. ${alugueis.length} alugueis encontrados para placa ${placa_id}.`);
+            } catch (dbError) {
+                // Captura erro específico da query
+                logger.error(`[AluguelService] ERRO DURANTE A QUERY MONGOOSE: ${dbError.message}`, { stack: dbError.stack });
+                throw dbError; // Relança para o catch externo
+            }
 
-            // Mapeamento _id para id após .lean()
-            alugueis.forEach(aluguel => {
-                // Mapeia o ID principal do aluguel
-                aluguel.id = aluguel._id ? aluguel._id.toString() : undefined;
-                delete aluguel._id;
+            try {
+                logger.debug('[AluguelService] Iniciando mapeamento _id -> id...');
+                // Mapeamento _id para id após .lean()
+                alugueis.forEach((aluguel, index) => {
+                    // Log para cada item antes de tentar converter
+                    logger.debug(`[AluguelService] Mapeando item ${index}, _id: ${aluguel?._id}`); 
+                    
+                    aluguel.id = aluguel._id ? aluguel._id.toString() : undefined;
+                    delete aluguel._id;
 
-                // <<< CORREÇÃO PRINCIPAL: Usa ?. para acesso seguro >>>
-                // Mapeia o ID do cliente populado, se existir
-                if (aluguel.cliente?._id) { // Verifica se cliente e cliente._id existem
-                     aluguel.cliente.id = aluguel.cliente._id.toString();
-                     delete aluguel.cliente._id;
-                }
-
-                // Adiciona cliente_nome para consistência com o frontend
-                aluguel.cliente_nome = aluguel.cliente?.nome || 'Cliente Apagado'; // Usa ?. aqui também
-            });
+                    if (aluguel.cliente?._id) { 
+                        logger.debug(`[AluguelService] Mapeando cliente _id: ${aluguel.cliente._id}`);
+                        aluguel.cliente.id = aluguel.cliente._id.toString();
+                        delete aluguel.cliente._id;
+                    }
+                    aluguel.cliente_nome = aluguel.cliente?.nome || 'Cliente Apagado';
+                });
+                logger.debug('[AluguelService] Mapeamento concluído com sucesso.');
+            } catch (mapError) {
+                 // Captura erro específico do mapeamento
+                logger.error(`[AluguelService] ERRO DURANTE O MAPEAMENTO DE IDS: ${mapError.message}`, { stack: mapError.stack });
+                throw mapError; // Relança para o catch externo
+            }
 
             return alugueis;
-        } catch (error) {
-            // Loga o erro específico da query ou do mapeamento
-            logger.error(`[AluguelService] Erro Mongoose/DB/Mapeamento ao buscar alugueis por placa: ${error.message}`, { stack: error.stack });
+
+        } catch (error) { // Catch externo (pega erros da query ou do mapeamento)
+            // Log já feito nos catches internos, mas loga novamente por segurança
+            logger.error(`[AluguelService] Erro final em getAlugueisByPlaca: ${error.message}`, { stack: error.stack });
             const serviceError = new Error(`Erro interno ao buscar histórico de alugueis: ${error.message}`);
-            serviceError.status = 500;
-            throw serviceError;
+            serviceError.status = error.status || 500; // Usa status 400 se veio da validação, senão 500
+            throw serviceError; 
         }
     }
 
