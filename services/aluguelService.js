@@ -27,15 +27,18 @@ class AluguelService {
 
             // Mapeamento _id para id após .lean()
             alugueis.forEach(aluguel => {
+                // Mapeia o ID principal do aluguel
                 aluguel.id = aluguel._id ? aluguel._id.toString() : undefined;
                 delete aluguel._id;
-                
+
                 // <<< CORREÇÃO PRINCIPAL: Usa ?. para acesso seguro >>>
+                // Mapeia o ID do cliente populado, se existir
                 if (aluguel.cliente?._id) { // Verifica se cliente e cliente._id existem
                      aluguel.cliente.id = aluguel.cliente._id.toString();
                      delete aluguel.cliente._id;
                 }
-                
+
+                // Adiciona cliente_nome para consistência com o frontend
                 aluguel.cliente_nome = aluguel.cliente?.nome || 'Cliente Apagado'; // Usa ?. aqui também
             });
 
