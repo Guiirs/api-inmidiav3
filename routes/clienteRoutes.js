@@ -1,60 +1,80 @@
-// routes/clienteRoutes.js
+// routes/clienteRoutes.js (CORRIGIDO)
+
 const express = require('express');
 const router = express.Router();
-const { body } = require('express-validator');
-const upload = require('../middlewares/uploadMiddleware'); // Middleware de upload
-const clienteController = require('../controllers/clienteController');
-const authenticateToken = require('../middlewares/authMiddleware');
-const { handleValidationErrors } = require('../validators/authValidator'); // Reutiliza o gestor de erros
-const { validarCNPJ } = require('../utils/validators'); // Importa validador de CNPJ
+const logger = require('../config/logger'); // Adiciona logger
 
-// Validação para Cliente (Criar/Atualizar)
-const validateCliente = [
-    body('nome')
-        .trim()
-        .notEmpty().withMessage('O nome do cliente é obrigatório.')
-        .isLength({ max: 150 }).withMessage('Nome do cliente muito longo (máx 150 caracteres).')
-        .escape(), // <-- Adiciona escape
+// <<< ALTERADO: Importa as funções específicas do controller >>>
+let createClienteController, updateClienteController, getAllClientesController, getClienteByIdController, deleteClienteController;
+try {
+    ({
+        createClienteController,
+        updateClienteController,
+        getAllClientesController,
+        getClienteByIdController,
+        deleteClienteController
+    } = require('../controllers/clienteController')); //
+    logger.info('[Routes Clientes] Controllers de Cliente carregados com sucesso.');
+} catch (error) {
+    logger.error('[Routes Clientes] ERRO CRÍTICO ao carregar clienteController:', error);
+    throw new Error('Falha ao carregar controllers de Cliente.');
+}
 
-    body('cnpj') // CNPJ não precisa de escape devido ao formato estrito
-        .optional({ checkFalsy: true })
-        .trim()
-        .custom(value => {
-            if (value && !validarCNPJ(value)) {
-                throw new Error('CNPJ inválido.');
-            }
-            return true;
-        }),
+// <<< ALTERADO: Importa authMiddleware (se ainda não estiver) >>>
+let authMiddleware;
+try {
+    authMiddleware = require('../middlewares/authMiddleware'); //
+    logger.info('[Routes Clientes] Middleware de Autenticação carregado com sucesso.');
+} catch (error) {
+    logger.error('[Routes Clientes] ERRO CRÍTICO ao carregar authMiddleware:', error);
+    throw new Error('Falha ao carregar middleware de Autenticação.');
+}
 
-    body('telefone')
-        .optional({ checkFalsy: true })
-        .trim()
-        .isLength({ max: 20 }).withMessage('Telefone muito longo (máx 20 caracteres).')
-        .escape(), // <-- Adiciona escape
-];
+// <<< ALTERADO: Importa upload (se ainda não estiver) >>>
+let upload;
+try {
+    ({ upload } = require('../middlewares/uploadMiddleware')); //
+    if (!upload || typeof upload.single !== 'function') {
+        logger.error('[Routes Clientes] ERRO CRÍTICO: Objeto "upload" importado de uploadMiddleware é inválido.');
+        throw new Error('Falha ao carregar middleware de Upload.');
+    }
+    logger.info('[Routes Clientes] Middleware de Upload carregado com sucesso.');
+} catch (error) {
+    logger.error('[Routes Clientes] ERRO CRÍTICO ao carregar uploadMiddleware:', error);
+    throw new Error('Falha ao carregar middleware de Upload.');
+}
 
-module.exports = () => {
-    router.use(authenticateToken); // Protege todas as rotas de cliente
 
-    router.get('/', clienteController.getAll);
+logger.info('[Routes Clientes] Definindo rotas de Clientes...');
 
-    router.post(
-        '/',
-        upload.single('logo'), // Processa upload ANTES da validação de body
-        validateCliente,       // Aplica as regras de validação
-        handleValidationErrors,// Verifica os erros
-        clienteController.create // Executa o controller se não houver erros
-    );
+// --- Rotas de Clientes ---
 
-    router.put(
-        '/:id',
-        upload.single('logo'),
-        validateCliente,
-        handleValidationErrors,
-        clienteController.update
-    );
+// GET /api/clientes - Busca todos os clientes da empresa logada
+// <<< ALTERADO: Usa a função importada diretamente >>>
+router.get('/', authMiddleware, getAllClientesController);
+logger.debug('[Routes Clientes] Rota GET / definida.');
 
-    router.delete('/:id', clienteController.delete);
+// GET /api/clientes/:id - Busca um cliente por ID
+// <<< ALTERADO: Usa a função importada diretamente >>>
+router.get('/:id', authMiddleware, getClienteByIdController);
+logger.debug('[Routes Clientes] Rota GET /:id definida.');
 
-    return router;
-};
+// POST /api/clientes - Cria um novo cliente
+// <<< ALTERADO: Usa a função importada diretamente >>>
+router.post('/', authMiddleware, upload.single('logo'), createClienteController); // 'logo' deve corresponder ao nome do campo no form-data
+logger.debug('[Routes Clientes] Rota POST / definida.');
+
+// PUT /api/clientes/:id - Atualiza um cliente existente
+// <<< ALTERADO: Usa a função importada diretamente >>>
+router.put('/:id', authMiddleware, upload.single('logo'), updateClienteController);
+logger.debug('[Routes Clientes] Rota PUT /:id definida.');
+
+// DELETE /api/clientes/:id - Apaga um cliente
+// <<< ALTERADO: Usa a função importada diretamente >>>
+router.delete('/:id', authMiddleware, deleteClienteController);
+logger.debug('[Routes Clientes] Rota DELETE /:id definida.');
+
+logger.info('[Routes Clientes] Rotas de Clientes definidas com sucesso.');
+
+module.exports = router;
+logger.debug('[Routes Clientes] Router exportado.');

@@ -1,148 +1,221 @@
-// InMidia/backend/controllers/placaController.js
-const { validationResult } = require('express-validator');
-const PlacaService = require('../services/placaService'); // Serviço Mongoose
-const mediaService = require('../services/midiaService'); // Ainda necessário? (O serviço Placa já o usa)
-// const db = require('../config/database'); // <-- Remova esta linha
-// Validadores permanecem os mesmos
-const { placaValidationRules, handleValidationErrors } = require('../validators/placaValidator');
+// controllers/placaController.js
 
-const createPlacaController = () => {
-    const controller = {};
-    // Instancia o serviço sem passar 'db'
-    const placaService = new PlacaService(); // <-- Alteração aqui
+// <<< ALTERADO: Importa as funções específicas do serviço >>>
+const {
+    createPlaca,
+    updatePlaca,
+    getAllPlacas,
+    getPlacaById,
+    deletePlaca,
+    toggleDisponibilidade,
+    getAllPlacaLocations
+} = require('../services/placaService');
+const logger = require('../config/logger');
 
-    controller.getAllPlacas = async (req, res, next) => {
-        try {
-            if (!req.user || !req.user.empresa_id) {
-                 const error = new Error('Informações de autenticação inválidas.');
-                 error.status = 401; throw error;
-            }
-            const empresa_id = req.user.empresa_id;
-            // Chama o serviço refatorado (que já retorna dados formatados)
-            const result = await placaService.getAll(empresa_id, req.query);
-            res.status(200).json(result);
-        } catch (err) {
-            next(err);
+// --- Placa Controllers ---
+
+/**
+ * Controller para criar uma nova placa.
+ */
+exports.createPlacaController = async (req, res, next) => {
+    try {
+        // Verifica se req.user e req.user.empresaId existem
+        if (!req.user || !req.user.empresaId) {
+            logger.error('[PlacaController] Erro: Informações do utilizador (empresaId) em falta no token.');
+            return res.status(401).json({ message: 'Autorização inválida ou em falta.' });
         }
-    };
+        const empresaId = req.user.empresaId; // Obtido do token JWT via authMiddleware
 
-    controller.getPlacaById = async (req, res, next) => {
-        try {
-            if (!req.user || !req.user.empresa_id) {
-                 const error = new Error('Informações de autenticação inválidas.');
-                 error.status = 401; throw error;
-            }
-            const { id } = req.params; // ID (_id) da placa
-            const empresa_id = req.user.empresa_id;
-             // Chama o serviço refatorado (que já retorna dados formatados)
-            const placa = await placaService.getById(id, empresa_id);
-            res.status(200).json(placa);
-        } catch (err) {
-            next(err); // Passa erro 404
-        }
-    };
+        logger.info(`[PlacaController] Recebida requisição para criar placa. Empresa ID: ${empresaId}`);
+        logger.debug(`[PlacaController] Dados recebidos (body): ${JSON.stringify(req.body)}`);
+        logger.debug(`[PlacaController] Ficheiro recebido: ${req.file ? req.file.key : 'Nenhum'}`);
 
-    controller.createPlaca = async (req, res, next) => {
-        // A validação já foi feita pelo middleware handleValidationErrors
-
-        try {
-            if (!req.user || !req.user.empresa_id) {
-                 const error = new Error('Informações de autenticação inválidas.');
-                 error.status = 401; throw error;
-            }
-            const empresa_id = req.user.empresa_id;
-
-            // Prepara os dados, incluindo o file object para o serviço
-            const placaData = {
-                ...req.body,
-                imagemFileObject: req.file // Passa o objeto do ficheiro para o serviço identificar
-            };
-
-            // Chama o serviço refatorado
-            const placaCriada = await placaService.create(placaData, empresa_id);
-            res.status(201).json(placaCriada); // Retorna o documento Mongoose
-
-        } catch (err) {
-            // O serviço Mongoose já lida com apagar a imagem em caso de erro
-            next(err); // Passa erros (409, upload) para o errorHandler
-        }
-    };
-
-    controller.updatePlaca = async (req, res, next) => {
-        // A validação já foi feita pelo middleware handleValidationErrors
-
-        try {
-            if (!req.user || !req.user.empresa_id) {
-                 const error = new Error('Informações de autenticação inválidas.');
-                 error.status = 401; throw error;
-            }
-            const { id } = req.params; // ID (_id) da placa
-            const empresa_id = req.user.empresa_id;
-            const placaData = { ...req.body }; // Dados do formulário
-
-            // Chama o serviço refatorado, passando o ID, dados, empresa e o file object
-            const placaAtualizada = await placaService.update(id, placaData, empresa_id, req.file);
-            res.status(200).json(placaAtualizada); // Retorna o documento atualizado
-
-        } catch (err) {
-            // O serviço Mongoose já lida com apagar a nova imagem em caso de erro
-            next(err); // Passa erros (404, 409, upload) para o errorHandler
-        }
-    };
-
-    controller.deletePlaca = async (req, res, next) => {
-        try {
-            if (!req.user || !req.user.empresa_id) {
-                 const error = new Error('Informações de autenticação inválidas.');
-                 error.status = 401; throw error;
-            }
-            const { id } = req.params; // ID (_id) da placa
-            const empresa_id = req.user.empresa_id;
-            // Chama o serviço refatorado (que já lida com apagar imagem do R2)
-            await placaService.delete(id, empresa_id);
-            res.status(204).send(); // No Content
-        } catch (err) {
-            next(err); // Passa erro 404
-        }
-    };
-
-    controller.toggleDisponibilidade = async (req, res, next) => {
-        try {
-            if (!req.user || !req.user.empresa_id) {
-                 const error = new Error('Informações de autenticação inválidas.');
-                 error.status = 401; throw error;
-            }
-            const { id } = req.params; // ID (_id) da placa
-            const empresa_id = req.user.empresa_id;
-            // Chama o serviço refatorado
-            const result = await placaService.toggleDisponibilidade(id, empresa_id);
-            res.status(200).json(result); // Serviço retorna { message, disponivel }
-        } catch (err) {
-            next(err); // Passa erros (404, 409 - alugada)
-        }
-    };
-
-    controller.getAllPlacaLocations = async (req, res, next) => {
-        try {
-            // Esta função pode precisar ser refatorada no serviço para usar Mongoose
-            // Por enquanto, vamos assumir que o serviço foi atualizado ou remover esta rota temporariamente
-            // Se o serviço `getAllPlacaLocations` foi movido para o PlacaService e usa Mongoose:
-             if (!req.user || !req.user.empresa_id) {
-                 const error = new Error('Informações de autenticação inválidas.');
-                 error.status = 401; throw error;
-             }
-            const empresa_id = req.user.empresa_id;
-            const locations = await placaService.getAllPlacaLocations(empresa_id); // Assumindo que este método existe no serviço Mongoose
-            res.status(200).json(locations);
-            // Se NÃO foi refatorado, comente a chamada:
-            // res.status(501).json({ message: "Rota getAllPlacaLocations não implementada para MongoDB." });
-        } catch (err) {
-            next(err);
-        }
-    };
-
-
-    return controller;
+        // <<< ALTERADO: Chama a função importada diretamente >>>
+        const novaPlaca = await createPlaca(req.body, req.file, empresaId);
+        logger.info(`[PlacaController] Placa criada com sucesso. ID: ${novaPlaca._id}`);
+        res.status(201).json(novaPlaca);
+    } catch (error) {
+        logger.error(`[PlacaController] Erro ao criar placa: ${error.message}`, { stack: error.stack, body: req.body, file: req.file });
+        next(error); // Passa para o errorHandler
+    }
 };
 
-module.exports = createPlacaController();
+/**
+ * Controller para atualizar uma placa existente.
+ */
+exports.updatePlacaController = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+         // Verifica se req.user e req.user.empresaId existem
+         if (!req.user || !req.user.empresaId) {
+            logger.error('[PlacaController] Erro: Informações do utilizador (empresaId) em falta no token.');
+            return res.status(401).json({ message: 'Autorização inválida ou em falta.' });
+        }
+        const empresaId = req.user.empresaId;
+
+        logger.info(`[PlacaController] Recebida requisição para atualizar placa ID: ${id}. Empresa ID: ${empresaId}`);
+        logger.debug(`[PlacaController] Dados recebidos (body): ${JSON.stringify(req.body)}`);
+        logger.debug(`[PlacaController] Ficheiro recebido: ${req.file ? req.file.key : 'Nenhum/Manter/Remover'}`);
+
+        // <<< ALTERADO: Chama a função importada diretamente >>>
+        const placaAtualizada = await updatePlaca(id, req.body, req.file, empresaId);
+
+        if (!placaAtualizada) {
+             // Se o serviço retornar null (embora a lógica atual lance erro), trata como não encontrado
+             logger.warn(`[PlacaController] Placa ID ${id} não encontrada para atualização (retorno do serviço foi null).`);
+             return res.status(404).json({ message: 'Placa não encontrada.' });
+        }
+
+        logger.info(`[PlacaController] Placa ID ${id} atualizada com sucesso.`);
+        res.status(200).json(placaAtualizada);
+    } catch (error) {
+        logger.error(`[PlacaController] Erro ao atualizar placa ID ${req.params.id}: ${error.message}`, { stack: error.stack, body: req.body, file: req.file });
+         // Se for erro específico do serviço (ex: Placa não encontrada, Região inválida)
+        if (error.message === 'Placa não encontrada.' || error.message === 'Região inválida.') {
+            return res.status(404).json({ message: error.message });
+        }
+        next(error);
+    }
+};
+
+/**
+ * Controller para buscar todas as placas (com filtros, paginação).
+ */
+exports.getAllPlacasController = async (req, res, next) => {
+    try {
+         // Verifica se req.user e req.user.empresaId existem
+         if (!req.user || !req.user.empresaId) {
+            logger.error('[PlacaController] Erro: Informações do utilizador (empresaId) em falta no token.');
+            return res.status(401).json({ message: 'Autorização inválida ou em falta.' });
+        }
+        const empresaId = req.user.empresaId;
+        logger.info(`[PlacaController] Recebida requisição para buscar placas. Empresa ID: ${empresaId}, Query: ${JSON.stringify(req.query)}`);
+
+        // <<< ALTERADO: Chama a função importada diretamente >>>
+        const result = await getAllPlacas(empresaId, req.query);
+        logger.info(`[PlacaController] Busca de placas concluída. Retornando ${result.data.length} placas na página ${result.pagination.currentPage}.`);
+        res.status(200).json(result);
+    } catch (error) {
+         logger.error(`[PlacaController] Erro ao buscar placas: ${error.message}`, { stack: error.stack, query: req.query });
+        next(error);
+    }
+};
+
+/**
+ * Controller para buscar uma placa específica pelo ID.
+ */
+exports.getPlacaByIdController = async (req, res, next) => {
+     try {
+         const { id } = req.params;
+          // Verifica se req.user e req.user.empresaId existem
+          if (!req.user || !req.user.empresaId) {
+             logger.error('[PlacaController] Erro: Informações do utilizador (empresaId) em falta no token.');
+             return res.status(401).json({ message: 'Autorização inválida ou em falta.' });
+         }
+         const empresaId = req.user.empresaId;
+         logger.info(`[PlacaController] Recebida requisição para buscar placa ID: ${id}. Empresa ID: ${empresaId}`);
+
+         // <<< ALTERADO: Chama a função importada diretamente >>>
+         const placa = await getPlacaById(id, empresaId);
+
+         if (!placa) {
+              // Se o serviço retornar null (embora a lógica atual lance erro), trata como não encontrado
+              logger.warn(`[PlacaController] Placa ID ${id} não encontrada na busca por ID (retorno do serviço foi null).`);
+              return res.status(404).json({ message: 'Placa não encontrada.' });
+         }
+
+         logger.info(`[PlacaController] Placa ID ${id} encontrada.`);
+         res.status(200).json(placa);
+     } catch (error) {
+         logger.error(`[PlacaController] Erro ao buscar placa ID ${req.params.id}: ${error.message}`, { stack: error.stack });
+         if (error.message === 'Placa não encontrada.') {
+            return res.status(404).json({ message: error.message });
+         }
+         next(error);
+     }
+ };
+
+/**
+ * Controller para apagar uma placa.
+ */
+ exports.deletePlacaController = async (req, res, next) => {
+     try {
+         const { id } = req.params;
+          // Verifica se req.user e req.user.empresaId existem
+          if (!req.user || !req.user.empresaId) {
+             logger.error('[PlacaController] Erro: Informações do utilizador (empresaId) em falta no token.');
+             return res.status(401).json({ message: 'Autorização inválida ou em falta.' });
+         }
+         const empresaId = req.user.empresaId;
+         logger.info(`[PlacaController] Recebida requisição para apagar placa ID: ${id}. Empresa ID: ${empresaId}`);
+
+         // <<< ALTERADO: Chama a função importada diretamente >>>
+         await deletePlaca(id, empresaId);
+         logger.info(`[PlacaController] Placa ID ${id} apagada com sucesso.`);
+         res.status(204).send(); // No content
+     } catch (error) {
+          logger.error(`[PlacaController] Erro ao apagar placa ID ${req.params.id}: ${error.message}`, { stack: error.stack });
+         if (error.message === 'Placa não encontrada.') {
+            return res.status(404).json({ message: error.message });
+         }
+         // Se for erro por placa alugada, retorna 409 (Conflict)
+         if (error.message.includes('alugada')) {
+             return res.status(409).json({ message: error.message });
+         }
+         next(error);
+     }
+ };
+
+/**
+ * Controller para alternar a disponibilidade (manutenção).
+ */
+ exports.toggleDisponibilidadeController = async (req, res, next) => {
+     try {
+         const { id } = req.params;
+          // Verifica se req.user e req.user.empresaId existem
+          if (!req.user || !req.user.empresaId) {
+             logger.error('[PlacaController] Erro: Informações do utilizador (empresaId) em falta no token.');
+             return res.status(401).json({ message: 'Autorização inválida ou em falta.' });
+         }
+         const empresaId = req.user.empresaId;
+         logger.info(`[PlacaController] Recebida requisição para alternar disponibilidade da placa ID: ${id}. Empresa ID: ${empresaId}`);
+
+         // <<< ALTERADO: Chama a função importada diretamente >>>
+         const placaAtualizada = await toggleDisponibilidade(id, empresaId);
+         logger.info(`[PlacaController] Disponibilidade da placa ID ${id} alternada com sucesso para ${placaAtualizada.disponivel}.`);
+         res.status(200).json(placaAtualizada);
+     } catch (error) {
+         logger.error(`[PlacaController] Erro ao alternar disponibilidade da placa ID ${req.params.id}: ${error.message}`, { stack: error.stack });
+          if (error.message === 'Placa não encontrada.') {
+             return res.status(404).json({ message: error.message });
+          }
+          // Se for erro por placa alugada, retorna 409 (Conflict)
+          if (error.message.includes('alugada')) {
+              return res.status(409).json({ message: error.message });
+          }
+         next(error);
+     }
+ };
+
+/**
+ * Controller para buscar todas as localizações de placas.
+ */
+ exports.getPlacaLocationsController = async (req, res, next) => {
+     try {
+          // Verifica se req.user e req.user.empresaId existem
+          if (!req.user || !req.user.empresaId) {
+             logger.error('[PlacaController] Erro: Informações do utilizador (empresaId) em falta no token.');
+             return res.status(401).json({ message: 'Autorização inválida ou em falta.' });
+         }
+         const empresaId = req.user.empresaId;
+         logger.info(`[PlacaController] Recebida requisição para buscar localizações de placas. Empresa ID: ${empresaId}`);
+
+         // <<< ALTERADO: Chama a função importada diretamente >>>
+         const locations = await getAllPlacaLocations(empresaId);
+         logger.info(`[PlacaController] Busca de localizações concluída. Retornando ${locations.length} localizações.`);
+         res.status(200).json(locations);
+     } catch (error) {
+          logger.error(`[PlacaController] Erro ao buscar localizações de placas: ${error.message}`, { stack: error.stack });
+         next(error);
+     }
+ };

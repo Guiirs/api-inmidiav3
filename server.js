@@ -1,106 +1,112 @@
-// InMidia/backend/server.js
-require('dotenv').config();
+// server.js
+
+require('dotenv').config(); // Carrega variáveis de ambiente do .env
 const express = require('express');
-const path = require('path');
-const helmet = require('helmet');
 const cors = require('cors');
-const morgan = require('morgan');
-const logger = require('./config/logger');
-const errorHandler = require('./middlewares/errorHandler');
-const swaggerUi = require('swagger-ui-express');
-const swaggerSpecs = require('./swaggerConfig');
-const cron = require('node-cron');
 const mongoose = require('mongoose');
+const path = require('path');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swaggerConfig'); // Configuração do Swagger
+const connectDB = require('./config/dbMongo'); // Função de conexão com MongoDB
+const logger = require('./config/logger'); // Winston logger
+const errorHandler = require('./middlewares/errorHandler'); // Middleware de tratamento de erros
 
-const connectDB = require('./config/dbMongo'); // Importa a conexão MongoDB
-const updatePlacaStatusJob = require('./scripts/updateStatusJob'); // Importa o script Mongoose
+// Importação das rotas
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/user');
+const empresaRoutes = require('./routes/empresaRoutes');
+const regiaoRoutes = require('./routes/regiaoRoutes');
+const placaRoutes = require('./routes/placas'); // <<< IMPORTAÇÃO DAS ROTAS DE PLACAS
+const clienteRoutes = require('./routes/clienteRoutes');
+const aluguelRoutes = require('./routes/aluguelRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const relatoriosRoutes = require('./routes/relatoriosRoutes');
+const publicApiRoutes = require('./routes/publicApiRoutes'); // Rotas da API pública
 
-// --- Importações de Rotas ---
-const authMiddleware = require('./middlewares/authMiddleware');
-// ... (resto das importações de rotas)
-const empresaRoutes = require('./routes/empresaRoutes')();
-const authRoutes = require('./routes/auth')();
-const placasRoutes = require('./routes/placas')();
-const publicApiRoutes = require('./routes/publicApiRoutes')();
-const regiaoRoutes = require('./routes/regiaoRoutes')();
-const userRoutes = require('./routes/user')();
-const adminRoutes = require('./routes/adminRoutes')();
-const relatoriosRoutes = require('./routes/relatoriosRoutes')();
-const clienteRoutes = require('./routes/clienteRoutes')();
-const aluguelRoutes = require('./routes/aluguelRoutes')();
+// Log para depuração da importação de placaRoutes
+console.log('--- server.js: placaRoutes importado:', typeof placaRoutes, placaRoutes); // <<< LOG DE DEPURAÇÃO ADICIONADO >>>
+logger.info(`[Server] placaRoutes importado. Tipo: ${typeof placaRoutes}`);
 
-const app = express(); // Cria a instância do app ANTES da função async
-const PORT = process.env.PORT || 3000;
 
-// --- Configuração do Express (middlewares) ---
-app.use(cors());
-app.use(helmet({ crossOriginResourcePolicy: false }));
-app.use(morgan('combined', { stream: logger.stream }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// Inicializa a aplicação Express
+const app = express();
 
-// --- Rotas Estáticas e de API ---
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
-app.use('/api/v1', publicApiRoutes);
-app.use('/empresas', empresaRoutes);
-app.use('/auth', authRoutes);
-app.use('/placas', authMiddleware, placasRoutes);
-app.use('/user', authMiddleware, userRoutes);
-app.use('/regioes', authMiddleware, regiaoRoutes);
-app.use('/admin', authMiddleware, adminRoutes);
-app.use('/relatorios', authMiddleware, relatoriosRoutes);
-app.use('/clientes', clienteRoutes);
-app.use('/alugueis', aluguelRoutes);
+// Conecta à Base de Dados MongoDB
+connectDB();
 
-// --- Error Handler (último middleware) ---
+// Configuração do CORS (ajuste as origens permitidas conforme necessário)
+const allowedOrigins = [
+    'http://localhost:5500', // Exemplo: Live Server
+    'http://127.0.0.1:5500', // Exemplo: Live Server
+    'http://localhost:3000', // Exemplo: Frontend dev
+    'https://inmidia.squareweb.app' // <<< SEU FRONTEND EM PRODUÇÃO >>>
+];
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Permite requisições sem 'origin' (ex: Postman, mobile apps) OU se a origem estiver na lista
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      logger.warn(`[CORS] Bloqueada origem não permitida: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true, // Se precisar enviar cookies ou cabeçalhos de autorização
+  optionsSuccessStatus: 204
+};
+app.use(cors(corsOptions));
+
+
+// Middlewares Essenciais
+app.use(express.json()); // Para fazer parse do body de requisições JSON
+app.use(express.urlencoded({ extended: true })); // Para fazer parse de formulários URL-encoded
+
+// Servir ficheiros estáticos (se houver, ex: uploads locais - NÃO RECOMENDADO PARA R2)
+// app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
+// Configuração das Rotas da API
+app.use('/api/auth', authRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/empresas', empresaRoutes); // Rota pública para registo
+app.use('/api/regioes', regiaoRoutes);
+app.use('/api/placas', placaRoutes); // <<< USO DAS ROTAS DE PLACAS (Linha 23 nos erros anteriores)
+app.use('/api/clientes', clienteRoutes);
+app.use('/api/alugueis', aluguelRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/relatorios', relatoriosRoutes);
+app.use('/api/public', publicApiRoutes); // API pública (requer apiKeyAuthMiddleware nas rotas específicas)
+
+
+// Rota para a documentação Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+logger.info('[Server] Rota /api-docs para Swagger UI configurada.');
+
+// Rota de Teste Simples
+app.get('/', (req, res) => {
+    res.send('API InMidia está a funcionar!');
+});
+
+// Middleware de Tratamento de Erros (deve ser o último middleware)
 app.use(errorHandler);
 
-
-// --- Função Async para iniciar o servidor E CONECTAR AO DB ---
-async function startServerAndConnectDb() {
-  // 1. Conecta ao MongoDB e ESPERA a conexão ser estabelecida
-  await connectDB();
-
-  // --- Cron Job (Configurado APÓS a conexão DB estar pronta) ---
-  cron.schedule('1 0 * * *', () => {
-      logger.info('--- DISPARANDO CRON JOB AGENDADO (1:00 AM) ---');
-      updatePlacaStatusJob(); // Chama a função Mongoose
-  }, {
-      scheduled: true,
-      timezone: "America/Sao_Paulo"
-  });
-  logger.info('[CRON JOB] Tarefa de atualização de status agendada para 01:00 AM (America/Sao_Paulo).');
-
-  // Opcional: Executa a tarefa uma vez ao iniciar (AGORA que a DB está conectada)
-  logger.info('--- EXECUTANDO CRON JOB NA INICIALIZAÇÃO (TESTE) APÓS CONEXÃO DB ---');
-  updatePlacaStatusJob().catch(err => logger.error("Erro na execução inicial do Cron Job:", err));
-  // ------------------------------------------------------------------
-
-  // --- Inicia o servidor (ouve a porta) ---
-  app.listen(PORT, (err) => {
-      if (err) logger.error('❌ Erro ao iniciar o servidor:', err);
-      else logger.info(`🚀 Servidor da API rodando em http://localhost:${PORT}`);
-  });
-
-} // Fim da função startServerAndConnectDb
-
-
-// --- Condicional para iniciar a conexão e o servidor ---
-// Só conecta e escuta a porta se NÃO estiver em ambiente de teste
-if (process.env.NODE_ENV !== 'test') {
-    startServerAndConnectDb(); // Chama a função para conectar e iniciar
-}
-// ----------------------------------------------------
-
-
-// Adiciona listeners de conexão (fora da função async)
-mongoose.connection.on('close', () => {
-    logger.warn('🔌 Conexão com MongoDB fechada.');
-});
-mongoose.connection.on('error', (err) => {
-    logger.error('❌ Erro na conexão MongoDB após conexão inicial:', err);
+// Inicia o Servidor
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  logger.info(`[Server] Servidor a correr na porta ${PORT}`);
+  logger.info(`[Server] Ambiente: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`[Server] Documentação API disponível em /api-docs`);
 });
 
-// Exporta o app configurado para ser usado pelos testes (ou noutros locais)
-module.exports = app;
+// Tratamento para Encerramento Gracioso (opcional mas recomendado)
+process.on('SIGINT', async () => {
+    logger.info('[Server] Recebido SIGINT. A desligar graciosamente...');
+    try {
+        await mongoose.connection.close();
+        logger.info('[Server] Conexão MongoDB fechada.');
+        process.exit(0);
+    } catch (err) {
+        logger.error('[Server] Erro ao fechar conexão MongoDB durante o encerramento:', err);
+        process.exit(1);
+    }
+});

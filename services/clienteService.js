@@ -1,215 +1,183 @@
 // services/clienteService.js
-const Cliente = require('../models/Cliente'); // Importa o modelo Cliente Mongoose
-// O midiaService continua a ser usado da mesma forma para R2
-const mediaService = require('./midiaService');
 
-class ClienteService {
-    // constructor não precisa mais do 'db'
-    constructor() {}
+const Cliente = require('../models/Cliente');
+const Aluguel = require('../models/Aluguel'); // Necessário para verificar alugueis
+const logger = require('../config/logger');
+const path = require('path'); // <<< ADICIONADO: Módulo path para extrair nome do ficheiro >>>
+const { deleteFileFromR2 } = require('../middlewares/uploadMiddleware'); // <<< ADICIONADO: Função para apagar ficheiro do R2 (assumindo que existe) >>>
 
-    // Auxiliar para buscar cliente e verificar posse (usado em getById, update, delete)
-    // Adiciona .lean() pois geralmente só precisamos dos dados aqui
-    async _findClienteByIdAndEmpresa(id, empresa_id) {
-        // Adiciona .lean()
-        const cliente = await Cliente.findOne({ _id: id, empresa: empresa_id }).lean().exec(); // <-- Adicionado .lean()
-        if (!cliente) {
-            const error = new Error('Cliente não encontrado.');
-            error.status = 404;
-            throw error;
-        }
-        // A transformação global toJSON/toObject (se configurada) tratará _id -> id
-        return cliente; // Retorna objeto simples
+/**
+ * Cria um novo cliente.
+ * @param {object} clienteData - Dados do cliente.
+ * @param {object} file - Ficheiro de logo (opcional, do Multer/S3).
+ * @param {string} empresaId - ID da empresa proprietária.
+ * @returns {Promise<object>} - O novo cliente criado.
+ */
+exports.createCliente = async (clienteData, file, empresaId) => {
+    logger.info(`[ClienteService] Tentando criar cliente para empresa ${empresaId}: ${JSON.stringify(clienteData)}`);
+
+    if (file) {
+        logger.info(`[ClienteService] Ficheiro recebido (logo): ${file.key}`);
+        // <<< ALTERADO: Guardar apenas o nome base do ficheiro >>>
+        clienteData.logo_url = path.basename(file.key);
+        logger.info(`[ClienteService] Nome do ficheiro (logo) extraído para guardar: ${clienteData.logo_url}`);
+    } else {
+        // Garante que o campo logo não fica com lixo se não houver ficheiro
+        delete clienteData.logo_url;
     }
 
-    async getAll(empresa_id) {
-        // Busca todos os clientes da empresa, ordenados por nome
-        // Adiciona .lean() para performance
-        return await Cliente.find({ empresa: empresa_id })
-                            .sort({ nome: 1 })
-                            .lean() // <-- Adicionado .lean()
-                            .exec();
+    // Associa o cliente à empresa
+    clienteData.empresa = empresaId;
+
+    const novoCliente = new Cliente(clienteData);
+    await novoCliente.save();
+    logger.info(`[ClienteService] Cliente criado com sucesso: ID ${novoCliente._id}`);
+    return novoCliente;
+};
+
+/**
+ * Atualiza um cliente existente.
+ * @param {string} id - ID do cliente a atualizar.
+ * @param {object} clienteData - Novos dados do cliente.
+ * @param {object} file - Novo ficheiro de logo (opcional).
+ * @param {string} empresaId - ID da empresa proprietária.
+ * @returns {Promise<object>} - O cliente atualizado.
+ */
+exports.updateCliente = async (id, clienteData, file, empresaId) => {
+    logger.info(`[ClienteService] Tentando atualizar cliente ID ${id} para empresa ${empresaId}: ${JSON.stringify(clienteData)}`);
+
+    // Busca o cliente existente para verificar propriedade e logo antigo
+    const clienteAntigo = await Cliente.findOne({ _id: id, empresa: empresaId });
+    if (!clienteAntigo) {
+        logger.warn(`[ClienteService] Cliente ID ${id} não encontrado ou não pertence à empresa ${empresaId}.`);
+        throw new Error('Cliente não encontrado.');
     }
 
-    async getById(id, empresa_id) {
-        // Usa a função auxiliar que já tem .lean()
-        return await this._findClienteByIdAndEmpresa(id, empresa_id);
+    let logoAntigoKey = null; // Guarda a key completa do logo antigo (se existir) para apagar
+
+    if (file) {
+        logger.info(`[ClienteService] Novo ficheiro recebido (logo) para cliente ID ${id}: ${file.key}`);
+        logoAntigoKey = clienteAntigo.logo_url ? `${process.env.R2_FOLDER_NAME || 'inmidia-uploads-sistema'}/${clienteAntigo.logo_url}` : null;
+
+        // <<< ALTERADO: Guardar apenas o nome base do ficheiro >>>
+        clienteData.logo_url = path.basename(file.key);
+        logger.info(`[ClienteService] Nome do ficheiro (logo) extraído para guardar: ${clienteData.logo_url}`);
+
+    } else if (clienteData.hasOwnProperty('logo_url') && clienteData.logo_url === '') {
+        // Se 'logo_url' veio explicitamente como string vazia, significa remover logo
+        logger.info(`[ClienteService] Remoção de logo solicitada para cliente ID ${id}`);
+        logoAntigoKey = clienteAntigo.logo_url ? `${process.env.R2_FOLDER_NAME || 'inmidia-uploads-sistema'}/${clienteAntigo.logo_url}` : null;
+        clienteData.logo_url = null; // Define como null para remover da BD
+    } else {
+        // Se não veio ficheiro novo nem pedido de remoção, mantém o logo existente
+        // Remove o campo 'logo_url' do clienteData para não o sobrescrever com undefined
+        delete clienteData.logo_url;
     }
 
-    async create(clienteData, empresa_id, fileObject) {
-        const { nome, cnpj, telefone } = clienteData;
-        let logo_url = null;
-        let savedImageData = null; // Para guardar dados da imagem salva
+    // Atualiza o cliente na base de dados
+    const clienteAtualizado = await Cliente.findByIdAndUpdate(id, clienteData, { new: true, runValidators: true });
 
-        // 1. Salva o logo, se existir (usando midiaService, lógica inalterada)
-        if (fileObject) {
-            try {
-                savedImageData = await mediaService.saveImage(fileObject);
-                logo_url = savedImageData.path; // URL completa do R2
-            } catch (uploadError) {
-                console.error("Erro ao salvar logo do cliente:", uploadError);
-                // Não precisa apagar imagem aqui, pois ainda não foi salva no R2 se deu erro
-                throw new Error('Erro ao processar o upload do logo.');
-            }
-        }
+    if (!clienteAtualizado) {
+        // Este caso não deveria acontecer por causa da verificação inicial, mas é uma segurança extra
+        logger.error(`[ClienteService] Falha ao atualizar cliente ID ${id} após verificação inicial.`);
+        throw new Error('Falha ao atualizar o cliente.');
+    }
 
-        // 2. Verifica duplicidade de CNPJ (só se o CNPJ for enviado)
-        if (cnpj) {
-            // Adiciona .lean() pois só precisamos saber se existe
-            const existing = await Cliente.findOne({ cnpj: cnpj, empresa: empresa_id })
-                                          .lean() // <-- Adicionado .lean()
-                                          .exec();
-            if (existing) {
-                // Se já existe e carregamos um logo, apaga o logo do R2
-                if (logo_url) await mediaService.deleteImage(logo_url);
-                const error = new Error('Um cliente com este CNPJ já existe na sua empresa.');
-                error.status = 409; // Conflict
-                throw error;
-            }
-        }
-
-        // 3. Cria o cliente com Mongoose
-        const novoCliente = new Cliente({
-            nome,
-            cnpj: cnpj || null, // Guarda null se for vazio
-            telefone: telefone || null, // Guarda null se for vazio
-            logo_url, // URL do logo ou null
-            empresa: empresa_id // ObjectId da empresa
-        });
-
+    // Se um novo logo foi carregado ou o existente foi removido,
+    // tenta apagar o logo antigo do R2 DEPOIS de atualizar a BD com sucesso
+    if (logoAntigoKey && logoAntigoKey !== (file ? file.key : null) ) {
+        logger.info(`[ClienteService] Solicitando exclusão do logo antigo: ${logoAntigoKey}`);
         try {
-            // Tenta salvar o novo cliente no MongoDB
-            // .save() opera no documento Mongoose, NÃO usar .lean() antes
-            const clienteSalvo = await novoCliente.save();
-            // A transformação toJSON/toObject tratará _id -> id na resposta
-            return clienteSalvo;
-        } catch (error) {
-            // Se o save falhar (ex: erro de validação do Mongoose ou erro de índice único não capturado antes)
-            // e carregamos um logo, apaga o logo do R2
-            if (logo_url) await mediaService.deleteImage(logo_url);
-
-            // Re-lança o erro original ou um erro específico se necessário
-            if (error.code === 11000 && error.keyPattern && error.keyPattern.cnpj) {
-                 const uniqueError = new Error('Um cliente com este CNPJ já existe na sua empresa (erro no save).');
-                 uniqueError.status = 409;
-                 throw uniqueError;
-            }
-            throw error;
+            // A função deleteFileFromR2 espera apenas a Key completa
+            await deleteFileFromR2(logoAntigoKey);
+            logger.info(`[ClienteService] Logo antigo ${logoAntigoKey} excluído do R2.`);
+        } catch (deleteError) {
+            logger.error(`[ClienteService] Falha ao excluir logo antigo ${logoAntigoKey} do R2:`, deleteError);
+            // Não lançamos erro aqui para não reverter a atualização da BD, apenas registamos
         }
     }
 
-    async update(id, clienteData, empresa_id, fileObject) {
-        const { nome, cnpj, telefone } = clienteData;
-
-        // Busca o cliente atual (já usa .lean() via _findClienteByIdAndEmpresa)
-        const clienteAtual = await this._findClienteByIdAndEmpresa(id, empresa_id);
-        const imagemAntigaPath = clienteAtual.logo_url; // URL antiga
-        let logo_url = imagemAntigaPath; // Mantém o logo antigo por defeito
-        let newImageData = null;
-
-        // 1. Verifica se um novo logo foi enviado (lógica do midiaService inalterada)
-        if (fileObject) {
-            try {
-                newImageData = await mediaService.saveImage(fileObject);
-                logo_url = newImageData.path; // Define a nova URL do logo
-            } catch (uploadError) {
-                console.error("Erro ao processar novo logo do cliente:", uploadError);
-                throw new Error('Erro ao processar o novo logo.');
-            }
-        } else if (clienteData.hasOwnProperty('logo_url') && !clienteData.logo_url) {
-            // Permite remover o logo enviando logo_url: null ou ''
-            logo_url = null;
-        }
+    logger.info(`[ClienteService] Cliente ID ${id} atualizado com sucesso.`);
+    return clienteAtualizado;
+};
 
 
-        // 2. Verifica duplicidade de CNPJ (se CNPJ foi fornecido, não é nulo/vazio E é diferente do atual)
-        const checkCnpj = cnpj && cnpj !== clienteAtual.cnpj;
-        if (checkCnpj) {
-            // Adiciona .lean() pois só precisamos saber se existe
-            const existing = await Cliente.findOne({
-                cnpj: cnpj,
-                empresa: empresa_id,
-                _id: { $ne: id } // Exclui o próprio cliente da verificação ($ne = not equal)
-            }).lean().exec(); // <-- Adicionado .lean()
+/**
+ * Busca todos os clientes de uma empresa.
+ * @param {string} empresaId - ID da empresa.
+ * @returns {Promise<Array<object>>} - Array de clientes.
+ */
+exports.getAllClientes = async (empresaId) => {
+    logger.debug(`[ClienteService] Buscando todos os clientes para empresa ${empresaId}`);
+    const clientes = await Cliente.find({ empresa: empresaId }).sort({ nome: 1 }); // Ordena por nome
+    logger.debug(`[ClienteService] Encontrados ${clientes.length} clientes.`);
+    return clientes;
+};
 
-            if (existing) {
-                // Se deu erro de duplicidade e carregamos um novo logo, apaga o novo logo do R2
-                if (newImageData && newImageData.path) await mediaService.deleteImage(newImageData.path);
-                const error = new Error('Um cliente com este CNPJ já existe na sua empresa.');
-                error.status = 409; // Conflict
-                throw error;
-            }
-        }
+/**
+ * Busca um cliente específico pelo ID.
+ * @param {string} id - ID do cliente.
+ * @param {string} empresaId - ID da empresa proprietária.
+ * @returns {Promise<object>} - O cliente encontrado.
+ */
+exports.getClienteById = async (id, empresaId) => {
+    logger.debug(`[ClienteService] Buscando cliente ID ${id} para empresa ${empresaId}`);
+    const cliente = await Cliente.findOne({ _id: id, empresa: empresaId });
 
-        // 3. Prepara dados para atualização
-        const updateData = {
-            nome,
-            cnpj: cnpj || null,
-            telefone: telefone || null,
-            logo_url // Nova URL ou null
-        };
+    if (!cliente) {
+        logger.warn(`[ClienteService] Cliente ID ${id} não encontrado ou não pertence à empresa ${empresaId}.`);
+        throw new Error('Cliente não encontrado.');
+    }
 
+    logger.debug(`[ClienteService] Cliente ID ${id} encontrado.`);
+    return cliente;
+};
+
+/**
+ * Apaga um cliente.
+ * @param {string} id - ID do cliente a apagar.
+ * @param {string} empresaId - ID da empresa proprietária.
+ * @returns {Promise<void>}
+ */
+exports.deleteCliente = async (id, empresaId) => {
+    logger.info(`[ClienteService] Tentando apagar cliente ID ${id} para empresa ${empresaId}`);
+
+    // Verifica se o cliente possui alugueis ativos ou futuros
+    const hoje = new Date();
+    const aluguelExistente = await Aluguel.findOne({
+        cliente: id,
+        empresa: empresaId,
+        data_fim: { $gte: hoje } // Verifica se a data fim é hoje ou no futuro
+    });
+
+    if (aluguelExistente) {
+        logger.warn(`[ClienteService] Tentativa de apagar cliente ${id} que possui alugueis ativos ou futuros.`);
+        throw new Error('Não é possível apagar um cliente com alugueis ativos ou agendados.');
+    }
+
+    // Encontra e apaga o cliente
+    const clienteApagado = await Cliente.findOneAndDelete({ _id: id, empresa: empresaId });
+
+    if (!clienteApagado) {
+        logger.warn(`[ClienteService] Cliente ID ${id} não encontrado ou não pertence à empresa ${empresaId} para exclusão.`);
+        throw new Error('Cliente não encontrado.');
+    }
+
+    // Se o cliente tinha logo, tenta apagar do R2
+    if (clienteApagado.logo_url) {
+        const logoKey = `${process.env.R2_FOLDER_NAME || 'inmidia-uploads-sistema'}/${clienteApagado.logo_url}`;
+        logger.info(`[ClienteService] Solicitando exclusão do logo ${logoKey} do R2 para cliente apagado ID ${id}.`);
         try {
-            // Atualiza o cliente no MongoDB, retornando o *novo* documento
-            // findByIdAndUpdate retorna o documento Mongoose por padrão, NÃO usar .lean()
-            const clienteAtualizado = await Cliente.findByIdAndUpdate(
-                id,
-                { $set: updateData },
-                { new: true, runValidators: true } // Retorna o novo, executa validadores
-            ).exec();
-
-            if (!clienteAtualizado) {
-                 // Caso raro, mas se o cliente for deletado entre a busca inicial e o update
-                 if (newImageData && newImageData.path) await mediaService.deleteImage(newImageData.path);
-                 throw new Error('Cliente não encontrado durante a atualização.'); // Lança erro 404
-            }
-
-
-            // 4. Se a atualização foi bem-sucedida E
-            //    (um novo logo foi carregado OU o logo foi explicitamente removido) E
-            //    havia um logo antigo
-            const logoMudou = (newImageData || (clienteData.hasOwnProperty('logo_url') && !clienteData.logo_url));
-            if (logoMudou && imagemAntigaPath) {
-                // E o logo antigo é diferente do novo (caso tenha carregado um novo)
-                if(imagemAntigaPath !== logo_url) {
-                    await mediaService.deleteImage(imagemAntigaPath);
-                }
-            }
-            // A transformação toJSON/toObject tratará _id -> id na resposta
-            return clienteAtualizado;
-
-        } catch (error) {
-            // Se o update falhar (ex: erro de validação, erro de índice único não capturado antes)
-            // e carregamos um novo logo, apaga o novo logo do R2
-            if (newImageData && newImageData.path) await mediaService.deleteImage(newImageData.path);
-
-             if (error.code === 11000 && error.keyPattern && error.keyPattern.cnpj) {
-                 const uniqueError = new Error('Um cliente com este CNPJ já existe na sua empresa (erro no update).');
-                 uniqueError.status = 409;
-                 throw uniqueError;
-            }
-            // Re-lança outros erros
-            throw error;
+            await deleteFileFromR2(logoKey);
+            logger.info(`[ClienteService] Logo ${logoKey} excluído do R2.`);
+        } catch (deleteError) {
+            logger.error(`[ClienteService] Falha ao excluir logo ${logoKey} do R2 para cliente apagado ID ${id}:`, deleteError);
+            // Não lançamos erro aqui, o cliente já foi apagado da BD
         }
     }
 
-    async delete(id, empresa_id) {
-        // Busca o cliente (já usa .lean() via _findClienteByIdAndEmpresa)
-        const cliente = await this._findClienteByIdAndEmpresa(id, empresa_id);
-        const logoPath = cliente.logo_url; // URL do logo no R2
+    // Opcional: Apagar histórico de alugueis *passados* deste cliente?
+    // await Aluguel.deleteMany({ cliente: id, empresa: empresaId, data_fim: { $lt: hoje } });
 
-        // Apaga o cliente do MongoDB (deleteOne não precisa de .lean())
-        const result = await Cliente.deleteOne({ _id: id }).exec(); // _id já garante a unicidade
-
-        // Se apagou do DB (deletedCount > 0) e tinha um logo, remove o logo do R2
-        if (result.deletedCount > 0 && logoPath) {
-            await mediaService.deleteImage(logoPath);
-        } else if (result.deletedCount === 0) {
-             // Caso não tenha encontrado para deletar (já tinha sido deletado?)
-             throw new Error('Cliente não encontrado para exclusão.');
-        }
-
-        return { success: true };
-    }
-}
-
-module.exports = ClienteService;
+    logger.info(`[ClienteService] Cliente ID ${id} apagado com sucesso.`);
+};
