@@ -9,6 +9,13 @@ const logger = require('./logger'); // Usa seu logger existente
 const caPath = path.resolve(__dirname, 'certs', 'ca-certificate.pem');
 
 const connectDB = async () => {
+  // <<< ADICIONAR ESTA VERIFICAÇÃO >>>
+  if (process.env.NODE_ENV === 'test') {
+    logger.info('[DB Mongo] Conexão adiada (ambiente de teste). Jest cuidará disso.');
+    return; // Não conecta se for ambiente de teste
+  }
+  // <<< FIM DA ADIÇÃO >>>
+
   try {
     const options = {
       // Opções Mongoose (geralmente não são mais necessárias nas versões recentes)

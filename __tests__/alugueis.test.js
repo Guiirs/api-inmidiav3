@@ -2,293 +2,195 @@
 
 const request = require('supertest');
 const app = require('../server');
-const db = require('../config/database');
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+const Empresa = require('../models/Empresa');
+const User = require('../models/User');
+const Cliente = require('../models/Cliente');
+const Regiao = require('../models/Regiao');
+const Placa = require('../models/Placa');
+const Aluguel = require('../models/Aluguel');
 
-describe('Rotas de Alugueis (/alugueis)', () => {
+describe('Rotas de Alugueis (/api/alugueis)', () => {
     let adminToken;
     let empresaId;
     let clienteId;
     let regiaoId;
-    let placaIdDisponivel; // Placa que começará disponível
-    let placaIdJaAlugada; // Placa que terá um aluguel inicial
-    let aluguelId;
+    let placaIdDisponivel;
+    let placaIdJaAlugada;
+    let aluguelExistenteId;
 
-    // Função auxiliar para datas
     const getDateString = (offsetDays = 0) => {
         const date = new Date();
-        date.setDate(date.getDate() + offsetDays);
+        date.setUTCDate(date.getUTCDate() + offsetDays);
         return date.toISOString().split('T')[0]; // YYYY-MM-DD
     };
 
-    // Setup: Cria empresa, admin, cliente, região, placas e faz login
+    const getDateObject = (offsetDays = 0) => {
+        const date = new Date();
+        date.setUTCHours(0, 0, 0, 0);
+        date.setUTCDate(date.getUTCDate() + offsetDays);
+        return date;
+    };
+
     beforeAll(async () => {
-        // Limpar tabelas
-        await db('alugueis').del();
-        await db('placas').del();
-        await db('clientes').del();
-        await db('regioes').del();
-        await db('users').del();
-        await db('empresas').del();
+        // Limpeza inicial
+        await User.deleteMany({}); await Empresa.deleteMany({}); await Cliente.deleteMany({});
+        await Regiao.deleteMany({}); await Placa.deleteMany({}); await Aluguel.deleteMany({});
 
-        // Cria Empresa
-        const [novaEmpresa] = await db('empresas').insert({
-            nome: 'Empresa Teste Aluguel',
-            cnpj: '44.555.666/0001-77',
-            api_key_hash: 'hash_teste_aluguel',
-            api_key_prefix: 'pref_aluguel'
-        }).returning('id');
-        empresaId = (typeof novaEmpresa === 'object') ? novaEmpresa.id : novaEmpresa;
-
-        // Cria Admin
+        // Criação de entidades base
+        const empresa = await Empresa.create({
+            nome: 'Empresa Teste Aluguel', cnpj: '44.555.666/0001-77',
+            api_key_hash: await bcrypt.hash('testkey_aluguel', 10), api_key_prefix: 'pref_aluguel'
+        });
+        empresaId = empresa._id;
         const adminPassword = 'passwordAdminAluguel';
-        const adminHashedPassword = await require('bcrypt').hash(adminPassword, 10);
-        await db('users').insert({
-            username: 'admin_aluguel',
-            email: 'admin_aluguel@test.com',
-            password: adminHashedPassword,
-            nome: 'Admin',
-            sobrenome: 'Aluguel',
-            role: 'admin',
-            empresa_id: empresaId
-        });
+        await User.create({
+             username: 'admin_aluguel', email: 'admin_aluguel@test.com',
+             password: await bcrypt.hash(adminPassword, 10),
+             nome: 'Admin', sobrenome: 'Aluguel', role: 'admin', empresa: empresaId
+         });
+        const cliente = await Cliente.create({ nome: 'Cliente Teste Aluguel', empresa: empresaId });
+        clienteId = cliente._id;
+        const regiao = await Regiao.create({ nome: 'Região Teste Aluguel', empresa: empresaId });
+        regiaoId = regiao._id;
 
-        // Cria Cliente
-        const [novoCliente] = await db('clientes').insert({
-            nome: 'Cliente Teste Aluguel',
-            empresa_id: empresaId
-        }).returning('id');
-        clienteId = (typeof novoCliente === 'object') ? novoCliente.id : novoCliente;
-
-        // Cria Região
-        const [novaRegiao] = await db('regioes').insert({
-            nome: 'Região Teste Aluguel',
-            empresa_id: empresaId
-        }).returning('id');
-        regiaoId = (typeof novaRegiao === 'object') ? novaRegiao.id : novaRegiao;
-
-        // Cria Placas
-        const [placaDisp] = await db('placas').insert({
-            id_placa: 'uuid-teste-aluguel-disp',
-            numero_placa: 'ALUG-DISP',
-            disponivel: true, // Começa disponível
-            regiao_id: regiaoId,
-            empresa_id: empresaId
-        }).returning('id');
-        placaIdDisponivel = (typeof placaDisp === 'object') ? placaDisp.id : placaDisp;
-
-        const [placaAlug] = await db('placas').insert({
-            id_placa: 'uuid-teste-aluguel-alug',
-            numero_placa: 'ALUG-ALUG',
-            disponivel: false, // Começa indisponível (simulando aluguel)
-            regiao_id: regiaoId,
-            empresa_id: empresaId
-        }).returning('id');
-        placaIdJaAlugada = (typeof placaAlug === 'object') ? placaAlug.id : placaAlug;
-
-        // Cria um aluguel inicial para a placa 'placaIdJaAlugada'
-        await db('alugueis').insert({
-            placa_id: placaIdJaAlugada,
-            cliente_id: clienteId,
-            data_inicio: getDateString(-5), // Começou há 5 dias
-            data_fim: getDateString(5),    // Termina em 5 dias
-            empresa_id: empresaId
-        });
-
-
-        // Login Admin
-        const adminLogin = await request(app)
-            .post('/auth/login')
+        // Login
+        const adminLogin = await request(app).post('/api/auth/login')
             .send({ email: 'admin_aluguel@test.com', password: adminPassword });
+        if (adminLogin.status !== 200 || !adminLogin.body.token) { throw new Error('Login falhou no beforeAll.'); }
         adminToken = adminLogin.body.token;
+        expect(adminToken).toBeDefined();
     });
 
-    // Limpa alugueis antes de cada teste e reseta placa disponível
     beforeEach(async () => {
-        await db('alugueis').whereNot({ placa_id: placaIdJaAlugada }).del(); // Apaga alugueis exceto o inicial da placa já alugada
-        await db('placas').where({ id: placaIdDisponivel }).update({ disponivel: true });
+        // Limpa coleções modificadas pelos testes
+        await Placa.deleteMany({}); await Aluguel.deleteMany({});
+
+        // Recria Placas e Aluguel inicial
+        const placaDisp = await Placa.create({ numero_placa: 'ALUG-DISP', disponivel: true, regiao: regiaoId, empresa: empresaId });
+        placaIdDisponivel = placaDisp._id;
+        const placaAlug = await Placa.create({ numero_placa: 'ALUG-ALUG', disponivel: false, regiao: regiaoId, empresa: empresaId });
+        placaIdJaAlugada = placaAlug._id;
+        const aluguelInicial = await Aluguel.create({
+            placa: placaIdJaAlugada, cliente: clienteId, data_inicio: getDateObject(-5), data_fim: getDateObject(5), empresa: empresaId
+        });
+        aluguelExistenteId = aluguelInicial._id;
     });
 
-    // --- Testes para POST /alugueis ---
-    describe('POST /alugueis', () => {
+    describe('POST /api/alugueis', () => {
         it('deve criar um aluguel futuro e manter a placa disponível', async () => {
-            const dataInicio = getDateString(1); // Amanhã
-            const dataFim = getDateString(10); // Daqui a 10 dias
-
-            const response = await request(app)
-                .post('/alugueis')
-                .set('Authorization', `Bearer ${adminToken}`)
-                .send({
-                    placa_id: placaIdDisponivel,
-                    cliente_id: clienteId,
-                    data_inicio: dataInicio,
-                    data_fim: dataFim
-                });
-
-            expect(response.statusCode).toBe(201);
-            expect(response.body).toHaveProperty('id');
-
-            // Verifica se a placa CONTINUA disponível (pois o aluguel é futuro)
-            const placa = await db('placas').where({ id: placaIdDisponivel }).first();
-            expect(placa.disponivel).toBe(true);
-
-            aluguelId = response.body.id;
+            const dataInicio = getDateString(1); const dataFim = getDateString(10);
+            const response = await request(app).post('/api/alugueis').set('Authorization', `Bearer ${adminToken}`)
+                .send({ placa_id: placaIdDisponivel.toString(), cliente_id: clienteId.toString(), data_inicio: dataInicio, data_fim: dataFim });
+            expect(response.statusCode).toBe(201); expect(response.body).toHaveProperty('id');
+            const placa = await Placa.findById(placaIdDisponivel); expect(placa).toBeDefined(); expect(placa.disponivel).toBe(true);
         });
 
          it('deve criar um aluguel que começa hoje e marcar placa como indisponível', async () => {
-            const dataInicio = getDateString(0); // Hoje
-            const dataFim = getDateString(5);
-
-            const response = await request(app)
-                .post('/alugueis')
-                .set('Authorization', `Bearer ${adminToken}`)
-                .send({
-                    placa_id: placaIdDisponivel,
-                    cliente_id: clienteId,
-                    data_inicio: dataInicio,
-                    data_fim: dataFim
-                });
-
-            expect(response.statusCode).toBe(201);
-            
-            // Verifica se a placa ficou indisponível
-            const placa = await db('placas').where({ id: placaIdDisponivel }).first();
-            expect(placa.disponivel).toBe(false);
+            const dataInicio = getDateString(0); const dataFim = getDateString(5);
+            const response = await request(app).post('/api/alugueis').set('Authorization', `Bearer ${adminToken}`)
+                .send({ placa_id: placaIdDisponivel.toString(), cliente_id: clienteId.toString(), data_inicio: dataInicio, data_fim: dataFim });
+            expect(response.statusCode).toBe(201); expect(response.body).toHaveProperty('id');
+            const placa = await Placa.findById(placaIdDisponivel); expect(placa).toBeDefined(); expect(placa.disponivel).toBe(false);
         });
 
         it('deve retornar 409 (Conflict) se tentar alugar placa já alugada no período', async () => {
-            // Usa a placa que já tem um aluguel de -5 a +5 dias
-            const response = await request(app)
-                .post('/alugueis')
-                .set('Authorization', `Bearer ${adminToken}`)
-                .send({
-                    placa_id: placaIdJaAlugada, // Placa já alugada
-                    cliente_id: clienteId,
-                    data_inicio: getDateString(0), // Tenta alugar hoje (sobrepõe)
-                    data_fim: getDateString(10)
-                });
-
-            expect(response.statusCode).toBe(409);
-            expect(response.body.message).toContain('já está reservada');
+            const response = await request(app).post('/api/alugueis').set('Authorization', `Bearer ${adminToken}`)
+                .send({ placa_id: placaIdJaAlugada.toString(), cliente_id: clienteId.toString(), data_inicio: getDateString(0), data_fim: getDateString(10) });
+            expect(response.statusCode).toBe(409); expect(response.body.message).toContain('já está reservada');
         });
 
-        it('deve retornar 400 (Bad Request) se data_fim for <= data_inicio', async () => {
-            const response = await request(app)
-                .post('/alugueis')
-                .set('Authorization', `Bearer ${adminToken}`)
-                .send({
-                    placa_id: placaIdDisponivel,
-                    cliente_id: clienteId,
-                    data_inicio: getDateString(5),
-                    data_fim: getDateString(3) // Fim antes do início
-                });
-            
-            expect(response.statusCode).toBe(400);
-            expect(response.body.message).toContain('posterior à data inicial');
+         it('deve retornar 400 (Bad Request) se data_fim for <= data_inicio', async () => {
+             const response = await request(app).post('/api/alugueis').set('Authorization', `Bearer ${adminToken}`)
+                .send({ placa_id: placaIdDisponivel.toString(), cliente_id: clienteId.toString(), data_inicio: getDateString(5), data_fim: getDateString(3) });
+             expect(response.statusCode).toBe(400); expect(response.body.message).toMatch(/posterior à data inicial/i);
         });
-        
+
          it('deve retornar 401 (Unauthorized) se não houver token', async () => {
-             const response = await request(app)
-                .post('/alugueis')
-                .send({
-                    placa_id: placaIdDisponivel,
-                    cliente_id: clienteId,
-                    data_inicio: getDateString(1),
-                    data_fim: getDateString(10)
-                });
-             expect(response.statusCode).toBe(401);
-        });
+              const response = await request(app).post('/api/alugueis')
+                 .send({ placa_id: placaIdDisponivel.toString(), cliente_id: clienteId.toString(), data_inicio: getDateString(1), data_fim: getDateString(10) });
+              expect(response.statusCode).toBe(401);
+         });
     });
 
-    // --- Testes para GET /alugueis/placa/:placaId ---
-    describe('GET /alugueis/placa/:placaId', () => {
+    describe('GET /api/alugueis/placa/:placaId', () => {
         it('deve retornar a lista de alugueis para uma placa', async () => {
-            // Cria um aluguel passado e um futuro para a placa disponível
-            await db('alugueis').insert([
-                { placa_id: placaIdDisponivel, cliente_id: clienteId, data_inicio: getDateString(-10), data_fim: getDateString(-5), empresa_id: empresaId },
-                { placa_id: placaIdDisponivel, cliente_id: clienteId, data_inicio: getDateString(1), data_fim: getDateString(5), empresa_id: empresaId }
+            await Aluguel.create([
+                { placa: placaIdDisponivel, cliente: clienteId, data_inicio: getDateObject(-10), data_fim: getDateObject(-5), empresa: empresaId },
+                { placa: placaIdDisponivel, cliente: clienteId, data_inicio: getDateObject(1), data_fim: getDateObject(5), empresa: empresaId }
             ]);
-
-            const response = await request(app)
-                .get(`/alugueis/placa/${placaIdDisponivel}`)
-                .set('Authorization', `Bearer ${adminToken}`);
-
-            expect(response.statusCode).toBe(200);
-            expect(response.body).toBeInstanceOf(Array);
-            expect(response.body.length).toBe(2);
-            // Ordenado por data_inicio desc
-            expect(new Date(response.body[0].data_inicio).getDate()).toBe(new Date(getDateString(1)).getDate());
+            const response = await request(app).get(`/api/alugueis/placa/${placaIdDisponivel}`).set('Authorization', `Bearer ${adminToken}`);
+            expect(response.statusCode).toBe(200); expect(response.body).toBeInstanceOf(Array); expect(response.body.length).toBe(2);
+            expect(response.body[0]).toHaveProperty('id'); expect(response.body[0].cliente).toBeDefined();
+            if (response.body[0].cliente) {
+                 expect(response.body[0].cliente).toHaveProperty('id'); expect(response.body[0].cliente.nome).toBe('Cliente Teste Aluguel');
+            } else { throw new Error('Cliente não foi populado na resposta da API'); }
+             expect(new Date(response.body[0].data_inicio).toISOString().split('T')[0]).toBe(getDateString(1));
+             expect(new Date(response.body[1].data_inicio).toISOString().split('T')[0]).toBe(getDateString(-10));
         });
-        
+
          it('deve retornar 401 (Unauthorized) se não houver token', async () => {
-             const response = await request(app).get(`/alugueis/placa/${placaIdDisponivel}`);
-             expect(response.statusCode).toBe(401);
-        });
+              const response = await request(app).get(`/api/alugueis/placa/${placaIdDisponivel}`); expect(response.statusCode).toBe(401);
+         });
+
+         it('deve retornar 400 (Bad Request) se o ID da placa for inválido', async () => {
+              const response = await request(app).get('/api/alugueis/placa/id-invalido').set('Authorization', `Bearer ${adminToken}`);
+              expect(response.statusCode).toBe(400); expect(response.body.message).toContain('ID da placa inválido');
+         });
     });
 
-    // --- Testes para DELETE /alugueis/:id ---
-    describe('DELETE /alugueis/:id', () => {
-        let aluguelFuturoId;
-        let aluguelAtivoId;
-
+    describe('DELETE /api/alugueis/:id', () => {
+        let aluguelFuturoId, aluguelAtivoId, placaIdParaDelete;
         beforeEach(async () => {
-            // Cria um aluguel futuro
-            const [alugFuturo] = await db('alugueis').insert({
-                placa_id: placaIdDisponivel, cliente_id: clienteId, data_inicio: getDateString(5),
-                data_fim: getDateString(10), empresa_id: empresaId
-            }).returning('id');
-            aluguelFuturoId = (typeof alugFuturo === 'object') ? alugFuturo.id : alugFuturo;
-
-            // Cria um aluguel ativo (e marca placa como indisponível)
-             await db('placas').where({id: placaIdDisponivel}).update({ disponivel: false });
-             const [alugAtivo] = await db('alugueis').insert({
-                 placa_id: placaIdDisponivel, cliente_id: clienteId, data_inicio: getDateString(-2),
-                 data_fim: getDateString(2), empresa_id: empresaId
-             }).returning('id');
-            aluguelAtivoId = (typeof alugAtivo === 'object') ? alugAtivo.id : alugAtivo;
+             const placaDelete = await Placa.create({ numero_placa: 'ALUG-DEL', disponivel: true, regiao: regiaoId, empresa: empresaId });
+             placaIdParaDelete = placaDelete._id;
+             const alugFuturo = await Aluguel.create({ placa: placaIdParaDelete, cliente: clienteId, data_inicio: getDateObject(5), data_fim: getDateObject(10), empresa: empresaId });
+             aluguelFuturoId = alugFuturo._id;
+             await Placa.findByIdAndUpdate(placaIdParaDelete, { disponivel: false });
+             const alugAtivo = await Aluguel.create({ placa: placaIdParaDelete, cliente: clienteId, data_inicio: getDateObject(-2), data_fim: getDateObject(2), empresa: empresaId });
+             aluguelAtivoId = alugAtivo._id;
         });
 
         it('deve apagar um aluguel futuro e manter a placa indisponível (devido ao ativo)', async () => {
-            const response = await request(app)
-                .delete(`/alugueis/${aluguelFuturoId}`)
-                .set('Authorization', `Bearer ${adminToken}`);
-
-            expect(response.statusCode).toBe(200);
-
-            // Verifica se foi apagado do DB
-            const deletedAluguel = await db('alugueis').where({ id: aluguelFuturoId }).first();
-            expect(deletedAluguel).toBeUndefined();
-
-            // Verifica se a placa CONTINUA indisponível (por causa do aluguel ativo)
-            const placa = await db('placas').where({ id: placaIdDisponivel }).first();
-            expect(placa.disponivel).toBe(false);
+            const response = await request(app).delete(`/api/alugueis/${aluguelFuturoId}`).set('Authorization', `Bearer ${adminToken}`);
+            expect(response.statusCode).toBe(200); expect(response.body.message).toContain('cancelado com sucesso');
+            const deletedAluguel = await Aluguel.findById(aluguelFuturoId); expect(deletedAluguel).toBeNull();
+            const placa = await Placa.findById(placaIdParaDelete); expect(placa).toBeDefined(); expect(placa.disponivel).toBe(false);
         });
 
         it('deve apagar um aluguel ativo e tornar a placa disponível (se não houver outros)', async () => {
-             // Apaga o aluguel futuro primeiro
-             await db('alugueis').where({id: aluguelFuturoId}).del();
-
-             // Tenta apagar o aluguel ativo
-             const response = await request(app)
-                 .delete(`/alugueis/${aluguelAtivoId}`)
-                 .set('Authorization', `Bearer ${adminToken}`);
-
+             await Aluguel.findByIdAndDelete(aluguelFuturoId);
+             const response = await request(app).delete(`/api/alugueis/${aluguelAtivoId}`).set('Authorization', `Bearer ${adminToken}`);
             expect(response.statusCode).toBe(200);
+            const deletedAluguel = await Aluguel.findById(aluguelAtivoId); expect(deletedAluguel).toBeNull();
+            const placa = await Placa.findById(placaIdParaDelete); expect(placa).toBeDefined(); expect(placa.disponivel).toBe(true);
+        });
 
-            // Verifica se a placa VOLTOU a ficar disponível
-            const placa = await db('placas').where({ id: placaIdDisponivel }).first();
-            expect(placa.disponivel).toBe(true);
+        it('deve apagar um aluguel ativo mas manter a placa indisponível se houver outro aluguel ativo', async () => {
+             const outroAluguelAtivo = await Aluguel.create({ placa: placaIdParaDelete, cliente: clienteId, data_inicio: getDateObject(-1), data_fim: getDateObject(1), empresa: empresaId });
+             const response = await request(app).delete(`/api/alugueis/${aluguelAtivoId}`).set('Authorization', `Bearer ${adminToken}`);
+            expect(response.statusCode).toBe(200);
+             const placa = await Placa.findById(placaIdParaDelete); expect(placa).toBeDefined(); expect(placa.disponivel).toBe(false);
+             await Aluguel.findByIdAndDelete(outroAluguelAtivo._id);
         });
-        
+
          it('deve retornar 401 (Unauthorized) se não houver token', async () => {
-             const response = await request(app).delete(`/alugueis/${aluguelAtivoId}`);
-             expect(response.statusCode).toBe(401);
-        });
-         
+              const response = await request(app).delete(`/api/alugueis/${aluguelAtivoId}`); expect(response.statusCode).toBe(401);
+         });
+
          it('deve retornar 404 (Not Found) se o aluguel não existir', async () => {
-             const response = await request(app)
-                 .delete('/alugueis/99999')
-                 .set('Authorization', `Bearer ${adminToken}`);
-             expect(response.statusCode).toBe(404);
+              const idInexistente = new mongoose.Types.ObjectId();
+              const response = await request(app).delete(`/api/alugueis/${idInexistente}`).set('Authorization', `Bearer ${adminToken}`);
+              // <<< CORREÇÃO (Erro 3): Esperar 404 >>>
+              expect(response.statusCode).toBe(404);
+              // <<< FIM CORREÇÃO >>>
+              expect(response.body.message).toContain('Aluguel não encontrado');
+          });
+
+         it('deve retornar 400 (Bad Request) se o ID do aluguel for inválido', async () => {
+             const response = await request(app).delete('/api/alugueis/id-invalido').set('Authorization', `Bearer ${adminToken}`);
+              expect(response.statusCode).toBe(400); expect(response.body.message).toContain('ID do aluguel inválido');
          });
     });
 });
