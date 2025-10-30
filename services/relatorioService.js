@@ -13,7 +13,7 @@ class RelatorioService {
      * @returns {Promise<Array<object>>} - Array com objetos { regiao: string, total_placas: number }.
      * @throws {Error} - Lança erro 500 em caso de falha na agregação.
      */
-    async placasPorRegiao(empresa_id) {
+    async placasPorRegiao(empresa_id) { // <-- Recebe 'empresa_id' (correto)
         logger.info(`[RelatorioService] Iniciando agregação 'placasPorRegiao' para empresa ${empresa_id}.`);
         const startTime = Date.now(); // Marca o início
 
@@ -21,7 +21,7 @@ class RelatorioService {
             // Usa o Aggregation Pipeline do MongoDB para agrupar e contar
             const aggregationPipeline = [
                 // 1. Filtra as placas pela empresa (converte string para ObjectId se necessário)
-                { $match: { empresa: new mongoose.Types.ObjectId(empresa_id) } },
+                { $match: { empresa: new mongoose.Types.ObjectId(empresa_id) } }, // <-- Usa 'empresa_id' (correto)
                 // 2. Faz o "join" com a coleção de Regioes
                 {
                     $lookup: {
@@ -70,17 +70,17 @@ class RelatorioService {
 
     /**
      * Gera um resumo para o dashboard (total de placas, disponíveis, região principal).
-     * @param {string} empresa_id - ObjectId da empresa.
+     * @param {string} empresa_id - ObjectId da empresa. // 🐞 CORREÇÃO: Alterado de empresaId para empresa_id
      * @returns {Promise<object>} - Objeto com { totalPlacas, placasDisponiveis, regiaoPrincipal }.
      * @throws {Error} - Lança erro 500 em caso de falha nas queries.
      */
-    async getDashboardSummary(empresa_id) {
+    async getDashboardSummary(empresa_id) { // 🐞 CORREÇÃO: Alterado de empresaId para empresa_id
         logger.info(`[RelatorioService] Iniciando 'getDashboardSummary' para empresa ${empresa_id}.`);
         const startTime = Date.now(); // Marca o início
 
         try {
             // Converte para ObjectId uma vez
-            const empresaObjectId = new mongoose.Types.ObjectId(empresa_id);
+            const empresaObjectId = new mongoose.Types.ObjectId(empresa_id); // 🐞 CORREÇÃO: Usa empresa_id
 
             // Define as promessas
             logger.debug(`[RelatorioService] Iniciando query countDocuments para totalPlacas.`);
