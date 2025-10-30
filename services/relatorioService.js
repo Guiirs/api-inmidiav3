@@ -1,203 +1,149 @@
-// services/relatorioService.js
-const Aluguel = require('../models/Aluguel');
-const Placa = require('../models/Placa');
-const Regiao = require('../models/Regiao');
-const mongoose = require('mongoose'); // 1. IMPORTAÇÃO ADICIONADA
-const logger = require('../config/logger');
+// InMidia/backend/services/relatorioService.js
+const Placa = require('../models/Placa'); // Modelo Placa Mongoose
+const Regiao = require('../models/Regiao'); // Modelo Regiao Mongoose
+const mongoose = require('mongoose'); // Necessário para ObjectId
+const logger = require('../config/logger'); // Importa o logger
 
-/**
- * Obtém o faturamento total da empresa.
- */
-exports.getFaturamentoTotal = async (empresaId) => {
-    try {
-        const empId = new mongoose.Types.ObjectId(empresaId);
-        const resultado = await Aluguel.aggregate([
-            { $match: { empresa_id: empId } },
-            { $group: { _id: null, total: { $sum: '$valorTotal' } } }
-        ]);
-        return resultado.length > 0 ? resultado[0].total : 0;
-    } catch (error) {
-        logger.error(`[RelatorioService] Erro ao calcular faturamento total para empresa ${empresaId}: ${error.message}`);
-        throw new Error('Erro ao calcular faturamento total.');
-    }
-};
+class RelatorioService {
+    constructor() {}
 
-/**
- * Obtém o número total de placas da empresa.
- */
-exports.getTotalPlacas = async (empresaId) => {
-    try {
-        return await Placa.countDocuments({ empresa_id: empresaId });
-    } catch (error) {
-        logger.error(`[RelatorioService] Erro ao contar placas para empresa ${empresaId}: ${error.message}`);
-        throw new Error('Erro ao contar placas.');
-    }
-};
+    /**
+     * Gera um relatório de contagem de placas por região para uma empresa.
+     * @param {string} empresa_id - ObjectId da empresa.
+     * @returns {Promise<Array<object>>} - Array com objetos { regiao: string, total_placas: number }.
+     * @throws {Error} - Lança erro 500 em caso de falha na agregação.
+     */
+    async placasPorRegiao(empresa_id) { // <-- Recebe 'empresa_id' (underscore) - CORRETO
+        logger.info(`[RelatorioService] Iniciando agregação 'placasPorRegiao' para empresa ${empresa_id}.`);
+        const startTime = Date.now(); // Marca o início
 
-/**
- * Obtém o número de placas disponíveis (status 'disponivel').
- */
-exports.getPlacasDisponiveis = async (empresaId) => {
-    try {
-        return await Placa.countDocuments({ empresa_id: empresaId, status: 'disponivel' });
-    } catch (error) {
-        logger.error(`[RelatorioService] Erro ao contar placas disponíveis para empresa ${empresaId}: ${error.message}`);
-        throw new Error('Erro ao contar placas disponíveis.');
-    }
-};
-
-/**
- * Obtém a contagem de placas por região (agregação).
- */
-exports.getPlacasPorRegiao = async (empresaId) => {
-    try {
-        const empId = new mongoose.Types.ObjectId(empresaId);
-        const resultado = await Placa.aggregate([
-            { $match: { empresa_id: empId } },
-            {
-                $lookup: {
-                    from: Regiao.collection.name,
-                    localField: 'regiao_id',
-                    foreignField: '_id',
-                    as: 'regiao'
-                }
-            },
-            { $unwind: { path: '$regiao', preserveNullAndEmptyArrays: true } },
-            {
-                $group: {
-                    _id: '$regiao.nome',
-                    count: { $sum: 1 }
-                }
-            },
-            {
-                $project: {
-                    _id: 0,
-                    regiao: { $ifNull: ['$_id', 'Sem Região'] },
-                    count: '$count'
-                }
-            },
-            { $sort: { count: -1 } }
-        ]);
-        return resultado;
-    } catch (error) {
-        logger.error(`[RelatorioService] Erro ao agregar placas por região para empresa ${empresaId}: ${error.message}`);
-        throw new Error('Erro ao agregar placas por região.');
-    }
-};
-
-/**
- * Obtém o faturamento dos últimos 6 meses (agregação).
- */
-exports.getFaturamentoUltimosMeses = async (empresaId) => {
-    try {
-        const empId = new mongoose.Types.ObjectId(empresaId);
-        const seisMesesAtras = new Date();
-        seisMesesAtras.setMonth(seisMesesAtras.getMonth() - 6);
-        seisMesesAtras.setDate(1); // Garante que começa no dia 1
-        seisMesesAtras.setHours(0, 0, 0, 0); // Zera a hora
-
-        const resultado = await Aluguel.aggregate([
-            {
-                $match: {
-                    empresa_id: empId,
-                    createdAt: { $gte: seisMesesAtras } // Usando createdAt
-                }
-            },
-            {
-                $group: {
-                    _id: {
-                        ano: { $year: '$createdAt' },
-                        mes: { $month: '$createdAt' }
-                    },
-                    total: { $sum: '$valorTotal' }
-                }
-            },
-            { $sort: { '_id.ano': 1, '_id.mes': 1 } },
-            {
-                $project: {
-                    _id: 0,
-                    label: {
-                        $concat: [
-                            { $toString: '$_id.mes' },
-                            '/',
-                            { $toString: '$_id.ano' }
-                        ]
-                    },
-                    faturamento: '$total'
-                }
-            }
-        ]);
-        return resultado;
-    } catch (error) {
-        logger.error(`[RelatorioService] Erro ao calcular faturamento dos últimos meses para empresa ${empresaId}: ${error.message}`);
-        throw new Error('Erro ao calcular faturamento dos últimos meses.');
-    }
-};
-
-
-// --- 2. NOVA FUNÇÃO ADICIONADA ---
-
-/**
- * Obtém o faturamento total dentro de um período específico (dataInicio, dataFim).
- * As datas já chegam validadas do controller.
- */
-exports.getFaturamentoPorPeriodo = async (empresaId, dataInicio, dataFim) => {
-    logger.info(`[RelatorioService] Buscando faturamento para empresa ${empresaId} de ${dataInicio} até ${dataFim}`);
-    
-    try {
-        const empId = new mongoose.Types.ObjectId(empresaId);
-
-        // 3. LÓGICA DE TIMEZONE (FUSO HORÁRIO)
-        // Garante que a busca cubra o dia inteiro, independente do fuso.
-        
-        // Converte a string "YYYY-MM-DD" para um objeto Date
-        const inicioQuery = new Date(dataInicio); 
-        // Define para meia-noite UTC do dia de início
-        inicioQuery.setUTCHours(0, 0, 0, 0); 
-
-        const fimQuery = new Date(dataFim);
-        // Define para o último segundo UTC do dia de fim
-        fimQuery.setUTCHours(23, 59, 59, 999); 
-
-        logger.debug(`[RelatorioService] Intervalo de query (UTC): ${inicioQuery.toISOString()} até ${fimQuery.toISOString()}`);
-
-        // 4. AGREGAÇÃO
-        const resultado = await Aluguel.aggregate([
-            {
-                $match: {
-                    empresa_id: empId,
-                    createdAt: { // Filtra pela data de criação do aluguel
-                        $gte: inicioQuery,
-                        $lte: fimQuery
+        try {
+            // Usa o Aggregation Pipeline do MongoDB para agrupar e contar
+            const aggregationPipeline = [
+                // 1. Filtra as placas pela empresa (converte string para ObjectId se necessário)
+                { $match: { empresa: new mongoose.Types.ObjectId(empresa_id) } }, // <-- Usa 'empresa_id' - CORRETO
+                // 2. Faz o "join" com a coleção de Regioes
+                {
+                    $lookup: {
+                        from: Regiao.collection.name, // Nome da coleção de Regioes
+                        localField: 'regiao',         // Campo na coleção Placa (ObjectId)
+                        foreignField: '_id',          // Campo na coleção Regiao (_id)
+                        as: 'regiaoInfo'              // Nome do novo array
                     }
-                }
-            },
-            {
-                $group: {
-                    _id: null, // Agrupa tudo num só resultado
-                    total: { $sum: '$valorTotal' }, // Soma o valorTotal
-                    count: { $sum: 1 } // Conta quantos alugueis
-                }
-            },
-            {
-                $project: {
-                    _id: 0,
-                    faturamentoTotal: '$total',
-                    numeroAlugueis: '$count'
-                }
-            }
-        ]);
+                },
+                // 3. Desconstrói o array regiaoInfo
+                { $unwind: { path: '$regiaoInfo', preserveNullAndEmptyArrays: true } },
+                // 4. Agrupa pelo nome da região
+                {
+                    $group: {
+                        _id: { regiaoNome: { $ifNull: ['$regiaoInfo.nome', 'Sem Região'] } },
+                        total_placas: { $sum: 1 } // Conta os documentos
+                    }
+                },
+                // 5. Formata a saída
+                {
+                    $project: {
+                        _id: 0, // Remove o campo _id do grupo
+                        regiao: '$_id.regiaoNome', // Renomeia
+                        // 🐞 CORREÇÃO: O seu frontend (DashboardPage.jsx) espera 'total_placas'. O backend (aqui) chama-se 'count'.
+                        // Vou corrigir o frontend na próxima etapa, mas para o seu *outro* controller (relatorioController.js) funcionar, vamos usar o nome que ele espera.
+                        // O seu controller 'relatorioController.js' chama 'getPlacasPorRegiao', que usa este serviço 'placasPorRegiao'.
+                        // O seu frontend 'DashboardPage.jsx' chama 'fetchPlacasPorRegiaoReport' (que usa este serviço) e espera 'total_placas'.
+                        // Esta linha está correta para o frontend.
+                        total_placas: 1
+                    }
+                },
+                // 6. Ordena pelo nome da região
+                { $sort: { regiao: 1 } }
+            ];
 
-        // Se não houver resultados, retorna 0
-        if (resultado.length === 0) {
-            return { faturamentoTotal: 0, numeroAlugueis: 0 };
+            logger.debug(`[RelatorioService] Executando pipeline de agregação 'placasPorRegiao'.`);
+            const results = await Placa.aggregate(aggregationPipeline).exec();
+            const endTime = Date.now();
+            logger.info(`[RelatorioService] Agregação 'placasPorRegiao' concluída em ${endTime - startTime}ms. ${results.length} resultados.`);
+
+            return results; // Retorna o array de objetos simples
+
+        } catch (error) {
+            const endTime = Date.now();
+            logger.error(`[RelatorioService] Erro na agregação 'placasPorRegiao' (tempo: ${endTime - startTime}ms): ${error.message}`, { stack: error.stack });
+            const serviceError = new Error(`Erro interno ao gerar relatório de placas por região: ${error.message}`);
+            serviceError.status = 500;
+            throw serviceError;
         }
-
-        return resultado[0];
-
-    } catch (error) {
-        logger.error(`[RelatorioService] Erro ao calcular faturamento por período para empresa ${empresaId}: ${error.message}`);
-        // Re-lança o erro para ser tratado pelo errorHandler
-        throw new Error('Erro ao calcular faturamento por período.');
     }
-};
+
+    /**
+     * Gera um resumo para o dashboard (total de placas, disponíveis, região principal).
+     * @param {string} empresa_id - ObjectId da empresa. // 🐞 CORREÇÃO: Alterado de empresaId para empresa_id
+     * @returns {Promise<object>} - Objeto com { totalPlacas, placasDisponiveis, regiaoPrincipal }.
+     * @throws {Error} - Lança erro 500 em caso de falha nas queries.
+     */
+    async getDashboardSummary(empresa_id) { // 🐞 CORREÇÃO: Alterado de empresaId para empresa_id
+        logger.info(`[RelatorioService] Iniciando 'getDashboardSummary' para empresa ${empresa_id}.`);
+        const startTime = Date.now(); // Marca o início
+
+        try {
+            // Converte para ObjectId uma vez
+            const empresaObjectId = new mongoose.Types.ObjectId(empresa_id); // 🐞 CORREÇÃO: Usa empresa_id
+
+            // Define as promessas
+            logger.debug(`[RelatorioService] Iniciando query countDocuments para totalPlacas.`);
+            const totalPlacasPromise = Placa.countDocuments({ empresa: empresaObjectId });
+
+            logger.debug(`[RelatorioService] Iniciando query countDocuments para placasDisponiveis.`);
+            const placasDisponiveisPromise = Placa.countDocuments({ empresa: empresaObjectId, disponivel: true });
+
+            logger.debug(`[RelatorioService] Iniciando pipeline de agregação para regiaoPrincipal.`);
+            const regiaoPrincipalPipeline = [
+                { $match: { empresa: empresaObjectId } }, // <-- Filtro correto
+                { $match: { regiao: { $ne: null } } }, // Apenas placas com região
+                {
+                    $lookup: {
+                        from: Regiao.collection.name, localField: 'regiao',
+                        foreignField: '_id', as: 'regiaoInfo'
+                    }
+                },
+                { $unwind: '$regiaoInfo' },
+                // 🐞 CORREÇÃO: O 'count' aqui está correto, mas o 'placasPorRegiao' (acima) estava a usar 'total_placas' no $group
+                { $group: { _id: { regiaoNome: '$regiaoInfo.nome' }, count: { $sum: 1 } } },
+                { $sort: { count: -1 } },
+                { $limit: 1 },
+                { $project: { _id: 0, nome: '$_id.regiaoNome' } }
+            ];
+            const regiaoPrincipalPromise = Placa.aggregate(regiaoPrincipalPipeline).exec();
+
+            // Executa todas as promessas em paralelo
+            const [totalPlacasResult, placasDisponiveisResult, regiaoPrincipalResultArray] = await Promise.all([
+                totalPlacasPromise,
+                placasDisponiveisPromise,
+                regiaoPrincipalPromise
+            ]);
+            const endTimeQueries = Date.now();
+            logger.debug(`[RelatorioService] Queries 'getDashboardSummary' concluídas em ${endTimeQueries - startTime}ms.`);
+            logger.debug(`[RelatorioService] Resultados - Total: ${totalPlacasResult}, Disponíveis: ${placasDisponiveisResult}, Região Agg: ${JSON.stringify(regiaoPrincipalResultArray)}`);
+
+
+            // Extrai o nome da região principal
+            const regiaoPrincipal = regiaoPrincipalResultArray.length > 0 ? regiaoPrincipalResultArray[0].nome : 'N/A';
+            const finalResult = {
+                totalPlacas: totalPlacasResult || 0,
+                placasDisponiveis: placasDisponiveisResult || 0,
+                regiaoPrincipal: regiaoPrincipal,
+            };
+            const endTime = Date.now();
+            logger.info(`[RelatorioService] 'getDashboardSummary' concluído em ${endTime - startTime}ms.`);
+
+            return finalResult;
+
+        } catch (error) {
+            const endTime = Date.now();
+            logger.error(`[RelatorioService] Erro nas queries 'getDashboardSummary' (tempo: ${endTime - startTime}ms): ${error.message}`, { stack: error.stack });
+            const serviceError = new Error(`Erro interno ao gerar resumo do dashboard: ${error.message}`);
+            serviceError.status = 500;
+            throw serviceError;
+        }
+    }
+}
+
+module.exports = RelatorioService; // Exporta a classe
