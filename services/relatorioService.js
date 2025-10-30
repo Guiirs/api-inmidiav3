@@ -13,7 +13,7 @@ class RelatorioService {
      * @returns {Promise<Array<object>>} - Array com objetos { regiao: string, total_placas: number }.
      * @throws {Error} - Lança erro 500 em caso de falha na agregação.
      */
-    async placasPorRegiao(empresa_id) { // <-- Recebe 'empresa_id' (correto)
+    async placasPorRegiao(empresa_id) { // (Esta função já estava correta)
         logger.info(`[RelatorioService] Iniciando agregação 'placasPorRegiao' para empresa ${empresa_id}.`);
         const startTime = Date.now(); // Marca o início
 
@@ -21,7 +21,7 @@ class RelatorioService {
             // Usa o Aggregation Pipeline do MongoDB para agrupar e contar
             const aggregationPipeline = [
                 // 1. Filtra as placas pela empresa (converte string para ObjectId se necessário)
-                { $match: { empresa: new mongoose.Types.ObjectId(empresa_id) } }, // <-- Usa 'empresa_id' (correto)
+                { $match: { empresa: new mongoose.Types.ObjectId(empresa_id) } },
                 // 2. Faz o "join" com a coleção de Regioes
                 {
                     $lookup: {
@@ -45,7 +45,7 @@ class RelatorioService {
                     $project: {
                         _id: 0, // Remove o campo _id do grupo
                         regiao: '$_id.regiaoNome', // Renomeia
-                        total_placas: 1 // Mantém o total
+                        total_placas: 1
                     }
                 },
                 // 6. Ordena pelo nome da região
