@@ -11,15 +11,15 @@ const AppError = require('../utils/AppError');
 const axios = require('axios');
 
 // Variáveis de ambiente para a API Externa (Requer configuração no .env)
-const PDF_REST_API_KEY = process.env.PDF_REST_API_KEY || '';
-const PDF_REST_ENDPOINT = process.env.PDF_REST_ENDPOINT || 'https://api.pdfrest.com';
+const PDF_REST_API_KEY = process.env.PDF_REST_API_KEY || '313c2df7-33d4-479b-b33e-7f3a82e4c5f6';
+const PDF_REST_ENDPOINT = process.env.PDF_REST_ENDPOINT || 'https://api.pdfrest.com/pdf';
 
 
 class RelatorioService {
     constructor() {}
 
     /**
-     * [NOVO MÉTODO - CORREÇÃO DASHBOARD]
+     * [MÉTODO CORRIGIDO - DASHBOARD]
      * Busca o resumo de dados para o dashboard.
      * @param {string} empresa_id - ObjectId da empresa.
      * @returns {Promise<object>} - Objeto com { totalPlacas, placasDisponiveis, regiaoPrincipal }.
@@ -73,7 +73,7 @@ class RelatorioService {
     }
 
     /**
-     * [NOVO MÉTODO - CORREÇÃO DASHBOARD]
+     * [MÉTODO CORRIGIDO - DASHBOARD]
      * Agrupa a contagem de placas por região.
      * @param {string} empresa_id - ObjectId da empresa.
      * @returns {Promise<Array<object>>} - Array com { regiao, total_placas }.
@@ -114,24 +114,19 @@ class RelatorioService {
 
     /**
      * Calcula métricas de ocupação de placas em um determinado período.
-     * * [CORRIGIDO] Adicionado 'empresa_id' como primeiro parâmetro.
-     * [CORRIGIDO] Adicionado filtro de 'empresa_id' nas agregações.
-     * * @param {string} empresa_id - ObjectId da empresa.
+     * @param {string} empresa_id - ObjectId da empresa.
      * @param {Date} dataInicio - Data de início (Objeto Date).
      * @param {Date} dataFim - Data de fim (Objeto Date).
      * @returns {Promise<object>} - Relatório consolidado.
      */
     async ocupacaoPorPeriodo(empresa_id, dataInicio, dataFim) {
-        // [CORREÇÃO LOG] Log agora mostra os parâmetros corretos
         logger.info(`[RelatorioService] Calculando ocupação para Empresa ${empresa_id} no período: ${dataInicio.toISOString()} a ${dataFim.toISOString()}`);
         
         const inicio = new Date(dataInicio);
         const fim = new Date(dataFim);
         
-        // Ajusta a data final para incluir o dia inteiro
         fim.setDate(fim.getDate() + 1);
 
-        // [CORREÇÃO VALIDAÇÃO] Esta validação agora funciona
         if (isNaN(inicio) || isNaN(fim) || fim <= inicio) {
             logger.warn(`[RelatorioService] Datas inválidas recebidas: Inicio=${dataInicio}, Fim=${dataFim}`);
             throw new AppError('Datas de relatório inválidas.', 400);
@@ -145,7 +140,7 @@ class RelatorioService {
             { 
                 $match: { 
                     is_active: true,
-                    empresa: empresaObjectId // [CORREÇÃO] Filtro de empresa adicionado
+                    empresa: empresaObjectId 
                 } 
             }, 
             {
@@ -180,12 +175,15 @@ class RelatorioService {
                                 in: {
                                     $let: {
                                         vars: {
-                                            aluguelInicio: '$$aluguel.data_inicio',
-                                            aluguelFim: '$$aluguel.data_fim',
-                                            effectiveStart: { $max: ['$$aluguelInicio', inicio] },
-                                            effectiveEnd: { $min: ['$$aluguelFim', fim] }
+                                            // [CORREÇÃO FINAL]
+                                            // As variáveis 'effectiveStart' e 'effectiveEnd'
+                                            // devem ser calculadas diretamente de '$$aluguel.*'
+                                            // e não de outras variáveis 'vars' no mesmo bloco.
+                                            effectiveStart: { $max: ['$$aluguel.data_inicio', inicio] },
+                                            effectiveEnd: { $min: ['$$aluguel.data_fim', fim] }
                                         },
                                         in: {
+                                            // Agora 'effectiveStart' e 'effectiveEnd' estão disponíveis aqui
                                             $divide: [
                                                 { $subtract: ['$$effectiveEnd', '$$effectiveStart'] },
                                                 1000 * 60 * 60 * 24
@@ -213,13 +211,12 @@ class RelatorioService {
                     as: 'regiaoDetalhes'
                 }
             },
-            // [AJUSTE] Usar 'preserveNullAndEmptyArrays' para não perder regiões sem nome
             { $unwind: { path: '$regiaoDetalhes', preserveNullAndEmptyArrays: true } }, 
             {
                 $project: {
                     _id: 0,
                     regiaoId: '$_id',
-                    regiao: { $ifNull: ['$regiaoDetalhes.nome', 'Sem Região'] }, // [AJUSTE] Trata placas sem região
+                    regiao: { $ifNull: ['$regiaoDetalhes.nome', 'Sem Região'] },
                     totalPlacas: 1,
                     totalDiasAlugados: { $round: ['$totalDiasAlugados', 0] },
                     totalDiasPlacas: { $multiply: ['$totalPlacas', numDiasPeriodo] }
@@ -253,7 +250,7 @@ class RelatorioService {
         const novosAlugueisPorCliente = await Aluguel.aggregate([
              {
                 $match: {
-                    empresa: empresaObjectId, // [CORREÇÃO] Filtro de empresa adicionado
+                    empresa: empresaObjectId, 
                     data_inicio: { $gte: inicio, $lt: fim } 
                 }
              },
@@ -273,7 +270,6 @@ class RelatorioService {
                      as: 'clienteDetalhes'
                  }
              },
-             // [AJUSTE] Usar 'preserveNullAndEmptyArrays' para não perder aluguéis de clientes removidos
              { $unwind: { path: '$clienteDetalhes', preserveNullAndEmptyArrays: true } },
              {
                  $project: {
