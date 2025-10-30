@@ -1,89 +1,112 @@
 // controllers/relatorioController.js
 const { validationResult } = require('express-validator');
-const RelatorioService = require('../services/relatorioService'); 
-const logger = require('../config/logger'); 
-// Não é necessário importar AppError aqui, ele deve ser tratado pelo next(err)
+const RelatorioService = require('../services/relatorioService');
+const logger = require('../config/logger');
+// const AppError = require('../utils/AppError'); // Necessário se não for um erro 400
 
-// Instancia o serviço
 const relatorioService = new RelatorioService();
 
 /**
- * Controller para gerar um relatório de placas por região.
+ * Controller para obter placas por região.
+ * GET /api/v1/relatorios/placas-por-regiao
  */
 exports.getPlacasPorRegiao = async (req, res, next) => {
-    const empresa_id = req.user.empresaId; 
-    const userId = req.user.id; 
-
-    logger.info(`[RelatorioController] Utilizador ${userId} requisitou getPlacasPorRegiao para empresa ${empresa_id}.`);
-
+    const empresa_id = req.user.empresaId;
     try {
+        // Assumindo lógica de serviço existente
         const data = await relatorioService.placasPorRegiao(empresa_id);
-        logger.info(`[RelatorioController] getPlacasPorRegiao retornou ${data.length} regiões para empresa ${empresa_id}.`);
-        res.status(200).json(data); 
+        res.status(200).json(data);
     } catch (err) {
-        logger.error(`[RelatorioController] Erro ao chamar relatorioService.placasPorRegiao: ${err.message}`, { status: err.status, stack: err.stack });
+        logger.error(`[RelatorioController] Erro ao obter placas por região: ${err.message}`, { status: err.status, stack: err.stack });
         next(err);
     }
 };
 
 /**
- * Controller para gerar o resumo do dashboard.
+ * Controller para obter o resumo do Dashboard.
+ * GET /api/v1/relatorios/dashboard-summary
  */
 exports.getDashboardSummary = async (req, res, next) => {
-    const empresa_id = req.user.empresaId; 
-    const userId = req.user.id;
-
-    logger.info(`[RelatorioController] Utilizador ${userId} requisitou getDashboardSummary para empresa ${empresa_id}.`);
-
+    const empresa_id = req.user.empresaId;
     try {
-        const summary = await relatorioService.getDashboardSummary(empresa_id);
-        logger.info(`[RelatorioController] getDashboardSummary concluído para empresa ${empresa_id}.`);
-        res.status(200).json(summary); 
+        // Assumindo lógica de serviço existente
+        const data = await relatorioService.dashboardSummary(empresa_id);
+        res.status(200).json(data);
     } catch (err) {
-        logger.error(`[RelatorioController] Erro ao chamar relatorioService.getDashboardSummary: ${err.message}`, { status: err.status, stack: err.stack });
+        logger.error(`[RelatorioController] Erro ao obter resumo do dashboard: ${err.message}`, { status: err.status, stack: err.stack });
         next(err);
     }
 };
 
 /**
- * Controller para obter a percentagem de ocupação das placas por período.
+ * Controller para obter a percentagem de ocupação por período.
  * GET /api/v1/relatorios/ocupacao-por-periodo?data_inicio=YYYY-MM-DD&data_fim=YYYY-MM-DD
  */
 exports.getOcupacaoPorPeriodo = async (req, res, next) => {
-    const empresa_id = req.user.empresaId; 
+    const empresa_id = req.user.empresaId;
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        const firstError = errors.array({ onlyFirstError: true })[0].msg;
+        logger.warn(`[RelatorioController] Requisição de Ocupação falhou: Erro de validação: ${firstError}`);
+        return res.status(400).json({ message: firstError });
+    }
+
+    // Convertendo para Date objects (início do dia)
+    const dataInicio = new Date(req.query.data_inicio);
+    const dataFim = new Date(req.query.data_fim);
+
+    if (isNaN(dataInicio.getTime()) || isNaN(dataFim.getTime())) {
+        return res.status(400).json({ message: 'Datas de período inválidas.' });
+    }
+
+    try {
+        const reportData = await relatorioService.ocupacaoPorPeriodo(empresa_id, dataInicio, dataFim);
+        res.status(200).json(reportData);
+    } catch (err) {
+        logger.error(`[RelatorioController] Erro ao obter ocupação por período: ${err.message}`, { status: err.status, stack: err.stack });
+        next(err);
+    }
+};
+
+
+/**
+ * [NOVO CONTROLLER] Controller para gerar e exportar o relatório de ocupação como PDF.
+ * GET /api/v1/relatorios/export/ocupacao-por-periodo?data_inicio=YYYY-MM-DD&data_fim=YYYY-MM-DD
+ */
+exports.exportOcupacaoPdf = async (req, res, next) => {
+    const empresa_id = req.user.empresaId;
     const userId = req.user.id;
 
-    logger.info(`[RelatorioController] Utilizador ${userId} requisitou getOcupacaoPorPeriodo para empresa ${empresa_id}.`);
-    
+    logger.info(`[RelatorioController] Utilizador ${userId} requisitou exportação PDF de Ocupação.`);
+
     // 1. Verifica erros de validação (express-validator)
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const firstError = errors.array({ onlyFirstError: true })[0].msg;
-        logger.warn(`[RelatorioController] Ocupacao falhou: Erro de validação: ${firstError}`);
+        logger.warn(`[RelatorioController] Exportação PDF falhou: Erro de validação: ${firstError}`);
         return res.status(400).json({ message: firstError });
     }
 
-    // 2. Extrai as strings de data
-    const dataInicioString = req.query.data_inicio;
-    const dataFimString = req.query.data_fim;
-    
-    // 3. CORREÇÃO: Converte explicitamente para objetos Date (início do dia)
-    const dataInicio = new Date(dataInicioString);
-    const dataFim = new Date(dataFimString);
-    
-    // Validação de segurança extra
+    // 2. Converte explicitamente para objetos Date (início do dia)
+    const dataInicio = new Date(req.query.data_inicio);
+    const dataFim = new Date(req.query.data_fim);
+
     if (isNaN(dataInicio.getTime()) || isNaN(dataFim.getTime())) {
-         return res.status(400).json({ message: 'As datas fornecidas são inválidas após a conversão.' });
+         return res.status(400).json({ message: 'Datas de período inválidas.' });
     }
 
     try {
-        // 4. Chama o serviço com os objetos Date
-        const result = await relatorioService.ocupacaoPorPeriodo(empresa_id, dataInicio, dataFim);
-        logger.info(`[RelatorioController] getOcupacaoPorPeriodo concluído. Ocupação: ${result.percentagem}%.`);
-        res.status(200).json(result); 
+        // 3. Obtém os dados completos (reutiliza a lógica de agregação)
+        const reportData = await relatorioService.ocupacaoPorPeriodo(empresa_id, dataInicio, dataFim);
+
+        // 4. Chama o serviço para gerar o PDF e enviar para a resposta HTTP
+        await relatorioService.generateOcupacaoPdf(reportData, dataInicio, dataFim, res);
+
+        // O serviço doc.end() cuida do res.end(), então não precisamos de res.send()/json() aqui.
     } catch (err) {
-        // O erro (que deve ser um AppError do service) é passado para o errorHandler global
-        logger.error(`[RelatorioController] Erro ao chamar relatorioService.ocupacaoPorPeriodo: ${err.message}`, { status: err.status, stack: err.stack });
+        logger.error(`[RelatorioController] Erro ao exportar PDF: ${err.message}`, { status: err.status, stack: err.stack });
+        // Se o erro for operacional (ex: 404), ele será tratado pelo errorHandler
         next(err);
     }
 };
