@@ -15,40 +15,33 @@ class RelatorioService {
      */
     async placasPorRegiao(empresa_id) { // (Esta função já estava correta)
         logger.info(`[RelatorioService] Iniciando agregação 'placasPorRegiao' para empresa ${empresa_id}.`);
-        const startTime = Date.now(); // Marca o início
+        const startTime = Date.now(); 
 
         try {
-            // Usa o Aggregation Pipeline do MongoDB para agrupar e contar
             const aggregationPipeline = [
-                // 1. Filtra as placas pela empresa (converte string para ObjectId se necessário)
                 { $match: { empresa: new mongoose.Types.ObjectId(empresa_id) } },
-                // 2. Faz o "join" com a coleção de Regioes
                 {
                     $lookup: {
-                        from: Regiao.collection.name, // Nome da coleção de Regioes
-                        localField: 'regiao',         // Campo na coleção Placa (ObjectId)
-                        foreignField: '_id',          // Campo na coleção Regiao (_id)
-                        as: 'regiaoInfo'              // Nome do novo array
+                        from: Regiao.collection.name, 
+                        localField: 'regiao',         
+                        foreignField: '_id',          
+                        as: 'regiaoInfo'              
                     }
                 },
-                // 3. Desconstrói o array regiaoInfo
                 { $unwind: { path: '$regiaoInfo', preserveNullAndEmptyArrays: true } },
-                // 4. Agrupa pelo nome da região
                 {
                     $group: {
                         _id: { regiaoNome: { $ifNull: ['$regiaoInfo.nome', 'Sem Região'] } },
-                        total_placas: { $sum: 1 } // Conta os documentos
+                        total_placas: { $sum: 1 } 
                     }
                 },
-                // 5. Formata a saída
                 {
                     $project: {
-                        _id: 0, // Remove o campo _id do grupo
-                        regiao: '$_id.regiaoNome', // Renomeia
+                        _id: 0, 
+                        regiao: '$_id.regiaoNome', 
                         total_placas: 1
                     }
                 },
-                // 6. Ordena pelo nome da região
                 { $sort: { regiao: 1 } }
             ];
 
@@ -57,7 +50,7 @@ class RelatorioService {
             const endTime = Date.now();
             logger.info(`[RelatorioService] Agregação 'placasPorRegiao' concluída em ${endTime - startTime}ms. ${results.length} resultados.`);
 
-            return results; // Retorna o array de objetos simples
+            return results; 
 
         } catch (error) {
             const endTime = Date.now();
@@ -76,7 +69,14 @@ class RelatorioService {
      */
     async getDashboardSummary(empresa_id) { // 🐞 CORREÇÃO: Alterado de empresaId para empresa_id
         logger.info(`[RelatorioService] Iniciando 'getDashboardSummary' para empresa ${empresa_id}.`);
-        const startTime = Date.now(); // Marca o início
+        const startTime = Date.now(); 
+
+        // 🐞 CORREÇÃO DE BUG: Se empresa_id for undefined (devido à inconsistência), a query falha.
+        if (!empresa_id) {
+             logger.warn("[RelatorioService] getDashboardSummary chamado sem empresa_id.");
+             // Retorna 0 para evitar o crash
+             return { totalPlacas: 0, placasDisponiveis: 0, regiaoPrincipal: 'N/A' };
+        }
 
         try {
             // Converte para ObjectId uma vez
@@ -92,7 +92,7 @@ class RelatorioService {
             logger.debug(`[RelatorioService] Iniciando pipeline de agregação para regiaoPrincipal.`);
             const regiaoPrincipalPipeline = [
                 { $match: { empresa: empresaObjectId } },
-                { $match: { regiao: { $ne: null } } }, // Apenas placas com região
+                { $match: { regiao: { $ne: null } } }, 
                 {
                     $lookup: {
                         from: Regiao.collection.name, localField: 'regiao',
@@ -117,8 +117,6 @@ class RelatorioService {
             logger.debug(`[RelatorioService] Queries 'getDashboardSummary' concluídas em ${endTimeQueries - startTime}ms.`);
             logger.debug(`[RelatorioService] Resultados - Total: ${totalPlacasResult}, Disponíveis: ${placasDisponiveisResult}, Região Agg: ${JSON.stringify(regiaoPrincipalResultArray)}`);
 
-
-            // Extrai o nome da região principal
             const regiaoPrincipal = regiaoPrincipalResultArray.length > 0 ? regiaoPrincipalResultArray[0].nome : 'N/A';
             const finalResult = {
                 totalPlacas: totalPlacasResult || 0,
