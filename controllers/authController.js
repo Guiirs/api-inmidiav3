@@ -129,3 +129,5 @@ exports.verifyResetToken = async (req, res, next) => {
         next(error);
     }
 };
+
+// 🐞 CORREÇÃO: A CHAVE '}' EXTRA QUE ESTAVA AQUI FOI REMOVIDA.

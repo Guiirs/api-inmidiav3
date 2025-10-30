@@ -1,17 +1,39 @@
+// models/Aluguel.js
 const mongoose = require('mongoose');
-const { Schema } = mongoose;
 
-const aluguelSchema = new Schema({
-  data_inicio: { type: Date, required: true },
-  data_fim: { type: Date, required: true },
-    placa: { type: Schema.Types.ObjectId, ref: 'Placa', required: true, index: true }, // Adicionado index: true
-    cliente: { type: Schema.Types.ObjectId, ref: 'Cliente', required: true, index: true }, // Adicionado index: true
-    empresa: { type: Schema.Types.ObjectId, ref: 'Empresa', required: true, index: true }, // Adicionado index: true
-  // Timestamps adicionados automaticamente
-}, {
-  timestamps: true
-});
+const AluguelSchema = new mongoose.Schema({
+    placa_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Placa',
+        required: [true, 'A placa é obrigatória.'],
+    },
+    cliente_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Cliente',
+        required: [true, 'O cliente é obrigatório.'],
+    },
+    empresa_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Empresa',
+        required: [true, 'A empresa é obrigatória.'],
+    },
+    dataInicio: {
+        type: Date,
+        required: [true, 'A data de início é obrigatória.'],
+    },
+    dataFim: {
+        type: Date,
+        required: [true, 'A data de fim é obrigatória.'],
+    },
+    valorTotal: {
+        type: Number,
+        required: [true, 'O valor total é obrigatório.'],
+    },
+    // Adicionado timestamps para termos createdAt e updatedAt
+}, { timestamps: true }); 
 
-// Pode ser útil indexar por placa e datas para verificar conflitos rapidamente
-aluguelSchema.index({ placa: 1, data_inicio: 1, data_fim: 1 }); // Índice de conflito mantido
-module.exports = mongoose.model('Aluguel', aluguelSchema);
+// ⚙️ MELHORIA DE PERFORMANCE: Adiciona um índice composto
+// Isto torna as consultas de relatórios (filtrando por empresa e data) muito mais rápidas.
+AluguelSchema.index({ empresa_id: 1, createdAt: -1 });
+
+module.exports = mongoose.model('Aluguel', AluguelSchema);

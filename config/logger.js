@@ -47,7 +47,10 @@ const logger = winston.createLogger({
 // --- ADICIONE ESTE BLOCO ---
 // Cria um stream com um método 'write' que o morgan pode usar
 logger.stream = {
-  write: (message) => logger.http(message.substring(0, message.lastIndexOf('\n'))),
+  write: (message) => {
+    // Remove a quebra de linha extra que o morgan adiciona
+    logger.http(message.substring(0, message.lastIndexOf('\n')));
+  },
 };
 // -------------------------
 

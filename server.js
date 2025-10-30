@@ -11,6 +11,11 @@ const connectDB = require('./config/dbMongo'); // Função de conexão com Mongo
 const logger = require('./config/logger'); // Winston logger
 const errorHandler = require('./middlewares/errorHandler'); // Middleware de tratamento de erros
 
+// --- MELHORIA: Importações de Segurança e Logging ---
+const helmet = require('helmet'); // Para segurança HTTP
+const morgan = require('morgan'); // Para logging de requisições
+// --- FIM MELHORIA ---
+
 // Importação das rotas (Assumindo que os ficheiros de rota exportam o router ou uma função)
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
@@ -39,7 +44,8 @@ const allowedOrigins = [
     'http://localhost:5500',
     'http://127.0.0.1:5500',
     'http://localhost:3000',
-    'http://localhost:4000', // Sua porta local
+    'http://localhost:4000',
+    'http://localhost:5173', // Sua porta local
     'https://inmidia.squareweb.app' // SEU FRONTEND EM PRODUÇÃO
 ];
 const corsOptions = {
@@ -57,10 +63,18 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
+// --- MELHORIA: Middlewares de Segurança e Logging ---
+app.use(helmet()); // 🔒 Adiciona 11 middlewares de segurança HTTP
+// --- FIM MELHORIA ---
 
 // Middlewares Essenciais
 app.use(express.json()); // Para fazer parse do body de requisições JSON
 app.use(express.urlencoded({ extended: true })); // Para fazer parse de formulários URL-encoded
+
+// --- MELHORIA: Integração do Morgan com Winston ---
+// Usa o stream do logger para integrar os logs HTTP do morgan
+app.use(morgan('dev', { stream: logger.stream }));
+// --- FIM MELHORIA ---
 
 
 // >>> 2. MONTAGEM CORRIGIDA DAS ROTAS (Mistura de Funções e Objetos) <<<
@@ -115,7 +129,9 @@ let server; // Variável para guardar a instância do servidor
 if (process.env.NODE_ENV !== 'test') {
   server = app.listen(PORT, () => {
     logger.info(`[Server] Servidor a correr na porta ${PORT}`);
+    // --- MELHORIA: Log do Ambiente ---
     logger.info(`[Server] Ambiente: ${process.env.NODE_ENV || 'development'}`);
+    // --- FIM MELHORIA ---
     logger.info(`[Server] Documentação API disponível em /api-docs`);
   });
 }
