@@ -1,107 +1,61 @@
 // controllers/relatorioController.js
-const relatorioService = require('../services/relatorioService');
-const logger = require('../config/logger');
+const { validationResult } = require('express-validator');
+const RelatorioService = require('../services/relatorioService'); // Serviço Mongoose
+const logger = require('../config/logger'); // Importa o logger
+
+// Instancia o serviço fora da função de criação (padrão preferido)
+const relatorioService = new RelatorioService();
 
 /**
- * Obtém os dados agregados para o Dashboard.
- * (Esta função substitui a sua 'getDashboardSummary' e 'getPlacasPorRegiao' anteriores)
+ * Controller para gerar um relatório de placas por região.
  */
-exports.getDashboardData = async (req, res, next) => {
+exports.getPlacasPorRegiao = async (req, res, next) => {
+    // Verifica se req.user e req.user.empresaId existem
+    if (!req.user || !req.user.empresaId) {
+        logger.error('[RelatorioController] getPlacasPorRegiao: Informações do utilizador (empresaId) em falta no token.');
+        return res.status(401).json({ message: 'Autorização inválida ou dados em falta.' });
+    }
+    const empresa_id = req.user.empresaId; // ID da empresa do token
+    const userId = req.user.id; // Para logging
+
+    logger.info(`[RelatorioController] Utilizador ${userId} requisitou getPlacasPorRegiao para empresa ${empresa_id}.`);
+
     try {
-        // 🐞 CORREÇÃO: Lê 'empresaId' (camelCase) do token
-        const empresaId = req.user.empresaId; 
-        if (!empresaId) {
-            logger.warn('[RelatorioController] getDashboardData: empresaId não encontrado no token.');
-            return res.status(401).json({ message: 'Autorização inválida ou dados em falta.' });
-        }
-        
-        logger.info(`[RelatorioController] Buscando dados do dashboard para empresa: ${empresaId}`);
-
-        // Executa as consultas em paralelo para maior performance
-        // Estas são as funções que o seu services/relatorioService.js (o que não usa classes) exporta
-        const [
-            faturamentoTotal,
-            totalPlacas,
-            placasDisponiveis,
-            placasPorRegiao,
-            faturamentoUltimosMeses
-        ] = await Promise.all([
-            // 🐞 CORREÇÃO: Passa 'empresaId' (camelCase) para o serviço
-            relatorioService.getFaturamentoTotal(empresaId),
-            relatorioService.getTotalPlacas(empresaId),
-            relatorioService.getPlacasDisponiveis(empresaId),
-            relatorioService.getPlacasPorRegiao(empresaId),
-            relatorioService.getFaturamentoUltimosMeses(empresaId)
-        ]);
-
-        const dashboardData = {
-            faturamentoTotal,
-            totalPlacas,
-            placasDisponiveis,
-            placasPorRegiao,
-            faturamentoUltimosMeses
-        };
-
-        res.status(200).json(dashboardData);
-    } catch (error) {
-        // O erro "relatorioService.getFaturamentoTotal is not a function"
-        // acontecia porque o controller errado estava a chamar o service errado.
-        // Esta implementação está alinhada.
-        logger.error(`[RelatorioController] Erro ao buscar dados do dashboard: ${error.message}`, { stack: error.stack });
-        next(error);
+        // Chama o serviço refatorado (que executa a agregação)
+        const data = await relatorioService.placasPorRegiao(empresa_id);
+        logger.info(`[RelatorioController] getPlacasPorRegiao retornou ${data.length} regiões para empresa ${empresa_id}.`);
+        res.status(200).json(data); // Serviço retorna o resultado da agregação
+    } catch (err) {
+        // Loga o erro recebido do serviço
+        logger.error(`[RelatorioController] Erro ao chamar relatorioService.placasPorRegiao: ${err.message}`, { status: err.status, stack: err.stack });
+        // O errorHandler tratará o status (provavelmente 500 ou timeout) vindo do serviço
+        next(err);
     }
 };
 
-
 /**
- * Obtém o faturamento total dentro de um período específico.
- * (Esta é a nova função para o seu novo relatório)
+ * Controller para gerar o resumo do dashboard.
  */
-exports.getFaturamentoPorPeriodo = async (req, res, next) => {
+exports.getDashboardSummary = async (req, res, next) => {
+    // Verifica se req.user e req.user.empresaId existem
+    if (!req.user || !req.user.empresaId) {
+        logger.error('[RelatorioController] getDashboardSummary: Informações do utilizador (empresaId) em falta no token.');
+        return res.status(401).json({ message: 'Autorização inválida ou dados em falta.' });
+    }
+    const empresa_id = req.user.empresaId; // ID da empresa do token
+    const userId = req.user.id;
+
+    logger.info(`[RelatorioController] Utilizador ${userId} requisitou getDashboardSummary para empresa ${empresa_id}.`);
+
     try {
-        const empresaId = req.user.empresaId; // 🐞 CORREÇÃO: 'empresaId' (camelCase)
-        if (!empresaId) {
-            logger.warn('[RelatorioController] getFaturamentoPorPeriodo: empresaId não encontrado no token.');
-            return res.status(401).json({ message: 'Autorização inválida ou dados em falta.' });
-        }
-
-        const { dataInicio, dataFim } = req.query;
-        logger.info(`[RelatorioController] Requisição getFaturamentoPorPeriodo para empresa: ${empresaId}. Datas: ${dataInicio} a ${dataFim}`);
-
-        // --- VALIDAÇÃO CRÍTICA DAS DATAS ---
-        if (!dataInicio || !dataFim) {
-            logger.warn(`[RelatorioController] Datas em falta. Empresa: ${empresaId}`);
-            return res.status(400).json({ message: 'Data de início e data de fim são obrigatórias.' });
-        }
-        const regexISO = /^\d{4}-\d{2}-\d{2}$/;
-        if (!regexISO.test(dataInicio) || !regexISO.test(dataFim)) {
-            logger.warn(`[RelatorioController] Formato de data inválido. Recebido: ${dataInicio}, ${dataFim}`);
-            return res.status(400).json({ message: 'Formato de data inválido. Use AAAA-MM-DD.' });
-        }
-        const inicio = new Date(dataInicio);
-        const fim = new Date(dataFim);
-        if (isNaN(inicio.getTime()) || isNaN(fim.getTime())) {
-            logger.warn(`[RelatorioController] Data inválida (ex: dia ou mês inexistente). Recebido: ${dataInicio}, ${dataFim}`);
-            return res.status(400).json({ message: 'Data inválida (ex: dia ou mês inexistente).' });
-        }
-        if (inicio > fim) {
-            logger.warn(`[RelatorioController] Data de início (${dataInicio}) posterior à data de fim (${dataFim}).`);
-            return res.status(400).json({ message: 'A data de início não pode ser posterior à data de fim.' });
-        }
-        // --- Fim da Validação ---
-
-        // Chama o serviço (que iremos criar/corrigir no próximo passo)
-        const resultado = await relatorioService.getFaturamentoPorPeriodo(
-            empresaId, 
-            dataInicio, 
-            dataFim
-        );
-        
-        logger.info(`[RelatorioController] Faturamento por período retornado com sucesso para empresa: ${empresaId}`);
-        res.status(200).json(resultado);
-
-    } catch (error) {
-        logger.error(`[RelatorioController] Erro ao buscar faturamento por período: ${error.message}`, { stack: error.stack });
-        next(error); 
+        // Chama o serviço refatorado
+        const summary = await relatorioService.getDashboardSummary(empresa_id);
+        logger.info(`[RelatorioController] getDashboardSummary concluído para empresa ${empresa_id}.`);
+        res.status(200).json(summary); // Serviço retorna o objeto de sumário
+    } catch (err) {
+        // Loga o erro recebido do serviço
+        logger.error(`[RelatorioController] Erro ao chamar relatorioService.getDashboardSummary: ${err.message}`, { status: err.status, stack: err.stack });
+        // O errorHandler tratará o status (provavelmente 500 ou timeout) vindo do serviço
+        next(err);
     }
 };
