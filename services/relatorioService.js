@@ -13,7 +13,7 @@ class RelatorioService {
      * @returns {Promise<Array<object>>} - Array com objetos { regiao: string, total_placas: number }.
      * @throws {Error} - Lança erro 500 em caso de falha na agregação.
      */
-    async placasPorRegiao(empresa_id) { // <-- Recebe 'empresa_id' (underscore) - CORRETO
+    async placasPorRegiao(empresa_id) {
         logger.info(`[RelatorioService] Iniciando agregação 'placasPorRegiao' para empresa ${empresa_id}.`);
         const startTime = Date.now(); // Marca o início
 
@@ -21,7 +21,7 @@ class RelatorioService {
             // Usa o Aggregation Pipeline do MongoDB para agrupar e contar
             const aggregationPipeline = [
                 // 1. Filtra as placas pela empresa (converte string para ObjectId se necessário)
-                { $match: { empresa: new mongoose.Types.ObjectId(empresa_id) } }, // <-- Usa 'empresa_id' - CORRETO
+                { $match: { empresa: new mongoose.Types.ObjectId(empresa_id) } },
                 // 2. Faz o "join" com a coleção de Regioes
                 {
                     $lookup: {
@@ -45,12 +45,7 @@ class RelatorioService {
                     $project: {
                         _id: 0, // Remove o campo _id do grupo
                         regiao: '$_id.regiaoNome', // Renomeia
-                        // 🐞 CORREÇÃO: O seu frontend (DashboardPage.jsx) espera 'total_placas'. O backend (aqui) chama-se 'count'.
-                        // Vou corrigir o frontend na próxima etapa, mas para o seu *outro* controller (relatorioController.js) funcionar, vamos usar o nome que ele espera.
-                        // O seu controller 'relatorioController.js' chama 'getPlacasPorRegiao', que usa este serviço 'placasPorRegiao'.
-                        // O seu frontend 'DashboardPage.jsx' chama 'fetchPlacasPorRegiaoReport' (que usa este serviço) e espera 'total_placas'.
-                        // Esta linha está correta para o frontend.
-                        total_placas: 1
+                        total_placas: 1 // Mantém o total
                     }
                 },
                 // 6. Ordena pelo nome da região
@@ -75,17 +70,17 @@ class RelatorioService {
 
     /**
      * Gera um resumo para o dashboard (total de placas, disponíveis, região principal).
-     * @param {string} empresa_id - ObjectId da empresa. // 🐞 CORREÇÃO: Alterado de empresaId para empresa_id
+     * @param {string} empresa_id - ObjectId da empresa.
      * @returns {Promise<object>} - Objeto com { totalPlacas, placasDisponiveis, regiaoPrincipal }.
      * @throws {Error} - Lança erro 500 em caso de falha nas queries.
      */
-    async getDashboardSummary(empresa_id) { // 🐞 CORREÇÃO: Alterado de empresaId para empresa_id
+    async getDashboardSummary(empresa_id) {
         logger.info(`[RelatorioService] Iniciando 'getDashboardSummary' para empresa ${empresa_id}.`);
         const startTime = Date.now(); // Marca o início
 
         try {
             // Converte para ObjectId uma vez
-            const empresaObjectId = new mongoose.Types.ObjectId(empresa_id); // 🐞 CORREÇÃO: Usa empresa_id
+            const empresaObjectId = new mongoose.Types.ObjectId(empresa_id);
 
             // Define as promessas
             logger.debug(`[RelatorioService] Iniciando query countDocuments para totalPlacas.`);
@@ -96,7 +91,7 @@ class RelatorioService {
 
             logger.debug(`[RelatorioService] Iniciando pipeline de agregação para regiaoPrincipal.`);
             const regiaoPrincipalPipeline = [
-                { $match: { empresa: empresaObjectId } }, // <-- Filtro correto
+                { $match: { empresa: empresaObjectId } },
                 { $match: { regiao: { $ne: null } } }, // Apenas placas com região
                 {
                     $lookup: {
@@ -105,7 +100,6 @@ class RelatorioService {
                     }
                 },
                 { $unwind: '$regiaoInfo' },
-                // 🐞 CORREÇÃO: O 'count' aqui está correto, mas o 'placasPorRegiao' (acima) estava a usar 'total_placas' no $group
                 { $group: { _id: { regiaoNome: '$regiaoInfo.nome' }, count: { $sum: 1 } } },
                 { $sort: { count: -1 } },
                 { $limit: 1 },
