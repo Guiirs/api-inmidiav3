@@ -1,9 +1,10 @@
 // services/relatorioService.js
 const Placa = require('../models/Placa'); // Modelo Placa Mongoose
 const Regiao = require('../models/Regiao'); // Modelo Regiao Mongoose
+const Aluguel = require('../models/Aluguel'); // [MELHORIA] Importa Aluguel
 const mongoose = require('mongoose'); // Necessário para ObjectId
 const logger = require('../config/logger'); // Importa o logger
-const AppError = require('../utils/AppError'); // [MELHORIA] Importa AppError
+const AppError = require('../utils/AppError'); 
 
 class RelatorioService {
     constructor() {}
@@ -19,29 +20,23 @@ class RelatorioService {
         const startTime = Date.now(); 
 
         try {
-            // Usa o Aggregation Pipeline do MongoDB para agrupar e contar (Lógica mantida)
             const aggregationPipeline = [
-                // 1. Filtra as placas pela empresa (converte string para ObjectId se necessário)
                 { $match: { empresa: new mongoose.Types.ObjectId(empresa_id) } },
-                // 2. Faz o "join" com a coleção de Regioes
                 {
                     $lookup: {
-                        from: Regiao.collection.name, // Nome da coleção de Regioes
-                        localField: 'regiao',         // Campo na coleção Placa (ObjectId)
-                        foreignField: '_id',          // Campo na coleção Regiao (_id)
-                        as: 'regiaoInfo'              // Nome do novo array
+                        from: Regiao.collection.name, 
+                        localField: 'regiao',         
+                        foreignField: '_id',          
+                        as: 'regiaoInfo'              
                     }
                 },
-                // 3. Desconstrói o array regiaoInfo
                 { $unwind: { path: '$regiaoInfo', preserveNullAndEmptyArrays: true } },
-                // 4. Agrupa pelo nome da região
                 {
                     $group: {
                         _id: { regiaoNome: { $ifNull: ['$regiaoInfo.nome', 'Sem Região'] } },
-                        total_placas: { $sum: 1 } // Conta os documentos
+                        total_placas: { $sum: 1 } 
                     }
                 },
-                // 5. Formata a saída
                 {
                     $project: {
                         _id: 0, 
@@ -49,7 +44,6 @@ class RelatorioService {
                         total_placas: 1 
                     }
                 },
-                // 6. Ordena pelo nome da região
                 { $sort: { regiao: 1 } }
             ];
 
@@ -63,33 +57,22 @@ class RelatorioService {
         } catch (error) {
             const endTime = Date.now();
             logger.error(`[RelatorioService] Erro na agregação 'placasPorRegiao' (tempo: ${endTime - startTime}ms): ${error.message}`, { stack: error.stack });
-            // [MELHORIA] Usa AppError
             throw new AppError(`Erro interno ao gerar relatório de placas por região: ${error.message}`, 500);
         }
     }
 
     /**
-     * Gera um resumo para o dashboard (total de placas, disponíveis, região principal).
-     * @param {string} empresa_id - ObjectId da empresa.
-     * @returns {Promise<object>} - Objeto com { totalPlacas, placasDisponiveis, regiaoPrincipal }.
-     * @throws {AppError} - Lança erro 500 em caso de falha nas queries.
+     * Gera um resumo para o dashboard. (Mantido)
      */
     async getDashboardSummary(empresa_id) {
         logger.info(`[RelatorioService] Iniciando 'getDashboardSummary' para empresa ${empresa_id}.`);
         const startTime = Date.now(); 
 
         try {
-            // Converte para ObjectId uma vez
             const empresaObjectId = new mongoose.Types.ObjectId(empresa_id);
-
-            // Define as promessas (Lógica mantida)
-            logger.debug(`[RelatorioService] Iniciando query countDocuments para totalPlacas.`);
             const totalPlacasPromise = Placa.countDocuments({ empresa: empresaObjectId });
-
-            logger.debug(`[RelatorioService] Iniciando query countDocuments para placasDisponiveis.`);
             const placasDisponiveisPromise = Placa.countDocuments({ empresa: empresaObjectId, disponivel: true });
-
-            logger.debug(`[RelatorioService] Iniciando pipeline de agregação para regiaoPrincipal.`);
+            
             const regiaoPrincipalPipeline = [
                 { $match: { empresa: empresaObjectId } },
                 { $match: { regiao: { $ne: null } } }, 
@@ -107,16 +90,12 @@ class RelatorioService {
             ];
             const regiaoPrincipalPromise = Placa.aggregate(regiaoPrincipalPipeline).exec();
 
-            // Executa todas as promessas em paralelo
             const [totalPlacasResult, placasDisponiveisResult, regiaoPrincipalResultArray] = await Promise.all([
-                totalPlacasPromise,
-                placasDisponiveisPromise,
-                regiaoPrincipalPromise
+                totalPlacasPromise, placasDisponiveisPromise, regiaoPrincipalPromise
             ]);
             const endTimeQueries = Date.now();
             logger.debug(`[RelatorioService] Queries 'getDashboardSummary' concluídas em ${endTimeQueries - startTime}ms.`);
 
-            // Extrai o nome da região principal (Lógica mantida)
             const regiaoPrincipal = regiaoPrincipalResultArray.length > 0 ? regiaoPrincipalResultArray[0].nome : 'N/A';
             const finalResult = {
                 totalPlacas: totalPlacasResult || 0,
@@ -131,8 +110,116 @@ class RelatorioService {
         } catch (error) {
             const endTime = Date.now();
             logger.error(`[RelatorioService] Erro nas queries 'getDashboardSummary' (tempo: ${endTime - startTime}ms): ${error.message}`, { stack: error.stack });
-            // [MELHORIA] Usa AppError
-            throw new new AppError(`Erro interno ao gerar resumo do dashboard: ${error.message}`, 500);
+            throw new AppError(`Erro interno ao gerar resumo do dashboard: ${error.message}`, 500);
+        }
+    }
+
+    /**
+     * [NOVO MÉTODO] Gera um relatório de ocupação das placas por dia dentro de um período.
+     * Calcula quantos dias cada placa esteve alugada dentro do período e soma.
+     * @param {string} empresaId - ObjectId da empresa.
+     * @param {Date} dataInicio - Início do período a ser analisado.
+     * @param {Date} dataFim - Fim do período a ser analisado.
+     * @returns {Promise<object>} - { totalDiasAlugados: number, totalDiasPlacas: number, percentagem: number }.
+     * @throws {AppError} - Lança erro 500.
+     */
+    async ocupacaoPorPeriodo(empresaId, dataInicio, dataFim) {
+        logger.info(`[RelatorioService] Iniciando agregação 'ocupacaoPorPeriodo' para empresa ${empresaId}. Período: ${dataInicio.toISOString().split('T')[0]} a ${dataFim.toISOString().split('T')[0]}.`);
+        const startTime = Date.now();
+        const empresaObjectId = new mongoose.Types.ObjectId(empresaId);
+
+        try {
+            // 1. Calcular o número total de dias de disponibilidade no período
+            const totalPlacas = await Placa.countDocuments({ empresa: empresaObjectId });
+            
+            // Se não há placas, retorna zero para evitar divisão por zero.
+            if (totalPlacas === 0) {
+                 logger.info('[RelatorioService] Nenhuma placa encontrada. Ocupação: 0%.');
+                 return {
+                     totalDiasAlugados: 0,
+                     totalDiasPlacas: 0,
+                     percentagem: 0,
+                 };
+            }
+            
+            // Calcula a diferença em dias (o +1 é para incluir o dia de início/fim)
+            const diffTime = Math.abs(dataFim.getTime() - dataInicio.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; 
+            const totalDiasPlacas = totalPlacas * diffDays;
+            
+            // 2. Agregação: Calcular dias alugados no período
+            const aggregationPipeline = [
+                // 1. Filtra aluguéis pela empresa
+                { $match: { empresa: empresaObjectId } },
+                // 2. Filtra aluguéis que se sobrepõem ao período [dataInicio, dataFim]
+                // Aluguel.data_inicio < dataFim E Aluguel.data_fim > dataInicio
+                {
+                    $match: {
+                        data_inicio: { $lte: dataFim },
+                        data_fim: { $gte: dataInicio }
+                    }
+                },
+                // 3. Calcula o número de dias de aluguel que CAEM DENTRO do período de análise
+                {
+                    $addFields: {
+                        // Data de Início Efetiva (o maior entre data_inicio do aluguel e dataInicio do período)
+                        data_inicio_efetiva: { $max: ['$data_inicio', dataInicio] },
+                        // Data de Fim Efetiva (o menor entre data_fim do aluguel e dataFim do período)
+                        data_fim_efetiva: { $min: ['$data_fim', dataFim] }
+                    }
+                },
+                // 4. Calcula a duração em milissegundos e converte para dias (+1 para inclusão do dia)
+                {
+                    $addFields: {
+                        duracao_ms: { 
+                            $subtract: ['$data_fim_efetiva', '$data_inicio_efetiva'] 
+                        }
+                    }
+                },
+                {
+                    $addFields: {
+                        dias_alugados: { 
+                            $add: [
+                                { $ceil: { $divide: ['$duracao_ms', 1000 * 60 * 60 * 24] } },
+                                1 // Adiciona 1 dia para inclusão (since both start and end days are included)
+                            ]
+                        }
+                    }
+                },
+                // 5. Agrupa para somar os dias alugados (não precisamos agrupar por placa, apenas somar o total)
+                {
+                    $group: {
+                        _id: null,
+                        totalDiasAlugados: { $sum: '$dias_alugados' }
+                    }
+                },
+                { $project: { _id: 0, totalDiasAlugados: 1 } }
+            ];
+
+            logger.debug('[RelatorioService] Executando pipeline de agregação para calcular dias alugados.');
+            const aggregationResult = await Aluguel.aggregate(aggregationPipeline).exec();
+            
+            const totalDiasAlugados = aggregationResult[0]?.totalDiasAlugados || 0;
+            
+            const percentagem = totalDiasPlacas > 0 
+                ? (totalDiasAlugados / totalDiasPlacas) * 100 
+                : 0;
+
+            const finalResult = {
+                totalDiasAlugados: Math.round(totalDiasAlugados),
+                totalDiasPlacas: totalDiasPlacas,
+                percentagem: parseFloat(percentagem.toFixed(2)),
+            };
+
+            const endTime = Date.now();
+            logger.info(`[RelatorioService] 'ocupacaoPorPeriodo' concluído em ${endTime - startTime}ms. Ocupação: ${finalResult.percentagem}%.`);
+
+            return finalResult;
+
+        } catch (error) {
+            const endTime = Date.now();
+            logger.error(`[RelatorioService] Erro na agregação 'ocupacaoPorPeriodo' (tempo: ${endTime - startTime}ms): ${error.message}`, { stack: error.stack });
+            throw new AppError(`Erro interno ao gerar relatório de ocupação: ${error.message}`, 500);
         }
     }
 }
