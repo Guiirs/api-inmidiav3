@@ -1,7 +1,7 @@
 // routes/relatoriosRoutes.js
 const express = require('express');
 const router = express.Router();
-const logger = require('../config/logger'); // Importa o logger
+const logger = require('../config/logger');
 
 // 1. Importe o controlador e o middleware diretamente
 let relatorioController, authenticateToken;
@@ -21,23 +21,28 @@ try {
 
 logger.info('[Routes Relatorios] Definindo rotas de Relatórios...');
 
-module.exports = () => {
-    // 1. Rota para o relatório de placas por região
-    router.get(
-        '/placas-por-regiao',
-        authenticateToken, // Aplica autenticação
-        relatorioController.getPlacasPorRegiao
-    );
-    logger.debug('[Routes Relatorios] Rota GET /placas-por-regiao definida (Relatório de Regiões).');
-    
-    // 2. Rota para o resumo do dashboard
-    router.get(
-        '/dashboard-summary',
-        authenticateToken, // Aplica autenticação
-        relatorioController.getDashboardSummary
-    );
-    logger.debug('[Routes Relatorios] Rota GET /dashboard-summary definida (Sumário do Dashboard).');
+// [MELHORIA] Aplica autenticação a todas as rotas do arquivo
+router.use(authenticateToken);
+logger.debug('[Routes Relatorios] Middleware de Autenticação aplicado a todas as rotas.');
 
-    logger.info('[Routes Relatorios] Rotas de Relatórios definidas com sucesso.');
-    return router;
-};
+// 1. Rota para o relatório de placas por região
+// GET /api/v1/relatorios/placas-por-regiao
+router.get(
+    '/placas-por-regiao',
+    relatorioController.getPlacasPorRegiao
+);
+logger.debug('[Routes Relatorios] Rota GET /placas-por-regiao definida (Relatório de Regiões).');
+
+// 2. Rota para o resumo do dashboard
+// GET /api/v1/relatorios/dashboard-summary
+router.get(
+    '/dashboard-summary',
+    relatorioController.getDashboardSummary
+);
+logger.debug('[Routes Relatorios] Rota GET /dashboard-summary definida (Sumário do Dashboard).');
+
+logger.info('[Routes Relatorios] Rotas de Relatórios definidas com sucesso.');
+
+// [CORREÇÃO] Exporta o router diretamente
+module.exports = router;
+logger.debug('[Routes Relatorios] Router exportado.');

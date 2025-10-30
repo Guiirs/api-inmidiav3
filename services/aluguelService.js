@@ -1,9 +1,10 @@
 // services/aluguelService.js
-const mongoose = require('mongoose'); // Necessário para transações e ObjectId
-const Aluguel = require('../models/Aluguel'); // Modelo Aluguel Mongoose
-const Placa = require('../models/Placa');     // Modelo Placa Mongoose
+const mongoose = require('mongoose'); 
+const Aluguel = require('../models/Aluguel');     // Modelo Aluguel (corrigido no Passo 01)
+const Placa = require('../models/Placa');     
 const Cliente = require('../models/Cliente'); // Modelo Cliente (para populate)
-const logger = require('../config/logger'); // Importa o logger
+const logger = require('../config/logger'); 
+const AppError = require('../utils/AppError'); // [MELHORIA] Importa AppError
 
 // Verifica se está em ambiente de teste (JEST_WORKER_ID é definido pelo Jest)
 const isTestEnvironment = process.env.JEST_WORKER_ID !== undefined;
@@ -20,67 +21,51 @@ class AluguelService {
 
     /**
      * Obtém todos os alugueis para uma placa específica, retornando objetos simples.
-     * @param {string} placa_id - ObjectId da placa.
+     * @param {string} placaId - ObjectId da placa.
      * @param {string} empresa_id - ObjectId da empresa.
      * @returns {Promise<Array<object>>} - Array com os dados dos alugueis (populados com cliente).
-     * @throws {Error} - Lança erro com status 400 (ID inválido) ou 500 (Erro interno).
+     * @throws {AppError} - Lança erro com status 500 (Erro interno) ou delega 400 (ID inválido).
      */
-    async getAlugueisByPlaca(placa_id, empresa_id) {
-        logger.info(`[AluguelService] Iniciando getAlugueisByPlaca para placa ${placa_id} na empresa ${empresa_id}.`);
-        if (!placa_id || !mongoose.Types.ObjectId.isValid(placa_id)) {
-             const error = new Error(`ID da placa inválido fornecido: ${placa_id}`);
-             error.status = 400; // Bad Request
-             logger.error(`[AluguelService] ${error.message}`);
-             throw error;
-        }
+    async getAlugueisByPlaca(placaId, empresa_id) {
+        logger.info(`[AluguelService] Iniciando getAlugueisByPlaca para placa ${placaId} na empresa ${empresa_id}.`);
+        
+        // [MELHORIA] Removida verificação de mongoose.Types.ObjectId.isValid(). 
+        // A rota (Passo 06) já valida, ou o errorHandler captura o CastError (400).
 
         try {
-            let alugueisDocs; // Mudar nome para indicar que são documentos Mongoose
-            try {
-                logger.debug('[AluguelService] Executando Aluguel.find()...');
-                // <<< CORREÇÃO (Populate): Remover .lean() daqui >>>
-                alugueisDocs = await Aluguel.find({ placa: placa_id, empresa: empresa_id })
-                                            .populate('cliente', 'nome logo_url') // Popula nome e logo
+            logger.debug('[AluguelService] Executando Aluguel.find()...');
+            
+            // Campos no model corrigido: 'placa' e 'cliente'
+            const alugueisDocs = await Aluguel.find({ placa: placaId, empresa: empresa_id })
+                                            .populate('cliente', 'nome logo_url') 
                                             .sort({ data_inicio: -1 })
-                                            // .lean() // REMOVIDO! Precisamos dos Mongoose docs para toJSON funcionar corretamente com populate
-                                            .exec();
-                logger.info(`[AluguelService] Query concluída. ${alugueisDocs.length} alugueis encontrados para placa ${placa_id}.`);
-            } catch (dbError) {
-                logger.error(`[AluguelService] ERRO DURANTE A QUERY MONGOOSE: ${dbError.message}`, { stack: dbError.stack });
-                throw dbError; // Relança para o catch externo
-            }
+                                            .exec(); 
+            logger.info(`[AluguelService] Query concluída. ${alugueisDocs.length} alugueis encontrados para placa ${placaId}.`);
+            
+            logger.debug('[AluguelService] Iniciando conversão para JSON e mapeamento...');
+            
+            // Usa o toJSON para aplicar a transformação global (_id -> id, remove __v)
+            const alugueis = alugueisDocs.map(doc => {
+                const obj = doc.toJSON();
 
-            try {
-                logger.debug('[AluguelService] Iniciando conversão para JSON e mapeamento...');
-                // <<< CORREÇÃO (Populate): Usar toJSON() em cada documento >>>
-                const alugueis = alugueisDocs.map(doc => {
-                    const obj = doc.toJSON(); // Aplica a transformação global (_id -> id, remove __v)
+                // Adiciona cliente_nome após a transformação toJSON (lógica mantida)
+                obj.cliente_nome = obj.cliente?.nome || 'Cliente Apagado'; 
 
-                    // Adiciona cliente_nome após a transformação toJSON
-                    // A transformação toJSON deve ter mapeado cliente._id para cliente.id se populado
-                    obj.cliente_nome = obj.cliente?.nome || 'Cliente Apagado';
+                // Garante que o campo cliente seja null se não foi populado corretamente
+                if (!obj.cliente || !obj.cliente.id) {
+                    obj.cliente = null;
+                }
+                return obj;
+            });
 
-                    // Garante que o campo cliente seja null se não foi populado corretamente
-                    // (toJSON pode retornar cliente como null ou um objeto sem 'id')
-                    if (!obj.cliente || !obj.cliente.id) {
-                        obj.cliente = null;
-                    }
-                    return obj;
-                });
-                // <<< FIM CORREÇÃO >>>
-                logger.debug('[AluguelService] Mapeamento toJSON e cliente_nome concluído.');
-                return alugueis; // Retorna os objetos simples transformados
+            logger.debug('[AluguelService] Mapeamento toJSON e cliente_nome concluído.');
+            return alugueis; 
 
-            } catch (mapError) {
-                logger.error(`[AluguelService] ERRO DURANTE O MAPEAMENTO toJSON: ${mapError.message}`, { stack: mapError.stack });
-                throw mapError; // Relança para o catch externo
-            }
-
-        } catch (error) { // Catch externo (pega erros da query ou do mapeamento)
+        } catch (error) { 
             logger.error(`[AluguelService] Erro final em getAlugueisByPlaca: ${error.message}`, { stack: error.stack });
-            const serviceError = new Error(`Erro interno ao buscar histórico de alugueis: ${error.message}`);
-            serviceError.status = error.status || 500; // Usa 400 se veio da validação, senão 500
-            throw serviceError;
+            // [MELHORIA] Relança AppErrors ou lança 500
+            if (error instanceof AppError) throw error; 
+            throw new AppError(`Erro interno ao buscar histórico de alugueis: ${error.message}`, 500);
         }
     }
 
@@ -89,30 +74,29 @@ class AluguelService {
      * @param {object} aluguelData - Dados do aluguel (placa_id, cliente_id, data_inicio, data_fim).
      * @param {string} empresa_id - ObjectId da empresa.
      * @returns {Promise<object>} - O documento do novo aluguel criado (populado e com id mapeado).
-     * @throws {Error} - Lança erro com status 400, 404, 409 ou 500.
+     * @throws {AppError} - Lança erro com status 400, 404, 409 ou 500.
      */
     async createAluguel(aluguelData, empresa_id) {
         logger.info(`[AluguelService] Tentando criar aluguel para empresa ${empresa_id}.`);
-        logger.debug(`[AluguelService] Dados recebidos: ${JSON.stringify(aluguelData)}`);
         const { placa_id, cliente_id, data_inicio, data_fim } = aluguelData;
 
-        // Validação das datas (Usando UTC para zerar horas)
+        // Validação das datas (Convertida para AppError)
         let inicioDate, fimDate;
         try {
             inicioDate = new Date(data_inicio); inicioDate.setUTCHours(0, 0, 0, 0);
             fimDate = new Date(data_fim); fimDate.setUTCHours(0, 0, 0, 0);
+
             if (isNaN(inicioDate.getTime()) || isNaN(fimDate.getTime())) {
-                throw new Error('Formato de data inválido.');
+                throw new AppError('Formato de data inválido.', 400); 
             }
         } catch (dateError) {
-             const error = new Error(`Datas inválidas fornecidas: ${dateError.message}`);
-             error.status = 400; logger.warn(`[AluguelService] Falha: ${error.message}`); throw error;
+             if (dateError instanceof AppError) throw dateError;
+             throw new AppError(`Datas inválidas fornecidas.`, 400); 
         }
 
-        // Comparação segura usando getTime()
+        // Comparação de datas (Convertida para AppError)
         if (fimDate.getTime() <= inicioDate.getTime()) {
-             const error = new Error('A data final deve ser posterior à data inicial.');
-             error.status = 400; logger.warn(`[AluguelService] Falha: ${error.message}`); throw error;
+             throw new AppError('A data final deve ser posterior à data inicial.', 400);
         }
 
         const session = useTransactions ? await mongoose.startSession() : null;
@@ -124,37 +108,36 @@ class AluguelService {
         }
 
         try {
-            // <<< CORREÇÃO (Conflito): Lógica de verificação de sobreposição >>>
-            logger.debug(`[AluguelService] Verificando conflitos para placa ${placa_id} entre ${inicioDate.toISOString()} e ${fimDate.toISOString()}`);
-            // Condição: Existe algum aluguel onde o início é ANTES do fim do novo, E o fim é DEPOIS do início do novo?
+            // Lógica de verificação de sobreposição (mantida)
+            logger.debug(`[AluguelService] Verificando conflitos para placa ${placa_id}...`);
+            
             const conflictingAluguel = await Aluguel.findOne({
                 placa: placa_id,
                 empresa: empresa_id,
-                data_inicio: { $lt: fimDate },     // Início Existente < Fim Novo
-                data_fim: { $gt: inicioDate }       // Fim Existente > Início Novo
-            }).lean().session(session).exec(); // Lean aqui é ok, só para verificar existência
+                data_inicio: { $lt: fimDate },
+                data_fim: { $gt: inicioDate }
+            }).lean().session(session).exec();
 
             if (conflictingAluguel) {
-                logger.warn(`[AluguelService] CONFLITO DETECTADO! Aluguel existente ID ${conflictingAluguel._id} (${conflictingAluguel.data_inicio.toISOString()} - ${conflictingAluguel.data_fim.toISOString()}) conflita com novo período.`);
-                const error = new Error(`Esta placa (ID: ${placa_id}) já está reservada total ou parcialmente no período solicitado.`);
-                error.status = 409; // Conflict
-                throw error; // Lança o erro para o catch
+                logger.warn(`[AluguelService] CONFLITO DETECTADO! Aluguel existente ID ${conflictingAluguel._id} conflita com novo período.`);
+                // [MELHORIA] Usa AppError
+                throw new AppError(`Esta placa (ID: ${placa_id}) já está reservada total ou parcialmente no período solicitado.`, 409);
             }
             logger.debug(`[AluguelService] Nenhum conflito encontrado.`);
-            // <<< FIM CORREÇÃO >>>
 
-            // Cria o aluguel
+            // Cria o aluguel 
             logger.debug(`[AluguelService] Tentando salvar novo aluguel no DB.`);
             const createOptions = session ? { session } : {};
             const [novoAluguelDoc] = await Aluguel.create([{
-                placa: placa_id, cliente: cliente_id,
-                data_inicio: inicioDate, // Usa data UTC zerada
-                data_fim: fimDate,       // Usa data UTC zerada
+                placa: placa_id, 
+                cliente: cliente_id,
+                data_inicio: inicioDate, 
+                data_fim: fimDate,       
                 empresa: empresa_id
             }], createOptions);
             logger.info(`[AluguelService] Aluguel ${novoAluguelDoc._id} criado ${session ? 'na transação' : ''}.`);
 
-            // Verifica se está ativo HOJE (comparando datas UTC zeradas)
+            // Verificação de status de placa (mantida)
             const hoje = new Date(); hoje.setUTCHours(0, 0, 0, 0);
             const isAtivoHoje = (inicioDate.getTime() <= hoje.getTime() && fimDate.getTime() >= hoje.getTime());
 
@@ -167,16 +150,11 @@ class AluguelService {
                     updateOptions
                 );
                  if (placaUpdateResult.matchedCount === 0) {
-                     const placaError = new Error(`Placa ${placa_id} não encontrada para atualização de status durante a criação do aluguel.`);
-                     placaError.status = 404; // Not Found
-                     logger.error(`[AluguelService] ${placaError.message}`);
-                     throw placaError; // Lança erro 404
+                     // [MELHORIA] Usa AppError
+                     throw new AppError(`Placa ${placa_id} não encontrada para atualização de status durante a criação do aluguel.`, 404);
                  }
                  logger.debug(`[AluguelService] Placa ${placa_id} marcada como indisponível.`);
-            } else {
-                 const motivo = inicioDate.getTime() > hoje.getTime() ? 'começa no futuro' : 'já terminou';
-                 logger.debug(`[AluguelService] Aluguel ${novoAluguelDoc._id} NÃO ativo hoje (${motivo}). Status da placa ${placa_id} não alterado.`);
-            }
+            } 
 
             // Commita condicionalmente
             if (session) {
@@ -185,39 +163,32 @@ class AluguelService {
             }
             logger.info(`[AluguelService] Aluguel ${novoAluguelDoc._id} processado com sucesso.`);
 
-            // Busca novamente SEM lean para poder usar toJSON e ter certeza que o populate funcionou
+            // Busca e formata o resultado (usando toJSON)
             const aluguelCriado = await Aluguel.findById(novoAluguelDoc._id)
                                                   .populate('cliente', 'nome logo_url')
-                                                  .exec(); // Sem .lean()
+                                                  .exec(); 
 
              if (aluguelCriado) {
-                 const obj = aluguelCriado.toJSON(); // Aplica toJSON
+                 const obj = aluguelCriado.toJSON(); 
                  obj.cliente_nome = obj.cliente?.nome || 'Cliente Apagado';
-                 if (!obj.cliente || !obj.cliente.id) obj.cliente = null; // Garante null se não populado
+                 if (!obj.cliente || !obj.cliente.id) obj.cliente = null;
                  return obj;
              } else {
-                 // Isso não deveria acontecer após a criação bem-sucedida
                  logger.error(`[AluguelService] ERRO INESPERADO: Aluguel ${novoAluguelDoc._id} não encontrado após criação/commit.`);
-                 throw new Error('Erro ao buscar aluguel recém-criado.'); // Lança 500
+                 throw new AppError('Erro ao buscar aluguel recém-criado.', 500);
              }
 
         } catch (error) {
-             // Aborta condicionalmente
              if (session && session.inTransaction()) {
                  logger.warn(`[AluguelService] Abortando transação devido a erro: ${error.message}`);
                  await session.abortTransaction();
              }
              logger.error(`[AluguelService] Erro ao criar aluguel: ${error.message}`, { stack: error.stack, status: error.status });
-             // Relança erros específicos ou um erro 500 genérico
-             if (error.status === 400 || error.status === 409 || error.status === 404) {
-                 throw error;
-             } else {
-                 const serviceError = new Error(`Erro interno ao criar aluguel: ${error.message}`);
-                 serviceError.status = 500;
-                 throw serviceError;
-             }
+             
+             // [MELHORIA] Relança AppErrors específicos ou lança 500
+             if (error instanceof AppError) throw error; 
+             throw new AppError(`Erro interno ao criar aluguel: ${error.message}`, 500);
         } finally {
-            // Finaliza sessão condicionalmente
             if (session) {
                 logger.debug('[AluguelService] Finalizando sessão Mongoose.');
                 await session.endSession();
@@ -230,7 +201,7 @@ class AluguelService {
      * @param {string} aluguel_id - ObjectId do aluguel a ser apagado.
      * @param {string} empresa_id - ObjectId da empresa.
      * @returns {Promise<{success: boolean, message: string}>} - Confirmação de sucesso.
-     * @throws {Error} - Lança erro com status 404 ou 500.
+     * @throws {AppError} - Lança erro com status 404 ou 500.
      */
     async deleteAluguel(aluguel_id, empresa_id) {
         logger.info(`[AluguelService] Tentando apagar aluguel ${aluguel_id} para empresa ${empresa_id}.`);
@@ -243,16 +214,16 @@ class AluguelService {
         }
 
         try {
-            // 1. Encontra o aluguel (lean é ok aqui pois só precisamos do ID da placa e datas)
+            // 1. Encontra o aluguel 
             logger.debug(`[AluguelService] Buscando aluguel ${aluguel_id}...`);
             const aluguel = await Aluguel.findOne({ _id: aluguel_id, empresa: empresa_id })
                                          .select('placa data_inicio data_fim')
-                                         .lean().session(session).exec(); // Passa session
+                                         .lean().session(session).exec();
             if (!aluguel) {
-                 const error = new Error('Aluguel não encontrado.'); error.status = 404;
-                 logger.warn(`[AluguelService] Falha: ${error.message}`); throw error;
+                 // [MELHORIA] Usa AppError
+                 throw new AppError('Aluguel não encontrado.', 404);
             }
-            const placaId = aluguel.placa; // Guarda o ObjectId da placa
+            const placaId = aluguel.placa;
             logger.debug(`[AluguelService] Aluguel ${aluguel_id} encontrado, placa ${placaId}.`);
 
             // 2. Apaga o aluguel
@@ -260,8 +231,7 @@ class AluguelService {
             const deleteOptions = session ? { session } : {};
             const deleteResult = await Aluguel.deleteOne({ _id: aluguel_id }, deleteOptions);
             if (deleteResult.deletedCount === 0) {
-                 // Erro inesperado, pois o aluguel foi encontrado antes
-                 throw new Error('Aluguel não encontrado durante a exclusão.');
+                 throw new AppError('Falha ao apagar o aluguel.', 500);
             }
             logger.info(`[AluguelService] Aluguel ${aluguel_id} apagado ${session ? 'na transação' : ''}.`);
 
@@ -276,11 +246,11 @@ class AluguelService {
             if (eraAtivoHoje) {
                  logger.debug(`[AluguelService] Verificando outros alugueis ativos para placa ${placaId}...`);
                  outroAluguelAtivo = await Aluguel.findOne({
-                    placa: placaId, // <<< Usa o placaId guardado
+                    placa: placaId, 
                     empresa: empresa_id,
                     data_inicio: { $lte: hoje },
                     data_fim: { $gte: hoje }
-                 }).lean().session(session).exec(); // Lean ok
+                 }).lean().session(session).exec();
             }
 
             // 5. Atualiza placa se necessário
@@ -288,21 +258,16 @@ class AluguelService {
                 logger.debug(`[AluguelService] Nenhum outro aluguel ativo. Marcando placa ${placaId} como disponível.`);
                  const updateOptions = session ? { session } : {};
                 const placaUpdateResult = await Placa.updateOne(
-                    { _id: placaId, empresa: empresa_id }, // <<< Usa o placaId guardado
+                    { _id: placaId, empresa: empresa_id }, 
                     { $set: { disponivel: true } },
                     updateOptions
                 );
-                 // Trata placa não encontrada como aviso, não erro fatal
-                 if (placaUpdateResult.matchedCount === 0) {
-                      logger.warn(`[AluguelService] Placa ${placaId} não encontrada para atualização após deletar aluguel ${aluguel_id}. Pode já ter sido deletada.`);
-                 } else if (placaUpdateResult.modifiedCount > 0) { // Loga apenas se realmente modificou
+                 if (placaUpdateResult.modifiedCount > 0) { 
                      logger.debug(`[AluguelService] Placa ${placaId} marcada como disponível.`);
                  }
             } else if (eraAtivoHoje && outroAluguelAtivo) {
                  logger.debug(`[AluguelService] Outro aluguel ativo (ID: ${outroAluguelAtivo._id}) encontrado para placa ${placaId}. Mantendo placa indisponível.`);
-            } else {
-                 logger.debug(`[AluguelService] Aluguel apagado ${aluguel_id} não estava ativo hoje. Status da placa ${placaId} não alterado.`);
-            }
+            } 
 
             // Commita condicionalmente
             if (session) {
@@ -314,22 +279,16 @@ class AluguelService {
             return { success: true, message: 'Aluguel cancelado com sucesso.' };
 
         } catch (error) {
-             // Aborta condicionalmente
              if (session && session.inTransaction()) {
                  logger.warn(`[AluguelService] Abortando transação delete devido a erro: ${error.message}`);
                  await session.abortTransaction();
              }
              logger.error(`[AluguelService] Erro ao apagar aluguel: ${error.message}`, { stack: error.stack, status: error.status });
-             // Relança erros específicos ou 500
-             if (error.status === 404) {
-                 throw error;
-             } else {
-                 const serviceError = new Error(`Erro interno ao cancelar aluguel: ${error.message}`);
-                 serviceError.status = 500;
-                 throw serviceError;
-             }
+             
+             // [MELHORIA] Relança AppErrors específicos ou lança 500
+             if (error instanceof AppError) throw error;
+             throw new AppError(`Erro interno ao cancelar aluguel: ${error.message}`, 500);
         } finally {
-             // Finaliza sessão condicionalmente
              if (session) {
                  logger.debug('[AluguelService] Finalizando sessão Mongoose.');
                  await session.endSession();

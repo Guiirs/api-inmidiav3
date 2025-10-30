@@ -1,29 +1,21 @@
 // InMidia/backend/controllers/empresaController.js
 const EmpresaService = require('../services/empresaService');
-const { validationResult } = require('express-validator'); // Importa para verificar erros de validação
-const logger = require('../config/logger'); // Importa o logger
+// const { validationResult } = require('express-validator'); // Não é mais necessário
+const logger = require('../config/logger');
 
 // Instancia o serviço fora das funções do controller
 const empresaService = new EmpresaService();
 
 /**
  * Controller para registar uma nova empresa e o seu utilizador administrador.
+ * POST /api/v1/empresas/register
  */
 exports.register = async (req, res, next) => {
     logger.info('[EmpresaController] Recebida requisição POST /empresas/register.');
-    logger.debug(`[EmpresaController] Dados recebidos (body): ${JSON.stringify(req.body)}`); // Cuidado com senha em logs detalhados
+    logger.debug(`[EmpresaController] Dados recebidos (body): ${JSON.stringify(req.body)}`);
 
-    // Verifica erros de validação detetados pelo express-validator (configurado nas rotas)
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        // Pega a primeira mensagem de erro
-        const firstError = errors.array({ onlyFirstError: true })[0].msg;
-        logger.warn(`[EmpresaController] Registo falhou: Erro de validação: ${firstError}`);
-        // Retorna 400 Bad Request com a mensagem de erro da validação
-        return res.status(400).json({ message: firstError });
-    }
+    // [MELHORIA] Remove a verificação de validationResult. Confia que a rota já a executou.
 
-    // Se a validação passou, continua para o serviço
     try {
         const { nome_empresa, cnpj, username, email, password, nome, sobrenome } = req.body;
 
@@ -41,12 +33,8 @@ exports.register = async (req, res, next) => {
         // Retorna 201 Created com os dados (incluindo a fullApiKey)
         res.status(201).json(result);
     } catch (err) {
-        // Loga o erro recebido do serviço antes de passar para o errorHandler
+        // O erro (que deve ser um AppError do service) é passado para o errorHandler global
         logger.error(`[EmpresaController] Erro ao chamar empresaService.register: ${err.message}`, { status: err.status, stack: err.stack });
-        // O errorHandler tratará o status (400, 409, 500) vindo do serviço
         next(err);
     }
 };
-
-// Removido createEmpresaController pois agora exportamos as funções diretamente
-// module.exports = createEmpresaController();

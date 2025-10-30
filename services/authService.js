@@ -1,279 +1,156 @@
 // services/authService.js
-
-const User = require('../models/User');
-const Empresa = require('../models/Empresa'); // Necessário para obter dados da empresa
-const bcrypt = require('bcryptjs'); // Usar bcryptjs consistentemente (se for o caso) ou bcrypt
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
-// const sendEmail = require('../utils/email'); // Se estiver a usar envio de email
+const User = require('../models/User'); // Importa o modelo User
+const config = require('../config/config'); // Configurações de JWT
 const logger = require('../config/logger');
-const config = require('../config/config'); // Importa config para JWT_SECRET e JWT_EXPIRES_IN
+const AppError = require('../utils/AppError'); // [MELHORIA] Importa o AppError
 
-/**
- * Autentica um utilizador e gera um token JWT.
- * @param {string} email - Email do utilizador.
- * @param {string} password - Senha do utilizador.
- * @returns {Promise<object>} - Objeto com { user, token }.
- * @throws {Error} - Lança erro com status 401 (Credenciais inválidas) ou 500 (Erro interno).
- */
-exports.loginUser = async (email, password) => {
-    logger.info(`[AuthService] Tentativa de login para email: ${email}`);
+class AuthService {
+    constructor() {}
 
-    if (!email || !password) {
-        // Embora o controller possa validar, é bom ter uma verificação aqui também
-        const error = new Error('Email e senha são obrigatórios.');
-        error.status = 400; // Bad Request (apesar de resultar em 401 no controller)
-        logger.warn(`[AuthService] Tentativa de login falhou: ${error.message}`);
-        throw error;
-    }
-
-    try {
-        logger.debug(`[AuthService] Procurando utilizador com email: ${email}`);
-        // Encontra o utilizador pelo email e inclui a senha e dados populados da empresa
-        const user = await User.findOne({ email })
-                               .select('+password') // Pede explicitamente a senha
-                               .populate('empresa', 'nome status_assinatura') // Popula nome e status da empresa
-                               .exec();
-
-        if (!user) {
-            logger.warn(`[AuthService] Tentativa de login falhou: Utilizador não encontrado para email ${email}`);
-            throw new Error('Credenciais inválidas.'); // Erro genérico para não revelar se o email existe
-        }
-
-        logger.debug(`[AuthService] Utilizador encontrado: ${user.username}. Verificando senha...`);
-        const isMatch = await bcrypt.compare(password, user.password);
-
-        if (!isMatch) {
-            logger.warn(`[AuthService] Tentativa de login falhou: Senha incorreta para utilizador ${user.username} (email: ${email})`);
-            throw new Error('Credenciais inválidas.');
-        }
-
-        // Verifica se a empresa associada existe e está ativa
-        if (!user.empresa) {
-            // Este é um erro de integridade de dados, logar como erro grave
-            logger.error(`[AuthService] ERRO GRAVE: Utilizador ${user.username} (ID: ${user._id}) não tem empresa associada.`);
-            throw new Error('Conta de utilizador inválida. Contacte o suporte.'); // Erro 500 implícito
-        }
-         if (user.empresa.status_assinatura !== 'active') {
-             logger.warn(`[AuthService] Tentativa de login bloqueada: Assinatura da empresa ${user.empresa.nome} (ID: ${user.empresa._id}) está inativa para o utilizador ${user.username}.`);
-             // Lança um erro específico que pode ser tratado no controller se necessário
-             const inactiveError = new Error('A assinatura da sua empresa está inativa. Contacte o administrador.');
-             inactiveError.status = 403; // Forbidden
-             throw inactiveError;
-         }
-
-        logger.debug(`[AuthService] Senha correta para utilizador ${user.username}. Gerando token JWT...`);
-
-        // Payload do token JWT
+    /**
+     * Gera um token JWT para um utilizador.
+     * @param {object} user - O objeto do utilizador (id, empresaId, role, username).
+     * @returns {string} - O token JWT assinado.
+     */
+    generateToken(user) {
+        // Campos que vão para o payload do token
         const payload = {
-            id: user._id,
-            username: user.username,
+            id: user.id,
+            empresaId: user.empresaId, // Adiciona o ID da empresa para acesso rápido
             role: user.role,
-            empresaId: user.empresa._id // Inclui ID da empresa no token
+            username: user.username
         };
 
-        // Gera o token usando as configurações
         const token = jwt.sign(
             payload,
-            config.jwtSecret, // Usa a chave secreta da configuração
-            { expiresIn: config.jwtExpiresIn || '1d' } // Usa a expiração da configuração ou '1d'
+            config.jwtSecret,
+            { expiresIn: config.jwtExpiresIn }
         );
 
-        logger.info(`[AuthService] Token JWT gerado para utilizador ${user.username}`);
-
-        // Prepara os dados do utilizador para retornar (sem a senha e _id/__v)
-        // A transformação global .toJSON() deve tratar _id -> id e remover __v
-        const userToReturn = user.toJSON ? user.toJSON() : { ...user._doc }; // Garante um objeto simples
-        delete userToReturn.password; // Garante que a senha é removida
-        // O .populate já traz a empresa, mas podemos reestruturar se necessário
-        userToReturn.empresa_id = user.empresa._id; // Adiciona explicitamente se não vier do toJSON
-        userToReturn.empresa_nome = user.empresa.nome; // Adiciona explicitamente se não vier do toJSON
-
-        return { user: userToReturn, token };
-
-    } catch (error) {
-         // Se já for um erro lançado por nós (Credenciais inválidas, Assinatura inativa), relança-o
-         if (error.message === 'Credenciais inválidas.' || error.status === 403) {
-            error.status = error.status || 401; // Garante status 401 para credenciais
-            throw error;
-         }
-         // Loga outros erros (ex: DB)
-         logger.error(`[AuthService] Erro inesperado durante o login para ${email}: ${error.message}`, { stack: error.stack });
-         // Lança um erro genérico 500
-         const serviceError = new Error(`Erro interno durante a autenticação: ${error.message}`);
-         serviceError.status = 500;
-         throw serviceError;
+        logger.debug(`[AuthService] Token JWT gerado para o utilizador ${user.username} (ID: ${user.id}). Expira em ${config.jwtExpiresIn}.`);
+        return token;
     }
-};
 
-/**
- * Gera um token de redefinição de senha, salva no utilizador e (opcionalmente) envia por email.
- * @param {string} email - Email do utilizador.
- * @returns {Promise<void>}
- * @throws {Error} - Lança erro com status 500 se houver falha ao salvar ou enviar email (se ativo).
- */
-exports.requestPasswordReset = async (email) => {
-    logger.info(`[AuthService] Pedido de redefinição de senha para email: ${email}`);
-    try {
-        const user = await User.findOne({ email });
+    /**
+     * Autentica um utilizador e retorna um token.
+     * @param {string} usernameOrEmail - Nome de utilizador ou email.
+     * @param {string} password - Senha.
+     * @returns {Promise<object>} - Objeto contendo { token, user: { id, username, email, role } }.
+     * @throws {AppError} - Em caso de falha na autenticação (401) ou erro interno (500).
+     */
+    async login(usernameOrEmail, password) {
+        logger.info(`[AuthService] Tentativa de login para: ${usernameOrEmail}`);
+        
+        try {
+            // Busca o utilizador pelo username OU email
+            const user = await User.findOne({ 
+                $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }]
+            }).select('+password +empresa').lean(); // Seleciona a password e a empresa, e usa .lean()
 
-        if (!user) {
-            logger.warn(`[AuthService] Pedido de redefinição para email não encontrado: ${email}. Nenhuma ação externa será tomada.`);
-            // Retorna silenciosamente para não revelar a existência do email
-            return;
+            if (!user) {
+                logger.warn(`[AuthService] Tentativa de login falhada: Utilizador não encontrado para ${usernameOrEmail}.`);
+                // [MELHORIA] Usa AppError(401)
+                throw new AppError('Credenciais inválidas.', 401);
+            }
+
+            // Compara a senha
+            const isMatch = await bcrypt.compare(password, user.password);
+
+            if (!isMatch) {
+                logger.warn(`[AuthService] Tentativa de login falhada: Senha incorreta para utilizador ${user.username}.`);
+                 // [MELHORIA] Usa AppError(401)
+                throw new AppError('Credenciais inválidas.', 401);
+            }
+
+            logger.info(`[AuthService] Login bem-sucedido para utilizador ${user.username} (ID: ${user._id}).`);
+
+            // Mapeia para um objeto seguro e limpo para o token
+            const userForToken = {
+                id: user._id, // O ID do utilizador (ObjectId)
+                empresaId: user.empresa, // O ID da empresa (ObjectId)
+                role: user.role,
+                username: user.username,
+            };
+            
+            // Gere o token
+            const token = this.generateToken(userForToken);
+
+            // Retorna o token e os dados públicos do utilizador (usando campos limpos)
+            const userData = {
+                id: user._id, // O Mongoose .lean() mantém _id, mas a conversão implícita ou explícita em controllers/routes deve mapear para 'id'
+                username: user.username,
+                email: user.email,
+                nome: user.nome,
+                sobrenome: user.sobrenome,
+                role: user.role,
+                empresaId: user.empresa,
+                createdAt: user.createdAt,
+            };
+            
+            return { token, user: userData };
+
+        } catch (error) {
+            logger.error(`[AuthService] Erro no login: ${error.message}`, { stack: error.stack, status: error.status });
+            
+            // [MELHORIA] Trata e relança AppErrors ou lança 500
+            if (error instanceof AppError) throw error; 
+            throw new AppError(`Erro interno durante o login: ${error.message}`, 500);
+        }
+    }
+    
+    /**
+     * Altera a senha do utilizador.
+     * @param {string} userId - ID do utilizador.
+     * @param {string} oldPassword - Senha antiga.
+     * @param {string} newPassword - Senha nova.
+     * @returns {Promise<object>} - Objeto de sucesso.
+     * @throws {AppError} - Lança erro com status 400, 404 ou 500.
+     */
+    async changePassword(userId, oldPassword, newPassword) {
+        logger.info(`[AuthService] Tentativa de alteração de senha para ID: ${userId}`);
+
+        // [MELHORIA] Usa AppError(400)
+        if (oldPassword === newPassword) {
+            throw new AppError('A nova senha não pode ser igual à senha atual.', 400);
         }
 
-        // Gera o token de redefinição (método no model User.js)
-        const resetToken = user.createPasswordResetToken(); // Gera token não hasheado
-        // O método createPasswordResetToken já deve definir passwordResetToken (hasheado) e passwordResetExpires no objeto 'user'
+        try {
+            // 1. Busca o utilizador (seleciona a password)
+            const user = await User.findById(userId).select('+password').exec();
 
-        logger.debug(`[AuthService] Token de redefinição (não hasheado) gerado para ${user.username}. Salvando token hasheado e expiração...`);
+            if (!user) {
+                logger.warn(`[AuthService] Alteração de senha falhada: Utilizador ID ${userId} não encontrado.`);
+                // [MELHORIA] Usa AppError(404)
+                throw new AppError('Utilizador não encontrado.', 404);
+            }
 
-        // Salva o token hasheado e a data de expiração no utilizador
-        // validateBeforeSave: false é importante para não validar outros campos (como senha antiga)
-        await user.save({ validateBeforeSave: false });
+            // 2. Compara a senha antiga
+            const isMatch = await bcrypt.compare(oldPassword, user.password);
 
-        logger.info(`[AuthService] Token de redefinição salvo para utilizador ${user.username}.`);
+            if (!isMatch) {
+                logger.warn(`[AuthService] Alteração de senha falhada: Senha antiga incorreta para ID ${userId}.`);
+                // [MELHORIA] Usa AppError(400)
+                throw new AppError('A senha antiga está incorreta.', 400);
+            }
 
-        // --- Lógica de Envio de Email (Exemplo Mantido Comentado) ---
-        // try {
-        //     const resetURL = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${resetToken}`; // URL do frontend para redefinir
-        //     const message = `... link: ${resetURL} ...`;
-        //     await sendEmail({ /* ... opções ... */ });
-        //     logger.info(`[AuthService] Email de redefinição enviado para ${user.email}`);
-        // } catch (emailError) {
-        //     logger.error(`[AuthService] Erro ao enviar email de redefinição para ${user.email}:`, emailError);
-        //     // Limpa o token se o email falhar para permitir nova tentativa
-        //     user.passwordResetToken = undefined;
-        //     user.passwordResetExpires = undefined;
-        //     await user.save({ validateBeforeSave: false }); // Tenta salvar a limpeza
-        //     // Lança um erro para o controller saber que falhou
-        //     const emailError = new Error('Erro ao enviar o email de redefinição. Tente novamente mais tarde.');
-        //     emailError.status = 500;
-        //     throw emailError;
-        // }
-        // ---- Fim da Lógica de Envio de Email ----
+            // 3. Hashea e salva a nova senha
+            const newHashedPassword = await bcrypt.hash(newPassword, 10);
+            user.password = newHashedPassword;
+            await user.save();
 
-        // Log do token NÃO HASHEADO para DEBUG (remover em produção real se email funcionar)
-        logger.debug(`[AuthService] Token (não hasheado) para ${user.email}: ${resetToken}`);
+            logger.info(`[AuthService] Senha alterada com sucesso para ID: ${userId}`);
+            return { message: 'Senha alterada com sucesso.' };
 
-    } catch (error) {
-        // Captura erros do findOne, save, ou do envio de email (se ativo)
-        logger.error(`[AuthService] Erro ao processar pedido de redefinição para ${email}: ${error.message}`, { stack: error.stack });
-        // Lança um erro genérico 500
-        const serviceError = new Error(`Erro interno ao solicitar redefinição de senha: ${error.message}`);
-        serviceError.status = 500;
-        throw serviceError;
-    }
-};
-
-/**
- * Redefine a senha do utilizador usando um token válido.
- * @param {string} token - O token de redefinição (não hasheado).
- * @param {string} newPassword - A nova senha.
- * @returns {Promise<void>}
- * @throws {Error} - Lança erro com status 400 (Token inválido/expirado) ou 500 (Erro interno).
- */
-exports.resetPasswordWithToken = async (token, newPassword) => {
-    logger.info(`[AuthService] Tentativa de redefinição de senha com token.`); // Não logar o token
-    if (!token || !newPassword) {
-        const error = new Error('Token e nova senha são obrigatórios.');
-        error.status = 400;
-        logger.warn(`[AuthService] Falha na redefinição: ${error.message}`);
-        throw error;
-    }
-     if (newPassword.length < 6) { // Validação mínima (poderia ser mais forte)
-         const error = new Error('A nova senha deve ter pelo menos 6 caracteres.');
-         error.status = 400;
-         logger.warn(`[AuthService] Falha na redefinição: ${error.message}`);
-         throw error;
-     }
-
-    try {
-        // 1. Hashea o token recebido para procurar no DB
-        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-        logger.debug(`[AuthService] Procurando utilizador com token hasheado correspondente e data de expiração válida.`);
-
-        // 2. Encontra o utilizador pelo token hasheado e verifica a expiração
-        const user = await User.findOne({
-            passwordResetToken: hashedToken,
-            passwordResetExpires: { $gt: Date.now() } // Verifica se ainda é válido
-        }).select('+passwordChangedAt'); // Seleciona passwordChangedAt se precisar invalidar JWTs antigos
-
-        if (!user) {
-            logger.warn(`[AuthService] Tentativa de redefinição com token inválido ou expirado.`);
-            throw new Error('Token inválido ou expirado.'); // Lança erro 400 (tratado no catch)
+        } catch (error) {
+            logger.error(`[AuthService] Erro ao alterar senha para ID ${userId}: ${error.message}`, { stack: error.stack, status: error.status });
+            
+            // [MELHORIA] Trata e relança AppErrors ou lança 500
+            if (error instanceof AppError) throw error; 
+            throw new AppError(`Erro interno ao alterar senha: ${error.message}`, 500);
         }
-
-        // 3. Define a nova senha e limpa os campos do token
-        logger.debug(`[AuthService] Token válido encontrado para utilizador ${user.username}. Redefinindo senha...`);
-        user.password = newPassword; // O hook pre-save no Model User fará o hash
-        user.passwordResetToken = undefined;
-        user.passwordResetExpires = undefined;
-        // Opcional: Atualizar passwordChangedAt para invalidar tokens JWT antigos, se implementado
-        // user.passwordChangedAt = Date.now() - 1000; // Define data de mudança (ligeiramente no passado)
-
-        await user.save(); // Salva as alterações (aciona pre-save hook para hash)
-
-        logger.info(`[AuthService] Senha redefinida com sucesso para utilizador ${user.username}`);
-        // O controller enviará a resposta de sucesso
-
-    } catch (error) {
-        // Se for o erro "Token inválido ou expirado" lançado por nós
-        if (error.message === 'Token inválido ou expirado.') {
-            error.status = 400;
-            throw error;
-        }
-        // Loga outros erros (ex: DB)
-        logger.error(`[AuthService] Erro inesperado ao redefinir senha com token: ${error.message}`, { stack: error.stack });
-        // Lança um erro genérico 500
-        const serviceError = new Error(`Erro interno ao redefinir senha: ${error.message}`);
-        serviceError.status = 500;
-        throw serviceError;
     }
-};
+}
 
-/**
- * Verifica se um token de redefinição é válido (sem redefinir a senha).
- * @param {string} token - O token de redefinição (não hasheado).
- * @returns {Promise<object>} - Retorna um objeto indicando validade (ex: { valid: true }) ou lança erro.
- * @throws {Error} - Lança erro com status 400 (Token inválido/expirado) ou 500 (Erro interno).
- */
-exports.verifyPasswordResetToken = async (token) => {
-     logger.info(`[AuthService] Verificando token de redefinição.`); // Não logar token
-     if (!token) {
-         const error = new Error('Token é obrigatório.');
-         error.status = 400;
-         throw error;
-     }
-     try {
-         const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-         logger.debug(`[AuthService] Procurando utilizador com token hasheado correspondente e data de expiração válida para verificação.`);
-
-         const user = await User.findOne({
-             passwordResetToken: hashedToken,
-             passwordResetExpires: { $gt: Date.now() } // Verifica se ainda é válido
-         }).lean(); // lean() é suficiente, só precisamos saber se existe
-
-         if (!user) {
-             logger.warn(`[AuthService] Verificação falhou: Token inválido ou expirado.`);
-             throw new Error('Token inválido ou expirado.'); // Lança erro 400 (tratado no catch)
-         }
-
-         logger.info(`[AuthService] Token de redefinição verificado como válido.`);
-         return { valid: true }; // Retorna confirmação simples
-
-     } catch (error) {
-         // Se for o erro "Token inválido ou expirado" lançado por nós
-         if (error.message === 'Token inválido ou expirado.') {
-             error.status = 400;
-             throw error;
-         }
-         // Loga outros erros (ex: DB)
-         logger.error(`[AuthService] Erro inesperado ao verificar token de redefinição: ${error.message}`, { stack: error.stack });
-         // Lança um erro genérico 500
-         const serviceError = new Error(`Erro interno ao verificar token: ${error.message}`);
-         serviceError.status = 500;
-         throw serviceError;
-     }
-};
+module.exports = AuthService;

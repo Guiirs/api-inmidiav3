@@ -1,8 +1,9 @@
-// InMidia/backend/services/relatorioService.js
+// services/relatorioService.js
 const Placa = require('../models/Placa'); // Modelo Placa Mongoose
 const Regiao = require('../models/Regiao'); // Modelo Regiao Mongoose
 const mongoose = require('mongoose'); // Necessário para ObjectId
 const logger = require('../config/logger'); // Importa o logger
+const AppError = require('../utils/AppError'); // [MELHORIA] Importa AppError
 
 class RelatorioService {
     constructor() {}
@@ -11,14 +12,14 @@ class RelatorioService {
      * Gera um relatório de contagem de placas por região para uma empresa.
      * @param {string} empresa_id - ObjectId da empresa.
      * @returns {Promise<Array<object>>} - Array com objetos { regiao: string, total_placas: number }.
-     * @throws {Error} - Lança erro 500 em caso de falha na agregação.
+     * @throws {AppError} - Lança erro 500 em caso de falha na agregação.
      */
     async placasPorRegiao(empresa_id) {
         logger.info(`[RelatorioService] Iniciando agregação 'placasPorRegiao' para empresa ${empresa_id}.`);
-        const startTime = Date.now(); // Marca o início
+        const startTime = Date.now(); 
 
         try {
-            // Usa o Aggregation Pipeline do MongoDB para agrupar e contar
+            // Usa o Aggregation Pipeline do MongoDB para agrupar e contar (Lógica mantida)
             const aggregationPipeline = [
                 // 1. Filtra as placas pela empresa (converte string para ObjectId se necessário)
                 { $match: { empresa: new mongoose.Types.ObjectId(empresa_id) } },
@@ -43,9 +44,9 @@ class RelatorioService {
                 // 5. Formata a saída
                 {
                     $project: {
-                        _id: 0, // Remove o campo _id do grupo
-                        regiao: '$_id.regiaoNome', // Renomeia
-                        total_placas: 1 // Mantém o total
+                        _id: 0, 
+                        regiao: '$_id.regiaoNome', 
+                        total_placas: 1 
                     }
                 },
                 // 6. Ordena pelo nome da região
@@ -57,14 +58,13 @@ class RelatorioService {
             const endTime = Date.now();
             logger.info(`[RelatorioService] Agregação 'placasPorRegiao' concluída em ${endTime - startTime}ms. ${results.length} resultados.`);
 
-            return results; // Retorna o array de objetos simples
+            return results; 
 
         } catch (error) {
             const endTime = Date.now();
             logger.error(`[RelatorioService] Erro na agregação 'placasPorRegiao' (tempo: ${endTime - startTime}ms): ${error.message}`, { stack: error.stack });
-            const serviceError = new Error(`Erro interno ao gerar relatório de placas por região: ${error.message}`);
-            serviceError.status = 500;
-            throw serviceError;
+            // [MELHORIA] Usa AppError
+            throw new AppError(`Erro interno ao gerar relatório de placas por região: ${error.message}`, 500);
         }
     }
 
@@ -72,17 +72,17 @@ class RelatorioService {
      * Gera um resumo para o dashboard (total de placas, disponíveis, região principal).
      * @param {string} empresa_id - ObjectId da empresa.
      * @returns {Promise<object>} - Objeto com { totalPlacas, placasDisponiveis, regiaoPrincipal }.
-     * @throws {Error} - Lança erro 500 em caso de falha nas queries.
+     * @throws {AppError} - Lança erro 500 em caso de falha nas queries.
      */
     async getDashboardSummary(empresa_id) {
         logger.info(`[RelatorioService] Iniciando 'getDashboardSummary' para empresa ${empresa_id}.`);
-        const startTime = Date.now(); // Marca o início
+        const startTime = Date.now(); 
 
         try {
             // Converte para ObjectId uma vez
             const empresaObjectId = new mongoose.Types.ObjectId(empresa_id);
 
-            // Define as promessas
+            // Define as promessas (Lógica mantida)
             logger.debug(`[RelatorioService] Iniciando query countDocuments para totalPlacas.`);
             const totalPlacasPromise = Placa.countDocuments({ empresa: empresaObjectId });
 
@@ -92,7 +92,7 @@ class RelatorioService {
             logger.debug(`[RelatorioService] Iniciando pipeline de agregação para regiaoPrincipal.`);
             const regiaoPrincipalPipeline = [
                 { $match: { empresa: empresaObjectId } },
-                { $match: { regiao: { $ne: null } } }, // Apenas placas com região
+                { $match: { regiao: { $ne: null } } }, 
                 {
                     $lookup: {
                         from: Regiao.collection.name, localField: 'regiao',
@@ -115,10 +115,8 @@ class RelatorioService {
             ]);
             const endTimeQueries = Date.now();
             logger.debug(`[RelatorioService] Queries 'getDashboardSummary' concluídas em ${endTimeQueries - startTime}ms.`);
-            logger.debug(`[RelatorioService] Resultados - Total: ${totalPlacasResult}, Disponíveis: ${placasDisponiveisResult}, Região Agg: ${JSON.stringify(regiaoPrincipalResultArray)}`);
 
-
-            // Extrai o nome da região principal
+            // Extrai o nome da região principal (Lógica mantida)
             const regiaoPrincipal = regiaoPrincipalResultArray.length > 0 ? regiaoPrincipalResultArray[0].nome : 'N/A';
             const finalResult = {
                 totalPlacas: totalPlacasResult || 0,
@@ -133,11 +131,10 @@ class RelatorioService {
         } catch (error) {
             const endTime = Date.now();
             logger.error(`[RelatorioService] Erro nas queries 'getDashboardSummary' (tempo: ${endTime - startTime}ms): ${error.message}`, { stack: error.stack });
-            const serviceError = new Error(`Erro interno ao gerar resumo do dashboard: ${error.message}`);
-            serviceError.status = 500;
-            throw serviceError;
+            // [MELHORIA] Usa AppError
+            throw new new AppError(`Erro interno ao gerar resumo do dashboard: ${error.message}`, 500);
         }
     }
 }
 
-module.exports = RelatorioService; // Exporta a classe
+module.exports = RelatorioService;

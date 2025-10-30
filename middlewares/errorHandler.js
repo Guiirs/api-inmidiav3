@@ -1,50 +1,132 @@
 // middlewares/errorHandler.js
-const logger = require('../config/logger'); // Importa o nosso logger
+const logger = require('../config/logger');
+const AppError = require('../utils/AppError');
 
-const errorHandler = (err, req, res, next) => {
-    let status = err.status || 500;
-    let message = err.message || 'Ocorreu um erro interno no servidor.';
-    let isCritical = status >= 500;
-
-    // Tratamento específico de erros (mantido)
-    if (err.code && err.code === 11000) {
-        status = 409; 
-        const field = Object.keys(err.keyValue || {})[0] || 'dados';
-        message = `Já existe um registo com estes ${field}.`;
-        isCritical = false;
-    } else if (err.name === 'ValidationError' || err.errors) {
-        status = 400; 
-        const mongooseErrors = Object.values(err.errors || {}).map(e => e.message);
-        message = mongooseErrors.join(' ') || 'Erro de validação de dados.';
-        isCritical = false;
-    } else if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
-         status = 403;
-         message = 'Token inválido ou expirado.';
-         isCritical = false;
-    } else if (err.status && err.status >= 400 && err.status < 500) {
-        status = err.status;
-        message = err.message;
-        isCritical = false;
-    } else if (isCritical) {
-        message = 'Ocorreu um erro interno no servidor.'; 
-    }
-
-    // <<< REFORÇO DO LOGGING >>>
-    // Loga a mensagem principal
-    logger.error(`${status} - ${message} - ${req.originalUrl} - ${req.method} - IP: ${req.ip}`);
-    
-    // Loga o objeto de erro completo E o stack trace SEPARADAMENTE para garantir visibilidade
-    // (A formatação padrão do Winston pode esconder o stack em alguns transportes)
-    if (err) {
-         logger.error("Objeto de Erro Completo:", err); 
-         if (err.stack) {
-             logger.error("Stack Trace Detalhado:\n", err.stack);
-         }
-    }
-    // <<< FIM DO REFORÇO >>>
-
-    // Envia a resposta final para o cliente
-    res.status(status).json({ message });
+/**
+ * Converte erros de Cast (ID inválido) do Mongoose em um AppError operacional.
+ */
+const handleCastErrorDB = (err) => {
+    const message = `Recurso inválido. ${err.path}: ${err.value}.`;
+    return new AppError(message, 400); // 400 Bad Request
 };
 
-module.exports = errorHandler;
+/**
+ * Converte erros de chave duplicada (11000) do Mongoose em um AppError operacional.
+ */
+const handleDuplicateFieldsDB = (err) => {
+    // Extrai o valor do erro
+    const field = Object.keys(err.keyValue)[0];
+    const value = err.keyValue[field];
+    const message = `O campo '${field}' com valor '${value}' já existe. Por favor, use outro valor.`;
+    return new AppError(message, 409); // 409 Conflict
+};
+
+/**
+ * Converte erros de validação do Mongoose em um AppError operacional.
+ */
+const handleValidationErrorDB = (err) => {
+    const errors = Object.values(err.errors).map(el => el.message);
+    const message = `Dados de entrada inválidos: ${errors.join('. ')}`;
+    return new AppError(message, 400); // 400 Bad Request
+};
+
+/**
+ * Converte erros de JWT (token inválido).
+ */
+const handleJWTError = () => new AppError('Token inválido. Por favor, faça login novamente.', 401); // 401 Unauthorized
+
+/**
+ * Converte erros de JWT (token expirado).
+ */
+const handleJWTExpiredError = () => new AppError('O seu token expirou. Por favor, faça login novamente.', 401); // 401 Unauthorized
+
+/**
+ * Envia uma resposta de erro detalhada (para ambiente de desenvolvimento).
+ */
+const sendErrorDev = (err, req, res) => {
+    res.status(err.statusCode).json({
+        status: err.status,
+        message: err.message,
+        error: err,
+        stack: err.stack,
+        // Mantém a exibição de erros de validação específicos, se existirem
+        validationErrors: err.validationErrors
+    });
+};
+
+/**
+ * Envia uma resposta de erro controlada (para ambiente de produção).
+ * Só vaza detalhes de erros operacionais (AppError).
+ */
+const sendErrorProd = (err, res) => {
+    // A) Erro Operacional (confiável, vindo de um AppError): Envia mensagem ao cliente
+    if (err.isOperational) {
+        res.status(err.statusCode).json({
+            status: err.status,
+            message: err.message,
+            // Adiciona erros de validação (ex: do express-validator) se existirem
+            ...(err.validationErrors && { errors: err.validationErrors })
+        });
+    } 
+    // B) Erro de programação ou desconhecido: Não vaza detalhes
+    else {
+        // 1. Loga o erro (já foi logado antes, mas garantimos aqui)
+        logger.error('ERRO NÃO OPERACIONAL 💥 (PRODUÇÃO)', { 
+            message: err.message, 
+            stack: err.stack, 
+            errorObject: err 
+        });
+
+        // 2. Envia resposta genérica
+        res.status(500).json({
+            status: 'error',
+            message: 'Ocorreu um erro interno no servidor. Tente novamente mais tarde.'
+        });
+    }
+};
+
+/**
+ * Middleware Global de Tratamento de Erros.
+ */
+module.exports = (err, req, res, next) => {
+    // Define valores padrão para o erro, caso não venham
+    err.statusCode = err.statusCode || 500;
+    err.status = err.status || 'error';
+
+    // [MELHORIA] Log centralizado
+    // Loga todos os erros (operacionais ou não) assim que chegam.
+    // O log original era bom, 
+    // mas agora está no topo.
+    logger.error(
+        `${err.statusCode} - ${err.message} - ${req.originalUrl} - ${req.method} - IP: ${req.ip}`,
+        // Inclui o stack trace no log (não na resposta ao cliente)
+        { stack: err.stack } 
+    );
+
+    // [MELHORIA] Distingue resposta de Dev e Prod
+    if (process.env.NODE_ENV === 'development') {
+        sendErrorDev(err, res);
+    } else { // 'production' ou qualquer outro
+        
+        // Em produção, primeiro tentamos converter erros técnicos
+        // em erros operacionais (AppError) para uma resposta limpa.
+        
+        // Copiamos o erro para não modificar o original
+        let error = { ...err, message: err.message, name: err.name, code: err.code, keyValue: err.keyValue };
+
+        if (error.name === 'CastError') error = handleCastErrorDB(error);
+        if (error.code === 11000) error = handleDuplicateFieldsDB(error);
+        if (error.name === 'ValidationError') error = handleValidationErrorDB(error);
+        if (error.name === 'JsonWebTokenError') error = handleJWTError();
+        if (error.name === 'TokenExpiredError') error = handleJWTExpiredError();
+        
+        // Se o erro veio do express-validator (passado via AppError)
+        // garantimos que ele seja marcado como operacional.
+        if (err.validationErrors) {
+            error.validationErrors = err.validationErrors;
+            error.isOperational = true;
+        }
+
+        sendErrorProd(error, res);
+    }
+};

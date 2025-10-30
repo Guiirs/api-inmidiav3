@@ -2,6 +2,7 @@
 const bcrypt = require('bcrypt');
 const User = require('../models/User'); // Importa o modelo User do Mongoose
 const logger = require('../config/logger'); // Importa o logger
+const AppError = require('../utils/AppError'); // [MELHORIA] Importa o AppError
 const saltRounds = 10;
 
 class AdminService {
@@ -12,20 +13,18 @@ class AdminService {
      * @param {object} userData - Dados do novo utilizador (username, email, password, nome, sobrenome, role?).
      * @param {string} empresa_id - ObjectId da empresa.
      * @returns {Promise<object>} - Objeto com os dados seguros do utilizador criado.
-     * @throws {Error} - Lança erro com status 400, 409 ou 500.
+     * @throws {AppError} - Lança erro com status 400, 409 ou 500.
      */
     async createUser(userData, empresa_id) {
         logger.info(`[AdminService] Tentando criar utilizador para empresa ${empresa_id}.`);
-        logger.debug(`[AdminService] Dados recebidos: ${JSON.stringify(userData)}`); // Cuidado ao logar senha em produção detalhada
+        logger.debug(`[AdminService] Dados recebidos: ${JSON.stringify(userData)}`);
 
         const { username, email, password, nome, sobrenome, role = 'user' } = userData;
 
-        // Validação básica (poderia ser movida para validator se preferir)
+        // Validação básica (mantida)
         if (!username || !email || !password || !nome || !sobrenome) {
-            const error = new Error('Campos obrigatórios (username, email, password, nome, sobrenome) em falta.');
-            error.status = 400;
-            logger.warn(`[AdminService] Falha ao criar utilizador: ${error.message}`);
-            throw error;
+            // [MELHORIA] Usa AppError
+            throw new AppError('Campos obrigatórios (username, email, password, nome, sobrenome) em falta.', 400);
         }
 
         try {
@@ -38,10 +37,8 @@ class AdminService {
 
             if (userExists) {
                 let field = userExists.username === username ? 'nome de utilizador' : 'email';
-                const error = new Error(`Já existe um utilizador com este ${field} na sua empresa.`);
-                error.status = 409;
-                logger.warn(`[AdminService] Falha ao criar utilizador: ${error.message}`);
-                throw error;
+                // [MELHORIA] Usa AppError
+                throw new AppError(`Já existe um utilizador com este ${field} na sua empresa.`, 409);
             }
 
             logger.debug(`[AdminService] Hasheando senha para utilizador ${username}`);
@@ -57,30 +54,25 @@ class AdminService {
             const createdUser = await newUser.save();
             logger.info(`[AdminService] Utilizador ${username} (ID: ${createdUser._id}) criado com sucesso para empresa ${empresa_id}.`);
 
-            // Retorna um objeto simples e seguro
-            return {
-                id: createdUser._id, // Garante retorno do ID mapeado
-                username: createdUser.username,
-                email: createdUser.email,
-                role: createdUser.role
-            };
+            // Retorna um objeto simples e seguro (após a transformação toJSON/toObject do Mongoose)
+            // A transformação global (configurada em dbMongo.js) mapeia _id -> id
+            return createdUser.toJSON();
+
         } catch (error) {
-            // Log detalhado do erro antes de tratar
             logger.error(`[AdminService] Erro Mongoose/DB ao criar utilizador: ${error.message}`, { stack: error.stack, code: error.code, keyValue: error.keyValue });
 
-            // Trata erros de duplicação que podem ter escapado à verificação inicial ou ocorreram por race condition
+            // Trata erros de duplicação que podem ter escapado (mantido)
             if (error.code === 11000) {
                 let field = Object.keys(error.keyValue)[0];
                 field = field === 'email' ? 'e-mail' : (field === 'username' ? 'nome de utilizador' : field);
-                const duplicateError = new Error(`Já existe um utilizador com este ${field}.`);
-                duplicateError.status = 409;
-                throw duplicateError; // Lança erro específico
+                // [MELHORIA] Usa AppError
+                throw new AppError(`Já existe um utilizador com este ${field}.`, 409); 
             }
-            // Re-lança outros erros (podem ser erros de validação do Mongoose ou de conexão)
-            // Considerar lançar um erro genérico 500 para mascarar detalhes internos
-            const serviceError = new Error(`Erro interno ao criar utilizador: ${error.message}`);
-            serviceError.status = 500; // Internal Server Error
-            throw serviceError;
+            // [MELHORIA] Se for um erro de validação (ex: password muito curta, mas validado no service/controller) ou outro erro de DB (não 400/409/500 interno)
+            if (error instanceof AppError) throw error; // Relança AppErrors (ex: 400 de validação)
+
+            // Lança um erro genérico 500 para outros erros inesperados
+            throw new AppError(`Erro interno ao criar utilizador: ${error.message}`, 500);
         }
     }
 
@@ -88,22 +80,22 @@ class AdminService {
      * Obtém todos os utilizadores de uma empresa.
      * @param {string} empresa_id - ObjectId da empresa.
      * @returns {Promise<Array<object>>} - Array com os dados seguros dos utilizadores.
-     * @throws {Error} - Lança erro com status 500 em caso de falha na DB.
+     * @throws {AppError} - Lança erro com status 500 em caso de falha na DB.
      */
     async getAllUsers(empresa_id) {
         logger.info(`[AdminService] Buscando todos os utilizadores para empresa ${empresa_id}.`);
         try {
             const users = await User.find({ empresa: empresa_id })
                                     .select('username email nome sobrenome role createdAt') // Seleciona campos seguros
-                                    .lean() // Retorna objetos simples
+                                    .lean() // Retorna objetos simples (A transformação _id -> id já deve funcionar se configurada no jest.setup.js)
                                     .exec();
             logger.info(`[AdminService] Encontrados ${users.length} utilizadores para empresa ${empresa_id}.`);
-            return users; // O mapeamento _id -> id já deve ocorrer globalmente
+            // O mapeamento _id -> id é tratado pelo Mongoose.set('toJSON') ou jest.setup.js
+            return users; 
         } catch (error) {
             logger.error(`[AdminService] Erro Mongoose/DB ao buscar todos os utilizadores: ${error.message}`, { stack: error.stack });
-            const serviceError = new Error(`Erro interno ao buscar utilizadores: ${error.message}`);
-            serviceError.status = 500;
-            throw serviceError;
+            // [MELHORIA] Usa AppError
+            throw new AppError(`Erro interno ao buscar utilizadores: ${error.message}`, 500);
         }
     }
 
@@ -113,35 +105,30 @@ class AdminService {
      * @param {string} newRole - A nova role ('admin' ou 'user').
      * @param {string} empresa_id - ObjectId da empresa do administrador que faz a requisição.
      * @returns {Promise<object>} - Objeto com mensagem de sucesso.
-     * @throws {Error} - Lança erro com status 400, 404 ou 500.
+     * @throws {AppError} - Lança erro com status 400, 404 ou 500.
      */
     async updateUserRole(userId, newRole, empresa_id) {
         logger.info(`[AdminService] Tentando atualizar role do utilizador ${userId} para ${newRole} na empresa ${empresa_id}.`);
 
         // Validação da Role
         if (!newRole || (newRole !== 'admin' && newRole !== 'user')) {
-            const error = new Error("A 'role' fornecida é inválida. Use 'admin' ou 'user'.");
-            error.status = 400;
-            logger.warn(`[AdminService] Falha ao atualizar role: ${error.message}`);
-            throw error;
+            // [MELHORIA] Usa AppError
+            throw new AppError("A 'role' fornecida é inválida. Use 'admin' ou 'user'.", 400);
         }
 
         try {
-            // Tenta encontrar e atualizar. { new: false } retorna o doc *antes* da atualização (ou null se não encontrar)
+            // Tenta encontrar e atualizar.
             const updateResult = await User.updateOne(
-                { _id: userId, empresa: empresa_id }, // Critérios de busca
-                { $set: { role: newRole } }           // Dados a atualizar
+                { _id: userId, empresa: empresa_id }, 
+                { $set: { role: newRole } }           
             );
 
             // Verifica se algum documento foi encontrado para atualizar
             if (updateResult.matchedCount === 0) {
-                const error = new Error('Utilizador não encontrado na sua empresa.');
-                error.status = 404;
-                logger.warn(`[AdminService] Falha ao atualizar role: Utilizador ${userId} não encontrado na empresa ${empresa_id}.`);
-                throw error;
+                // [MELHORIA] Usa AppError
+                throw new AppError('Utilizador não encontrado na sua empresa.', 404);
             }
 
-             // Verifica se o documento foi realmente modificado (opcional, mas informativo)
              if (updateResult.modifiedCount === 0) {
                  logger.info(`[AdminService] Role do utilizador ${userId} já era '${newRole}'. Nenhuma alteração feita.`);
              } else {
@@ -151,12 +138,12 @@ class AdminService {
             return { message: 'Nível de acesso do utilizador atualizado com sucesso!' };
 
         } catch (error) {
-            // Log detalhado do erro
             logger.error(`[AdminService] Erro Mongoose/DB ao atualizar role: ${error.message}`, { stack: error.stack });
-            // Considerar lançar um erro genérico 500
-            const serviceError = new Error(`Erro interno ao atualizar role do utilizador: ${error.message}`);
-            serviceError.status = 500;
-            throw serviceError;
+            // [MELHORIA] Se for um AppError (400, 404), relança.
+            if (error instanceof AppError) throw error; 
+
+            // Lança um erro genérico 500
+            throw new AppError(`Erro interno ao atualizar role do utilizador: ${error.message}`, 500);
         }
     }
 
@@ -166,40 +153,36 @@ class AdminService {
      * @param {string} adminUserId - ObjectId do administrador que está a fazer a requisição.
      * @param {string} empresa_id - ObjectId da empresa.
      * @returns {Promise<{success: boolean}>} - Confirmação de sucesso.
-     * @throws {Error} - Lança erro com status 400, 404 ou 500.
+     * @throws {AppError} - Lança erro com status 400, 404 ou 500.
      */
     async deleteUser(userId, adminUserId, empresa_id) {
         logger.info(`[AdminService] Admin ${adminUserId} tentando apagar utilizador ${userId} na empresa ${empresa_id}.`);
 
         // Verifica se o admin está a tentar apagar a si próprio
         if (String(userId) === String(adminUserId)) {
-            const error = new Error('Não é possível apagar a sua própria conta de administrador.');
-            error.status = 400;
-            logger.warn(`[AdminService] Falha ao apagar utilizador: Admin ${adminUserId} tentou apagar a própria conta.`);
-            throw error;
+            // [MELHORIA] Usa AppError
+            throw new AppError('Não é possível apagar a sua própria conta de administrador.', 400);
         }
 
         try {
             const result = await User.deleteOne({ _id: userId, empresa: empresa_id });
 
             if (result.deletedCount === 0) {
-                const error = new Error('Utilizador não encontrado na sua empresa.');
-                error.status = 404;
-                logger.warn(`[AdminService] Falha ao apagar utilizador: Utilizador ${userId} não encontrado na empresa ${empresa_id}.`);
-                throw error;
+                // [MELHORIA] Usa AppError
+                throw new AppError('Utilizador não encontrado na sua empresa.', 404);
             }
 
             logger.info(`[AdminService] Utilizador ${userId} apagado com sucesso pelo admin ${adminUserId}.`);
             return { success: true };
         } catch (error) {
-            // Log detalhado do erro
             logger.error(`[AdminService] Erro Mongoose/DB ao apagar utilizador: ${error.message}`, { stack: error.stack });
-            // Considerar lançar um erro genérico 500
-            const serviceError = new Error(`Erro interno ao apagar utilizador: ${error.message}`);
-            serviceError.status = 500;
-            throw serviceError;
+            // [MELHORIA] Se for um AppError (400, 404), relança.
+            if (error instanceof AppError) throw error; 
+
+            // Lança um erro genérico 500
+            throw new AppError(`Erro interno ao apagar utilizador: ${error.message}`, 500);
         }
     }
 }
 
-module.exports = AdminService; // Exporta a classe
+module.exports = AdminService;

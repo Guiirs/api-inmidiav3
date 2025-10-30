@@ -1,39 +1,50 @@
 // models/Aluguel.js
 const mongoose = require('mongoose');
+const { Schema } = mongoose;
 
-const AluguelSchema = new mongoose.Schema({
-    placa_id: {
+const AluguelSchema = new Schema({
+    // [CORREÇÃO] Campo renomeado de 'placa_id' para 'placa'
+    // 'ref' se refere ao nome do modelo 'Placa' (do models/Placa.js)
+    placa: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Placa',
         required: [true, 'A placa é obrigatória.'],
+        index: true, // Adicionado índice para performance
     },
-    cliente_id: {
+    // [CORREÇÃO] Campo renomeado de 'cliente_id' para 'cliente'
+    cliente: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Cliente',
         required: [true, 'O cliente é obrigatório.'],
+        index: true, // Adicionado índice para performance
     },
-    empresa_id: {
+    // [CORREÇÃO] Campo renomeado de 'empresa_id' para 'empresa'
+    empresa: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Empresa',
         required: [true, 'A empresa é obrigatória.'],
+        index: true,
     },
-    dataInicio: {
+    // [CORREÇÃO] Campo renomeado de 'dataInicio' para 'data_inicio'
+    data_inicio: {
         type: Date,
         required: [true, 'A data de início é obrigatória.'],
     },
-    dataFim: {
+    // [CORREÇÃO] Campo renomeado de 'dataFim' para 'data_fim'
+    data_fim: {
         type: Date,
         required: [true, 'A data de fim é obrigatória.'],
     },
-    valorTotal: {
-        type: Number,
-        required: [true, 'O valor total é obrigatório.'],
-    },
-    // Adicionado timestamps para termos createdAt e updatedAt
-}, { timestamps: true }); 
+    // [REMOÇÃO] O campo 'valorTotal' foi removido pois estava
+    // marcado como 'required' no original, mas nunca era fornecido
+    // pelo aluguelService, causando um bug silencioso.
+}, { timestamps: true });
 
-// ⚙️ MELHORIA DE PERFORMANCE: Adiciona um índice composto
-// Isto torna as consultas de relatórios (filtrando por empresa e data) muito mais rápidas.
-AluguelSchema.index({ empresa_id: 1, createdAt: -1 });
+// [MELHORIA] Índice composto para otimizar a verificação de conflitos de datas
+AluguelSchema.index({ placa: 1, data_inicio: 1, data_fim: 1 });
+
+// [MELHORIA] Índice composto para relatórios (o original estava em empresa_id e createdAt)
+// Este é mais útil para buscar aluguéis que estão terminando.
+AluguelSchema.index({ empresa: 1, data_fim: 1 });
 
 module.exports = mongoose.model('Aluguel', AluguelSchema);

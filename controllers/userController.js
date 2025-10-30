@@ -1,20 +1,17 @@
 // controllers/userController.js
-const { validationResult } = require('express-validator');
-const UserService = require('../services/userService'); // Importa o serviço
-const logger = require('../config/logger'); // Importa o logger
+// const { validationResult } = require('express-validator'); // Não é mais necessário
+const UserService = require('../services/userService'); 
+const logger = require('../config/logger'); 
 
 // Instancia o serviço fora das funções do controller
 const userService = new UserService();
 
 /**
  * Controller para obter o perfil do utilizador autenticado.
+ * GET /api/v1/user/me
  */
 exports.getUserProfile = async (req, res, next) => {
-    // Verifica se req.user e req.user.id existem
-    if (!req.user || !req.user.id) {
-        logger.error('[UserController] getUserProfile: ID do utilizador em falta no token.');
-        return res.status(401).json({ message: 'Autorização inválida ou dados em falta.' });
-    }
+    // [MELHORIA] Confia que authMiddleware já validou req.user e ID.
     const userId = req.user.id;
     
     logger.info(`[UserController] Utilizador ID ${userId} requisitou getUserProfile.`);
@@ -26,35 +23,24 @@ exports.getUserProfile = async (req, res, next) => {
         // O serviço Mongoose já retorna os campos corretos (sem senha)
         res.status(200).json(user);
     } catch (err) {
-        // Loga o erro recebido do serviço
+        // O erro (que deve ser um AppError do service) é passado para o errorHandler global
         logger.error(`[UserController] Erro ao chamar userService.getProfile (ID: ${userId}): ${err.message}`, { status: err.status, stack: err.stack });
-        // O errorHandler tratará o status (404, 500) vindo do serviço
         next(err);
     }
 };
 
 /**
  * Controller para atualizar o perfil do utilizador autenticado.
+ * PUT /api/v1/user/me
  */
 exports.updateUserProfile = async (req, res, next) => {
-    // Verifica se req.user e req.user.id existem
-    if (!req.user || !req.user.id) {
-        logger.error('[UserController] updateUserProfile: ID do utilizador em falta no token.');
-        return res.status(401).json({ message: 'Autorização inválida ou dados em falta.' });
-    }
+    // [MELHORIA] Confia que authMiddleware já validou req.user e ID.
     const userId = req.user.id;
 
     logger.info(`[UserController] Utilizador ID ${userId} requisitou updateUserProfile.`);
     logger.debug(`[UserController] Dados recebidos para update: ${JSON.stringify(req.body)}`);
 
-    // Validação de entrada (feita em routes/user.js usando express-validator)
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        const firstError = errors.array({ onlyFirstError: true })[0].msg;
-        logger.warn(`[UserController] updateUserProfile: Erro de validação: ${firstError}`);
-        // Retorna 400 Bad Request com a mensagem de erro da validação
-        return res.status(400).json({ message: firstError });
-    }
+    // [MELHORIA] Remove a verificação de validationResult (agora na rota)
 
     try {
         // Chama o serviço refatorado
@@ -64,25 +50,21 @@ exports.updateUserProfile = async (req, res, next) => {
         // O serviço já retorna o utilizador atualizado (sem senha)
         res.status(200).json({
             message: 'Dados do utilizador atualizados com sucesso.',
-            user: updatedUser // Retorna o objeto do utilizador atualizado
+            user: updatedUser 
         });
     } catch (err) {
-        // Loga o erro recebido do serviço
+        // O erro (que deve ser um AppError do service) é passado para o errorHandler global
         logger.error(`[UserController] Erro ao chamar userService.updateProfile (ID: ${userId}): ${err.message}`, { status: err.status, stack: err.stack });
-        // O errorHandler tratará o status (400, 404, 409, 500) vindo do serviço
         next(err);
     }
 };
 
 /**
  * Controller para obter os dados da empresa associada (apenas Admin).
+ * GET /api/v1/user/me/empresa
  */
 exports.getEmpresaProfile = async (req, res, next) => {
-    // Verifica se req.user, req.user.empresaId e req.user.role existem
-    if (!req.user || !req.user.empresaId || !req.user.role) {
-        logger.error('[UserController] getEmpresaProfile: Dados do utilizador/empresa em falta no token.');
-        return res.status(401).json({ message: 'Autorização inválida ou dados em falta.' });
-    }
+    // [MELHORIA] Confia que authMiddleware já validou todos os campos essenciais.
     const empresa_id = req.user.empresaId;
     const userRole = req.user.role;
     const userId = req.user.id;
@@ -96,22 +78,18 @@ exports.getEmpresaProfile = async (req, res, next) => {
         logger.info(`[UserController] Perfil da empresa ID ${empresa_id} encontrado com sucesso.`);
         res.status(200).json(empresa);
     } catch (err) {
-        // Loga o erro recebido do serviço
+        // O erro (que deve ser um AppError do service) é passado para o errorHandler global
         logger.error(`[UserController] Erro ao chamar userService.getEmpresaProfile (Empresa: ${empresa_id}): ${err.message}`, { status: err.status, stack: err.stack });
-        // O errorHandler tratará o status (403, 404, 500) vindo do serviço
         next(err);
     }
 };
 
 /**
  * Controller para regenerar a API Key da empresa (apenas Admin com confirmação de senha).
+ * POST /api/v1/user/me/empresa/regenerate-api-key
  */
 exports.regenerateEmpresaApiKey = async (req, res, next) => {
-    // Verifica se req.user e req.user.empresaId/id existem
-    if (!req.user || !req.user.id || !req.user.empresaId || !req.user.role) {
-        logger.error('[UserController] regenerateEmpresaApiKey: Dados do utilizador/empresa em falta no token.');
-        return res.status(401).json({ message: 'Autorização inválida ou dados em falta.' });
-    }
+    // [MELHORIA] Confia que authMiddleware já validou todos os campos essenciais.
     const userId = req.user.id;
     const empresaId = req.user.empresaId;
     const userRole = req.user.role;
@@ -119,13 +97,7 @@ exports.regenerateEmpresaApiKey = async (req, res, next) => {
 
     logger.info(`[UserController] Utilizador ID ${userId} requisitou regenerateEmpresaApiKey (Role: ${userRole}).`);
 
-    // Validação de entrada (feita em routes/user.js usando express-validator)
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        const firstError = errors.array({ onlyFirstError: true })[0].msg;
-        logger.warn(`[UserController] regenerateEmpresaApiKey: Erro de validação: ${firstError}`);
-        return res.status(400).json({ message: firstError });
-    }
+    // [MELHORIA] Remove a verificação de validationResult (agora na rota)
 
     try {
         // Chama o serviço refatorado
@@ -140,12 +112,8 @@ exports.regenerateEmpresaApiKey = async (req, res, next) => {
             newApiKeyPrefix: result.newPrefix
         });
     } catch (err) {
-        // Loga o erro recebido do serviço
+        // O erro (que deve ser um AppError do service) é passado para o errorHandler global
         logger.error(`[UserController] Erro ao chamar userService.regenerateApiKey (Empresa: ${empresaId}): ${err.message}`, { status: err.status, stack: err.stack });
-        // O errorHandler tratará o status (400, 401, 403, 404, 500) vindo do serviço
         next(err);
     }
 };
-
-// Removido createUserController pois exportamos diretamente
-// module.exports = createUserController();
