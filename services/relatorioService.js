@@ -20,6 +20,95 @@ class RelatorioService {
     constructor() {}
 
     /**
+     * [NOVO MÉTODO - CORREÇÃO DASHBOARD]
+     * Busca o resumo de dados para o dashboard.
+     * @param {string} empresa_id - ObjectId da empresa.
+     * @returns {Promise<object>} - Objeto com { totalPlacas, placasDisponiveis, regiaoPrincipal }.
+     */
+    async getDashboardSummary(empresa_id) {
+        logger.info(`[RelatorioService] Buscando Dashboard Summary para empresa ${empresa_id}.`);
+        try {
+            // 1. Contagem total de placas
+            const totalPlacasPromise = Placa.countDocuments({ empresa: empresa_id });
+
+            // 2. Contagem de placas disponíveis
+            const placasDisponiveisPromise = Placa.countDocuments({
+                empresa: empresa_id,
+                disponivel: true
+            });
+
+            // 3. Região principal (com mais placas)
+            const regiaoPrincipalPromise = Placa.aggregate([
+                { $match: { empresa: new mongoose.Types.ObjectId(empresa_id) } },
+                { $group: { _id: '$regiao', total: { $sum: 1 } } },
+                { $sort: { total: -1 } },
+                { $limit: 1 },
+                {
+                    $lookup: {
+                        from: 'regiaos', // Nome da coleção de Regiões
+                        localField: '_id',
+                        foreignField: '_id',
+                        as: 'regiaoDetalhes'
+                    }
+                },
+                { $unwind: { path: '$regiaoDetalhes', preserveNullAndEmptyArrays: true } },
+                { $project: { _id: 0, nome: { $ifNull: ['$regiaoDetalhes.nome', 'N/A'] } } }
+            ]);
+
+            const [totalPlacas, placasDisponiveis, regiaoResult] = await Promise.all([
+                totalPlacasPromise,
+                placasDisponiveisPromise,
+                regiaoPrincipalPromise
+            ]);
+
+            const regiaoPrincipal = regiaoResult.length > 0 ? regiaoResult[0].nome : 'N/A';
+
+            return { totalPlacas, placasDisponiveis, regiaoPrincipal };
+
+        } catch (error) {
+            logger.error(`[RelatorioService] Erro ao gerar Dashboard Summary: ${error.message}`, { stack: error.stack });
+            throw new AppError(`Erro interno ao buscar resumo do dashboard: ${error.message}`, 500);
+        }
+    }
+
+    /**
+     * [NOVO MÉTODO - CORREÇÃO DASHBOARD]
+     * Agrupa a contagem de placas por região.
+     * @param {string} empresa_id - ObjectId da empresa.
+     * @returns {Promise<Array<object>>} - Array com { regiao, total_placas }.
+     */
+    async placasPorRegiao(empresa_id) {
+        logger.info(`[RelatorioService] Buscando placasPorRegiao para empresa ${empresa_id}.`);
+        try {
+            const data = await Placa.aggregate([
+                { $match: { empresa: new mongoose.Types.ObjectId(empresa_id) } },
+                { $group: { _id: '$regiao', total_placas: { $sum: 1 } } },
+                { $sort: { total_placas: -1 } },
+                {
+                    $lookup: {
+                        from: 'regiaos', // Nome da coleção de Regiões
+                        localField: '_id',
+                        foreignField: '_id',
+                        as: 'regiaoDetalhes'
+                    }
+                },
+                { $unwind: { path: '$regiaoDetalhes', preserveNullAndEmptyArrays: true } },
+                {
+                    $project: {
+                        _id: 0,
+                        regiao: { $ifNull: ['$regiaoDetalhes.nome', 'Sem Região'] },
+                        total_placas: 1
+                    }
+                }
+            ]);
+            return data;
+        } catch (error) {
+            logger.error(`[RelatorioService] Erro ao buscar placasPorRegiao: ${error.message}`, { stack: error.stack });
+            throw new AppError(`Erro interno ao buscar placas por região: ${error.message}`, 500);
+        }
+    }
+
+    /**
      * Calcula métricas de ocupação de placas em um determinado período.
      * @param {string} dataInicio - Data de início (formato YYYY-MM-DD).
      * @param {string} dataFim - Data de fim (formato YYYY-MM-DD).
@@ -215,7 +304,7 @@ class RelatorioService {
     }
 
     /**
-     * [NOVO MÉTODO] Gera o PDF do relatório de Ocupação via API externa (PDFRest).
+     * [MÉTODO EXISTENTE] Gera o PDF do relatório de Ocupação via API externa (PDFRest).
      * Renderiza um HTML e envia para a API.
      * @param {object} reportData - O resultado da ocupacaoPorPeriodo (JSON).
      * @param {Date} dataInicio - Início do período (objeto Date).
