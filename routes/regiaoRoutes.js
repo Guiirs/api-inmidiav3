@@ -81,3 +81,4 @@ logger.info('[Routes Regiao] Rotas de Regiões definidas com sucesso.');
 // [CORREÇÃO] Exporta o router diretamente
 module.exports = router;
 logger.debug('[Routes Regiao] Router exportado.');
+

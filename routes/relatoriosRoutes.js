@@ -1,74 +1,51 @@
 // routes/relatoriosRoutes.js
 const express = require('express');
 const router = express.Router();
-const logger = require('../config/logger');
+const relatorioController = require('../controllers/relatorioController');
+const authMiddleware = require('../middlewares/authMiddleware');
 const { query } = require('express-validator');
-const { handleValidationErrors } = require('../validators/authValidator');
+const logger = require('../config/logger');
 
-// 1. Importe o controlador e o middleware
-let relatorioController, authenticateToken;
-try {
-    relatorioController = require('../controllers/relatorioController');
-    authenticateToken = require('../middlewares/authMiddleware');
-    
-    if (typeof relatorioController.getPlacasPorRegiao !== 'function' || typeof authenticateToken !== 'function') {
-        logger.error('[Routes Relatorios] ERRO CRÍTICO: Controllers ou Middleware de Relatorios ausentes.');
-        throw new Error('Componentes de Relatórios incompletos.');
-    }
-    logger.info('[Routes Relatorios] Componentes carregados com sucesso.');
-} catch (error) {
-    logger.error(`[Routes Relatorios] ERRO CRÍTICO ao carregar dependências: ${error.message}`);
-    throw new Error('Falha ao carregar dependências de Relatórios.');
-}
-
-// --- Regras de validação para o período de ocupação (REUTILIZADAS) ---
-const validateOcupacaoPeriodo = [
+// Middleware para validar se as datas de início e fim estão presentes e no formato correto
+const validateDateRange = [
     query('data_inicio')
-        .notEmpty().withMessage('A data de início é obrigatória.')
-        .isISO8601().withMessage('Data de início inválida (formato YYYY-MM-DD).'), 
-    
+        .exists().withMessage('O parâmetro data_inicio é obrigatório.')
+        .isDate({ format: 'YYYY-MM-DD' }).withMessage('Data de início inválida. Use o formato YYYY-MM-DD.'),
     query('data_fim')
-        .notEmpty().withMessage('A data final é obrigatória.')
-        .isISO8601().withMessage('Data final inválida (formato YYYY-MM-DD).') 
-        .custom((value, { req }) => {
-             if (!req.query.data_inicio || value < req.query.data_inicio) {
-                 throw new Error('A data final deve ser posterior ou igual à data inicial.');
-             }
-             return true;
-         }),
+        .exists().withMessage('O parâmetro data_fim é obrigatório.')
+        .isDate({ format: 'YYYY-MM-DD' }).withMessage('Data de fim inválida. Use o formato YYYY-MM-DD.'),
 ];
-// -----------------------------------------------------------
 
+// Todas as rotas de relatório requerem autenticação
+router.use(authMiddleware);
 
-logger.info('[Routes Relatorios] Definindo rotas de Relatórios...');
-
-// Aplica autenticação a todas as rotas do arquivo
-router.use(authenticateToken);
-logger.debug('[Routes Relatorios] Middleware de Autenticação aplicado a todas as rotas.');
-
-// ... (Rotas GET /placas-por-regiao e /dashboard-summary mantidas) ...
-
-// 3. Rota para a percentagem de ocupação por período (GET)
-router.get(
-    '/ocupacao-por-periodo',
-    validateOcupacaoPeriodo,    
-    handleValidationErrors,     
-    relatorioController.getOcupacaoPorPeriodo 
+// 1. Rota para Relatório de Placas por Região
+// GET /api/v1/relatorios/placas-por-regiao
+router.get('/placas-por-regiao', 
+    relatorioController.getPlacasPorRegiao
 );
-logger.debug('[Routes Relatorios] Rota GET /ocupacao-por-periodo definida (Relatório de Ocupação).');
 
-// 4. [NOVA ROTA] Rota de Exportação PDF
-// GET /api/v1/relatorios/export/ocupacao-por-periodo?data_inicio=...&data_fim=...
-router.get(
-    '/export/ocupacao-por-periodo',
-    validateOcupacaoPeriodo,    // Reutiliza a validação de datas
-    handleValidationErrors,     
-    relatorioController.exportOcupacaoPdf // Novo Controller
+// 2. Rota para Resumo do Dashboard
+// GET /api/v1/relatorios/dashboard-summary
+router.get('/dashboard-summary', 
+    relatorioController.getDashboardSummary
 );
-logger.debug('[Routes Relatorios] Rota GET /export/ocupacao-por-periodo definida (Exportação PDF).');
 
-logger.info('[Routes Relatorios] Rotas de Relatórios definidas com sucesso.');
+// 3. Rota para Ocupação por Período (Retorna JSON)
+// GET /api/v1/relatorios/ocupacao-por-periodo?data_inicio=YYYY-MM-DD&data_fim=YYYY-MM-DD
+router.get('/ocupacao-por-periodo', 
+    validateDateRange, // Aplica a validação das datas
+    relatorioController.getOcupacaoPorPeriodo
+);
 
-// Exporta o router
+// 4. [NOVA ROTA] Rota para Exportação de Ocupação por Período em PDF
+// GET /api/v1/relatorios/export/ocupacao-por-periodo?data_inicio=YYYY-MM-DD&data_fim=YYYY-MM-DD
+// Nota: Use um prefixo como '/export/' para diferenciar a resposta (JSON vs. PDF)
+router.get('/export/ocupacao-por-periodo', 
+    validateDateRange, // Aplica a mesma validação das datas
+    relatorioController.exportOcupacaoPdf // Chama o novo método do controller
+);
+
 module.exports = router;
 logger.debug('[Routes Relatorios] Router exportado.');
+logger.info('[Routes Relatorios] Rotas de Relatórios definidas com sucesso.');

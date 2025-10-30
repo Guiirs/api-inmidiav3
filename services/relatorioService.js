@@ -1,301 +1,378 @@
 // services/relatorioService.js
-const Placa = require('../models/Placa'); // Modelo Placa Mongoose
-const Regiao = require('../models/Regiao'); // Modelo Regiao Mongoose
-const Aluguel = require('../models/Aluguel'); // Importa Aluguel
-const Cliente = require('../models/Cliente'); // Importa Cliente
-const mongoose = require('mongoose'); 
-const logger = require('../config/logger'); 
-const AppError = require('../utils/AppError'); 
-// [NOVO] Importa a biblioteca de PDF (Assumindo que você instalou pdfkit)
-const PDFDocument = require('pdfkit'); 
+
+// Modelos e dependências
+const Placa = require('../models/Placa');
+const Regiao = require('../models/Regiao');
+const Aluguel = require('../models/Aluguel');
+const Cliente = require('../models/Cliente'); // Incluído para agregação de clientes
+const mongoose = require('mongoose');
+const logger = require('../config/logger');
+const AppError = require('../utils/AppError');
+const axios = require('axios'); // [NOVO] Adiciona axios para chamadas HTTP externas
+
+// Variáveis de ambiente para a API Externa (Requer configuração no .env)
+const PDF_REST_API_KEY = process.env.PDF_REST_API_KEY || '';
+const PDF_REST_ENDPOINT = process.env.PDF_REST_ENDPOINT || 'https://api.pdfrest.com'; 
+// NOTE: O endpoint da PDFRest para converter HTML para PDF geralmente é /pdf/from-html. Ajustei o endpoint base.
+
 
 class RelatorioService {
     constructor() {}
 
-    // ... (placasPorRegiao e getDashboardSummary mantidos) ...
-
     /**
-     * [MÉTODO ANTERIOR] Gera um relatório detalhado de ocupação por período. (Mantido)
+     * Calcula métricas de ocupação de placas em um determinado período.
+     * @param {string} dataInicio - Data de início (formato YYYY-MM-DD).
+     * @param {string} dataFim - Data de fim (formato YYYY-MM-DD).
+     * @returns {Promise<object>} - Relatório consolidado.
      */
-    async ocupacaoPorPeriodo(empresaId, dataInicio, dataFim) {
-        // ... (Implementação do ocupacaoPorPeriodo - CÓDIGO ANTERIOR MANTIDO) ...
-        logger.info(`[RelatorioService] Iniciando agregação 'ocupacaoPorPeriodo' DETALHADO para empresa ${empresaId}. Período: ${dataInicio.toISOString().split('T')[0]} a ${dataFim.toISOString().split('T')[0]}.`);
-        const startTime = Date.now();
-        const empresaObjectId = new mongoose.Types.ObjectId(empresaId);
+    async ocupacaoPorPeriodo(dataInicio, dataFim) {
+        logger.info(`[RelatorioService] Calculando ocupação para o período: ${dataInicio} a ${dataFim}`);
+        
+        const inicio = new Date(dataInicio);
+        const fim = new Date(dataFim);
+        
+        // Ajusta a data final para incluir o dia inteiro
+        fim.setDate(fim.getDate() + 1);
 
-        try {
-            // 1. Duração total do período em dias
-            const diffTime = Math.abs(dataFim.getTime() - dataInicio.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-            
-            // 2. Total de Placas na Empresa
-            const totalPlacas = await Placa.countDocuments({ empresa: empresaObjectId });
-            const totalDiasPlacas = totalPlacas * diffDays;
-
-            if (totalPlacas === 0) {
-                 return {
-                     totalDiasAlugados: 0, totalDiasPlacas: 0, percentagem: 0,
-                     ocupacaoPorRegiao: [], novosAlugueisPorCliente: [], totalAlugueisNoPeriodo: 0,
-                 };
-            }
-            
-            const calcularDiasAlugados = [
-                {
-                    $addFields: {
-                        data_inicio_efetiva: { $max: ['$data_inicio', dataInicio] },
-                        data_fim_efetiva: { $min: ['$data_fim', dataFim] }
-                    }
-                },
-                {
-                    $addFields: {
-                        duracao_ms: { $subtract: ['$data_fim_efetiva', '$data_inicio_efetiva'] }
-                    }
-                },
-                {
-                    $addFields: {
-                        dias_alugados: { 
-                             $add: [
-                                { $ceil: { $divide: ['$duracao_ms', 1000 * 60 * 60 * 24] } },
-                                1
-                             ]
-                        }
-                    }
-                },
-                { $match: { dias_alugados: { $gt: 0 } } }
-            ];
-
-            // 1. AGREGAÇÃO: MÉTRICAS GLOBAIS
-            const [globalMetricsResult] = await Aluguel.aggregate([
-                { $match: { empresa: empresaObjectId, data_inicio: { $lte: dataFim }, data_fim: { $gte: dataInicio } } },
-                ...calcularDiasAlugados,
-                { $group: { _id: null, totalDiasAlugados: { $sum: '$dias_alugados' }, totalAlugueisNoPeriodo: { $sum: 1 } } },
-                { $project: { _id: 0, totalDiasAlugados: 1, totalAlugueisNoPeriodo: 1 } }
-            ]).exec();
-            
-            const totalDiasAlugados = globalMetricsResult?.totalDiasAlugados || 0;
-            const totalAlugueisNoPeriodo = globalMetricsResult?.totalAlugueisNoPeriodo || 0;
-            const taxaOcupacaoMediaGeral = totalDiasPlacas > 0 ? (totalDiasAlugados / totalDiasPlacas) * 100 : 0;
-            
-            // 2. AGREGAÇÃO: OCUPAÇÃO POR REGIÃO
-            const ocupacaoPorRegiao = await Placa.aggregate([
-                { $match: { empresa: empresaObjectId } },
-                {
-                    $lookup: {
-                        from: Aluguel.collection.name,
-                        localField: '_id',
-                        foreignField: 'placa',
-                        as: 'alugueisRelevantes',
-                        pipeline: [
-                            { $match: { data_inicio: { $lte: dataFim }, data_fim: { $gte: dataInicio } } },
-                            ...calcularDiasAlugados, 
-                            { $project: { dias_alugados: 1 } }
-                        ]
-                    }
-                },
-                { $unwind: { path: '$alugueisRelevantes', preserveNullAndEmptyArrays: true } },
-                 {
-                    $lookup: {
-                        from: Regiao.collection.name,
-                        localField: 'regiao',
-                        foreignField: '_id',
-                        as: 'regiaoInfo',
-                        pipeline: [{ $project: { nome: 1, _id: 0 } }]
-                    }
-                },
-                { $unwind: { path: '$regiaoInfo', preserveNullAndEmptyArrays: true } },
-                { 
-                    $group: {
-                        _id: { regiaoId: { $ifNull: ['$regiao', 'SEM_REGIAO'] }, regiaoNome: { $ifNull: ['$regiaoInfo.nome', 'Sem Região'] } },
-                        totalDiasAlugadosRegiao: { $sum: { $ifNull: ['$alugueisRelevantes.dias_alugados', 0] } },
-                        totalPlacasRegiao: { $sum: 1 }
-                    }
-                },
-                {
-                    $project: {
-                        _id: 0,
-                        regiao: '$_id.regiaoNome',
-                        totalDiasAlugados: '$totalDiasAlugadosRegiao',
-                        totalPlacas: '$totalPlacasRegiao',
-                        diasPeriodo: diffDays,
-                        taxa_ocupacao_regiao: {
-                            $multiply: [
-                                { $divide: ['$totalDiasAlugadosRegiao', { $multiply: ['$totalPlacasRegiao', diffDays] }] },
-                                100
-                            ]
-                        }
-                    }
-                },
-                { $sort: { regiao: 1 } }
-            ]).exec();
-
-            // 3. AGREGAÇÃO: NOVOS ALUGUÉIS POR CLIENTE
-            const novosAlugueisPorCliente = await Aluguel.aggregate([
-                { $match: { empresa: empresaObjectId, data_inicio: { $gte: dataInicio, $lte: dataFim } } },
-                 {
-                    $lookup: {
-                        from: Cliente.collection.name,
-                        localField: 'cliente',
-                        foreignField: '_id',
-                        as: 'clienteInfo',
-                        pipeline: [{ $project: { nome: 1, _id: 0 } }]
-                    }
-                },
-                { $unwind: { path: '$clienteInfo', preserveNullAndEmptyArrays: true } },
-                {
-                    $group: {
-                        _id: { clienteId: { $ifNull: ['$cliente', 'APAGADO'] }, clienteNome: { $ifNull: ['$clienteInfo.nome', 'Cliente Apagado'] } },
-                        total_novos_alugueis: { $sum: 1 }
-                    }
-                },
-                { $project: { _id: 0, cliente_nome: '$_id.clienteNome', total_novos_alugueis: 1 } },
-                { $sort: { total_novos_alugueis: -1 } }
-            ]).exec();
-
-            const finalResult = {
-                // Métricas Globais
-                totalDiasAlugados: Math.round(totalDiasAlugados),
-                totalDiasPlacas: totalDiasPlacas,
-                percentagem: parseFloat(taxaOcupacaoMediaGeral.toFixed(2)),
-                totalAlugueisNoPeriodo: totalAlugueisNoPeriodo, 
-                
-                // Detalhes
-                ocupacaoPorRegiao: ocupacaoPorRegiao.map(item => ({
-                    ...item,
-                    taxa_ocupacao_regiao: parseFloat(item.taxa_ocupacao_regiao.toFixed(2)),
-                    diasPeriodo: undefined 
-                })),
-                novosAlugueisPorCliente: novosAlugueisPorCliente
-            };
-
-            const endTime = Date.now();
-            logger.info(`[RelatorioService] 'ocupacaoPorPeriodo' concluído em ${endTime - startTime}ms. Ocupação Geral: ${finalResult.percentagem}%.`);
-
-            return finalResult;
-
-        } catch (error) {
-            const endTime = Date.now();
-            logger.error(`[RelatorioService] Erro na agregação 'ocupacaoPorPeriodo' (tempo: ${endTime - startTime}ms): ${error.message}`, { stack: error.stack });
-            throw new AppError(`Erro interno ao gerar relatório de ocupação: ${error.message}`, 500);
+        if (isNaN(inicio) || isNaN(fim) || fim <= inicio) {
+            throw new AppError('Datas de relatório inválidas.', 400);
         }
+        
+        const numDiasPeriodo = (fim.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24);
+
+        // --- PIPELINE 1: Ocupação e Placas por Região ---
+        const ocupacaoPorRegiao = await Placa.aggregate([
+            // 1. Filtra placas ativas (disponível=true ou em aluguel)
+            { $match: { is_active: true } }, 
+            // 2. Lookup para trazer os dados de Aluguéis
+            {
+                $lookup: {
+                    from: 'alugueis', 
+                    let: { placaId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$$placaId', '$placa'] },
+                                        // Filtra aluguéis que se sobrepõem ao período
+                                        { $lt: ['$data_inicio', fim] },
+                                        { $gt: ['$data_fim', inicio] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'alugueisNoPeriodo'
+                }
+            },
+            // 3. Projeta e calcula os dias alugados para cada placa
+            {
+                $project: {
+                    regiao: '$regiao',
+                    totalAlugueis: { $size: '$alugueisNoPeriodo' },
+                    diasAlugados: {
+                        $sum: {
+                            $map: {
+                                input: '$alugueisNoPeriodo',
+                                as: 'aluguel',
+                                in: {
+                                    $let: {
+                                        vars: {
+                                            aluguelInicio: '$$aluguel.data_inicio',
+                                            aluguelFim: '$$aluguel.data_fim',
+                                            
+                                            // Calcula o dia de início efetivo (max(data_inicio do aluguel, data_inicio do relatório))
+                                            effectiveStart: { $max: ['$$aluguelInicio', inicio] },
+                                            // Calcula o dia de fim efetivo (min(data_fim do aluguel, data_fim do relatório))
+                                            effectiveEnd: { $min: ['$$aluguelFim', fim] }
+                                        },
+                                        // Calcula a diferença em milissegundos, divide para obter dias
+                                        in: {
+                                            $divide: [
+                                                { $subtract: ['$$effectiveEnd', '$$effectiveStart'] },
+                                                1000 * 60 * 60 * 24
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            // 4. Agrupa por Região
+            {
+                $group: {
+                    _id: '$regiao',
+                    totalPlacas: { $sum: 1 },
+                    totalDiasAlugados: { $sum: '$diasAlugados' }
+                }
+            },
+            // 5. Lookup para trazer o nome da Região
+            {
+                $lookup: {
+                    from: 'regiaos', // Nome da coleção de Região (Regiao.js)
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'regiaoDetalhes'
+                }
+            },
+            { $unwind: '$regiaoDetalhes' }, // Desempacota os detalhes da região
+            // 6. Projeta os resultados finais da região
+            {
+                $project: {
+                    _id: 0,
+                    regiaoId: '$_id',
+                    regiao: '$regiaoDetalhes.nome',
+                    totalPlacas: 1,
+                    totalDiasAlugados: { $round: ['$totalDiasAlugados', 0] },
+                    totalDiasPlacas: { $multiply: ['$totalPlacas', numDiasPeriodo] }
+                }
+            },
+            // 7. Calcula a taxa de ocupação por região
+            {
+                $project: {
+                    regiao: 1,
+                    totalPlacas: 1,
+                    totalDiasAlugados: 1,
+                    totalDiasPlacas: 1,
+                    taxa_ocupacao_regiao: {
+                        $cond: {
+                            if: { $eq: ['$totalDiasPlacas', 0] },
+                            then: 0,
+                            else: { $multiply: [{ $divide: ['$totalDiasAlugados', '$totalDiasPlacas'] }, 100] }
+                        }
+                    }
+                }
+            }
+        ]);
+
+        // --- CÁLCULOS GLOBAIS ---
+
+        // Soma total
+        const totalDiasAlugados = ocupacaoPorRegiao.reduce((sum, item) => sum + item.totalDiasAlugados, 0);
+        const totalPlacas = ocupacaoPorRegiao.reduce((sum, item) => sum + item.totalPlacas, 0);
+        const totalDiasPlacas = totalPlacas * numDiasPeriodo;
+
+        const percentagem = totalDiasPlacas === 0
+            ? 0
+            : (totalDiasAlugados / totalDiasPlacas) * 100;
+            
+        
+        // --- PIPELINE 2: Novos Aluguéis por Cliente (Para Gráfico) ---
+        const novosAlugueisPorCliente = await Aluguel.aggregate([
+             {
+                $match: {
+                    // Aluguéis que iniciaram no período
+                    data_inicio: { $gte: inicio, $lt: fim } 
+                }
+             },
+             // Agrupa por cliente e conta
+             {
+                 $group: {
+                     _id: '$cliente',
+                     total_novos_alugueis: { $sum: 1 }
+                 }
+             },
+             // Ordena pelos clientes com mais aluguéis
+             { $sort: { total_novos_alugueis: -1 } },
+             // Limita aos 10 principais
+             { $limit: 10 },
+             // Lookup para obter o nome do cliente
+             {
+                 $lookup: {
+                     from: 'clientes', // Nome da coleção de Cliente (Cliente.js)
+                     localField: '_id',
+                     foreignField: '_id',
+                     as: 'clienteDetalhes'
+                 }
+             },
+             {
+                 $project: {
+                     _id: 0,
+                     cliente_nome: { $ifNull: [{ $arrayElemAt: ['$clienteDetalhes.nome', 0] }, 'Cliente Desconhecido'] },
+                     total_novos_alugueis: 1
+                 }
+             }
+        ]);
+        
+        const totalAlugueisNoPeriodo = novosAlugueisPorCliente.reduce((sum, item) => sum + item.total_novos_alugueis, 0);
+
+
+        return {
+            totalDiasPlacas: Math.round(totalDiasPlacas),
+            totalDiasAlugados: Math.round(totalDiasAlugados),
+            percentagem: parseFloat(percentagem.toFixed(2)),
+            totalAlugueisNoPeriodo: totalAlugueisNoPeriodo, // Novo: Total de aluguéis iniciados
+            ocupacaoPorRegiao: ocupacaoPorRegiao.map(r => ({
+                 ...r,
+                 // Garante que o % esteja com no máximo 2 casas decimais
+                 taxa_ocupacao_regiao: parseFloat(r.taxa_ocupacao_regiao.toFixed(2)) 
+            })),
+            novosAlugueisPorCliente: novosAlugueisPorCliente,
+        };
     }
-    
+
     /**
-     * [NOVO MÉTODO] Gera o PDF do relatório de Ocupação.
-     * @param {object} reportData - O resultado da ocupacaoPorPeriodo.
-     * @param {Date} dataInicio - Início do período.
-     * @param {Date} dataFim - Fim do período.
+     * [NOVO MÉTODO] Gera o PDF do relatório de Ocupação via API externa (PDFRest).
+     * Renderiza um HTML e envia para a API.
+     * @param {object} reportData - O resultado da ocupacaoPorPeriodo (JSON).
+     * @param {Date} dataInicio - Início do período (objeto Date).
+     * @param {Date} dataFim - Fim do período (objeto Date).
      * @param {object} res - Objeto de resposta do Express.
      * @returns {void}
      */
     async generateOcupacaoPdf(reportData, dataInicio, dataFim, res) {
-        logger.info('[RelatorioService] Iniciando geração do PDF de Ocupação.');
-        
-        // CUIDADO: Este doc.pipe(res) deve ser a ÚLTIMA coisa a fazer.
-        const doc = new PDFDocument({ margin: 50 });
+        logger.info('[RelatorioService] Iniciando geração do PDF de Ocupação via API Externa (PDFRest).');
 
-        // Definição dos Headers da Resposta
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=relatorio_ocupacao_${dataInicio.toISOString().split('T')[0]}_${dataFim.toISOString().split('T')[0]}.pdf`);
+        if (!PDF_REST_API_KEY || !PDF_REST_ENDPOINT) {
+             throw new AppError('As variáveis PDF_REST_API_KEY ou PDF_REST_ENDPOINT estão em falta no .env.', 500);
+        }
 
-        // Pipe o PDF para a resposta HTTP (Começa a enviar chunks)
-        doc.pipe(res);
-
-        // --- CONTEÚDO DO PDF ---
-        
-        // Formata datas para o cabeçalho
+        // Helper para formatar a data no PDF
         const formatPdfDate = (date) => `${String(date.getUTCDate()).padStart(2, '0')}/${String(date.getUTCMonth() + 1).padStart(2, '0')}/${date.getUTCFullYear()}`;
-        const inicioFormatado = formatPdfDate(dataInicio);
-        const fimFormatado = formatPdfDate(dataFim);
         
-        doc.fontSize(18).text('Relatório de Ocupação de Placas', { align: 'center' }).moveDown(0.5);
-        doc.fontSize(12).text(`Período: ${inicioFormatado} a ${fimFormatado}`, { align: 'center' }).moveDown(1.5);
+        const dataInicioStr = formatPdfDate(dataInicio);
+        // dataFim é ajustada para incluir o dia completo no cálculo, então voltamos 1 dia para a exibição no PDF
+        const dataFimExibicao = new Date(dataFim);
+        dataFimExibicao.setDate(dataFimExibicao.getDate() - 1);
+        const dataFimStr = formatPdfDate(dataFimExibicao);
         
-        // 1. Resumo Global
-        doc.fontSize(14).text('1. Métricas Globais', { underline: true }).moveDown(0.5);
-        doc.fontSize(10)
-           .text(`Taxa de Ocupação Média: ${reportData.percentagem.toFixed(2)}%`)
-           .text(`Total de Dias Alugados: ${reportData.totalDiasAlugados}`)
-           .text(`Total de Aluguéis Iniciados: ${reportData.totalAlugueisNoPeriodo}`)
-           .text(`Total de Placas x Dias (Máx.): ${reportData.totalDiasPlacas}`)
-           .moveDown(1);
-           
-        // 2. Ocupação por Região
-        doc.fontSize(14).text('2. Ocupação Detalhada por Região', { underline: true }).moveDown(0.5);
-        if (reportData.ocupacaoPorRegiao.length === 0) {
-             doc.fontSize(10).text('Nenhum dado de ocupação por região no período.').moveDown(1);
-        } else {
-            // Tabela simples (larguras em pontos)
-            const tableHeaders = ['Região', 'Placas', 'Dias Alugados', 'Taxa Ocupação (%)'];
-            const tableRows = reportData.ocupacaoPorRegiao.map(r => [
-                r.regiao, 
-                r.totalPlacas.toString(), 
-                r.totalDiasAlugados.toString(), 
-                `${r.taxa_ocupacao_regiao.toFixed(2)}%`
-            ]);
+        // Formata os dados da tabela de Região
+        const tabelaRegiaoHtml = reportData.ocupacaoPorRegiao.map(r => `
+            <tr>
+                <td>${r.regiao}</td>
+                <td style="text-align: right;">${r.totalPlacas}</td>
+                <td style="text-align: right;">${r.totalDiasAlugados}</td>
+                <td style="text-align: right;">${r.totalDiasPlacas}</td>
+                <td style="text-align: right; font-weight: bold;">${r.taxa_ocupacao_regiao.toFixed(2)}%</td>
+            </tr>
+        `).join('');
+        
+        // Formata os dados da tabela de Clientes
+        const tabelaClientesHtml = reportData.novosAlugueisPorCliente.map(c => `
+            <tr>
+                <td>${c.cliente_nome}</td>
+                <td style="text-align: right;">${c.total_novos_alugueis}</td>
+            </tr>
+        `).join('');
+
+        // --- 1. Formatar o Conteúdo (HTML) ---
+        const htmlContent = `
+            <html>
+                <head>
+                    <style>
+                        body { font-family: sans-serif; margin: 40px; color: #333; font-size: 10px; }
+                        h1 { color: #D32F2F; border-bottom: 2px solid #D32F2F; padding-bottom: 5px; margin-bottom: 10px; font-size: 20px; }
+                        h2 { color: #555; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 25px; font-size: 14px; }
+                        p { margin: 5px 0; }
+                        .summary-grid { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 30px; }
+                        .metric { width: 45%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #f9f9f9; box-sizing: border-box; }
+                        .metric-label { font-size: 9px; color: #666; text-transform: uppercase; margin-bottom: 3px; }
+                        .metric-value { font-size: 16px; font-weight: bold; color: #333; }
+                        
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                        th, td { border: 1px solid #ddd; padding: 5px 8px; text-align: left; font-size: 9px; }
+                        th { background-color: #eee; font-weight: bold; text-transform: uppercase; color: #333; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Relatório de Ocupação de Placas</h1>
+                    <p style="font-size: 12px; margin-bottom: 20px;"><strong>Período:</strong> ${dataInicioStr} a ${dataFimStr}</p>
+                    
+                    <h2>Métricas Globais</h2>
+                    <div class="summary-grid">
+                        <div class="metric">
+                            <p class="metric-label">Taxa de Ocupação Média</p>
+                            <p class="metric-value">${reportData.percentagem.toFixed(2)}%</p>
+                        </div>
+                        <div class="metric">
+                            <p class="metric-label">Aluguéis Iniciados no Período</p>
+                            <p class="metric-value">${reportData.totalAlugueisNoPeriodo}</p>
+                        </div>
+                        <div class="metric">
+                            <p class="metric-label">Dias Alugados (Total)</p>
+                            <p class="metric-value">${reportData.totalDiasAlugados}</p>
+                        </div>
+                        <div class="metric">
+                            <p class="metric-label">Capacidade Máxima (Dias/Placa)</p>
+                            <p class="metric-value">${reportData.totalDiasPlacas}</p>
+                        </div>
+                    </div>
+                    
+                    <h2>Ocupação Detalhada por Região</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Região</th>
+                                <th style="text-align: right;">Placas Ativas</th>
+                                <th style="text-align: right;">Dias Alugados</th>
+                                <th style="text-align: right;">Capacidade (Dias)</th>
+                                <th style="text-align: right;">Taxa Ocupação (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tabelaRegiaoHtml}</tbody>
+                    </table>
+
+                    <h2>Top 10 Clientes por Novos Aluguéis</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th style="text-align: right;">Total de Novos Aluguéis</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tabelaClientesHtml}</tbody>
+                    </table>
+                </body>
+            </html>
+        `;
+
+        // --- 2. Chamada à API Externa (PDFRest) ---
+        const filename = `relatorio_ocupacao_${dataInicio.toISOString().split('T')[0]}_${dataFimExibicao.toISOString().split('T')[0]}.pdf`;
+
+        try {
+            // PDFRest geralmente usa um endpoint específico para conversão de HTML
+            const pdfApiEndpoint = `${PDF_REST_ENDPOINT}/html-to-pdf`; 
             
-            this._drawTable(doc, tableHeaders, tableRows, doc.y);
-        }
-        
-        // 3. Novos Aluguéis por Cliente
-        doc.moveDown(1);
-        doc.fontSize(14).text('3. Novos Aluguéis por Cliente', { underline: true }).moveDown(0.5);
-        if (reportData.novosAlugueisPorCliente.length === 0) {
-             doc.fontSize(10).text('Nenhum novo aluguel encontrado no período.').moveDown(1);
-        } else {
-             const tableHeaders = ['Cliente', 'Total de Aluguéis'];
-             const tableRows = reportData.novosAlugueisPorCliente.map(c => [
-                 c.cliente_nome, 
-                 c.total_novos_alugueis.toString()
-             ]);
-             this._drawTable(doc, tableHeaders, tableRows, doc.y);
-        }
-        
-        // --- FIM DO CONTEÚDO ---
-        
-        doc.end();
-        logger.info('[RelatorioService] PDF de Ocupação gerado com sucesso.');
-    }
-    
-    // Método auxiliar para desenhar tabelas (simplificado para PDFKit)
-    _drawTable(doc, headers, rows, startY) {
-         let currentY = startY + 10;
-         const startX = 50;
-         const rowHeight = 20;
-         const availableWidth = doc.page.width - 2 * startX;
-         const columnWidth = availableWidth / headers.length;
-         
-         // Headers
-         doc.font('Helvetica-Bold').fontSize(10).fillColor('#252836'); // Cor mais escura
-         headers.forEach((header, i) => {
-             doc.text(header, startX + i * columnWidth, currentY, { width: columnWidth, align: 'center' });
-         });
-         currentY += rowHeight;
-         
-         // Rows
-         doc.font('Helvetica').fontSize(10);
-         rows.forEach((row, rowIndex) => {
-             // Fundo cinza claro
-             doc.fillColor(rowIndex % 2 === 0 ? '#f9f9f9' : '#ffffff').rect(startX, currentY - 5, availableWidth, rowHeight).fill();
-             doc.fillColor('black'); // Cor do texto
-             
-             row.forEach((cell, i) => {
-                 doc.text(cell, startX + i * columnWidth, currentY + 3, { width: columnWidth, align: 'center' });
+            const pdfResponse = await axios.post(pdfApiEndpoint, {
+                // PDFRest usa o parâmetro 'html' para o conteúdo
+                html: htmlContent, 
+                // Parâmetros comuns para PDFRest (ajustáveis conforme sua conta/plano)
+                pdf_options: {
+                    margins: { top: 10, right: 10, bottom: 10, left: 10 }, // Margens em mm
+                    format: 'A4'
+                },
+                filename: filename
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Api-Key': PDF_REST_API_KEY // Autenticação
+                },
+                responseType: 'arraybuffer' // Receber a resposta como binário (Blob/Buffer)
+            });
+
+            // --- 3. Enviar o PDF de Volta para o Cliente (Front-end) ---
+            
+            // Define o Content-Type como PDF
+            res.setHeader('Content-Type', 'application/pdf');
+            // Define o cabeçalho para download
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+            
+            // Envia o buffer binário (o PDF) para o cliente
+            res.send(Buffer.from(pdfResponse.data));
+
+            logger.info('[RelatorioService] PDF de Ocupação enviado com sucesso via API Externa.');
+
+        } catch (apiError) {
+             logger.error(`[RelatorioService] ERRO NA API EXTERNA (${PDF_REST_ENDPOINT}): ${apiError.message}`, { 
+                 status: apiError.response?.status, 
+                 data: apiError.response?.data?.error || apiError.response?.data?.message || 'Detalhes indisponíveis' 
              });
-             currentY += rowHeight;
-             
-             // Verificar se precisa de nova página
-             if (currentY + rowHeight > doc.page.height - 50) {
-                 doc.addPage();
-                 currentY = 50; // Começa a 50 na nova página
-                 doc.font('Helvetica-Bold').fontSize(10).fillColor('#252836');
-                 headers.forEach((header, i) => {
-                     doc.text(header, startX + i * columnWidth, currentY, { width: columnWidth, align: 'center' });
-                 });
-                 doc.moveDown(1);
-                 currentY += rowHeight;
-                 doc.font('Helvetica').fontSize(10);
-             }
-         });
+             // Converte erro de API externa em AppError 500
+             throw new AppError('Falha na comunicação com o serviço de geração de PDF.', 500);
+        }
     }
 }
 
