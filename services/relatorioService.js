@@ -11,7 +11,7 @@ const AppError = require('../utils/AppError');
 const axios = require('axios');
 
 // Variáveis de ambiente para a API Externa (Requer configuração no .env)
-const PDF_REST_API_KEY = process.env.PDF_REST_API_KEY || '313c2df7-33d4-479b-b33e-7f3a82e4c5f6';
+const PDF_REST_API_KEY = process.env.PDF_REST_API_KEY || '';
 const PDF_REST_ENDPOINT = process.env.PDF_REST_ENDPOINT || 'https://api.pdfrest.com/pdf';
 
 
