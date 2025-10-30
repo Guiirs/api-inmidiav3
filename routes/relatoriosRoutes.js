@@ -2,10 +2,8 @@
 const express = require('express');
 const router = express.Router();
 const logger = require('../config/logger');
-// [MELHORIA] Importa 'query' para validar query params
 const { query } = require('express-validator');
-// [MELHORIA] Importa o handler de erros de validação
-const { handleValidationErrors } = require('../validators/authValidator');
+const { handleValidationErrors } = require('../validators/authValidator'); 
 
 // 1. Importe o controlador e o middleware
 let relatorioController, authenticateToken;
@@ -13,7 +11,6 @@ try {
     relatorioController = require('../controllers/relatorioController');
     authenticateToken = require('../middlewares/authMiddleware');
     
-    // Verificações de integridade (mantidas)
     if (typeof relatorioController.getPlacasPorRegiao !== 'function' || typeof authenticateToken !== 'function') {
         logger.error('[Routes Relatorios] ERRO CRÍTICO: Controllers ou Middleware de Relatorios ausentes.');
         throw new Error('Componentes de Relatórios incompletos.');
@@ -24,19 +21,19 @@ try {
     throw new Error('Falha ao carregar dependências de Relatórios.');
 }
 
-// --- [NOVO] Regras de validação para o período de ocupação ---
+// --- Regras de validação para o período de ocupação (CORRIGIDO) ---
 const validateOcupacaoPeriodo = [
     query('data_inicio')
         .notEmpty().withMessage('A data de início é obrigatória.')
-        .isISO8601().withMessage('Data de início inválida (formato YYYY-MM-DD).')
-        .toDate(), // Converte para objeto Date (importante para o service)
+        // CORREÇÃO: .toDate() REMOVIDO
+        .isISO8601().withMessage('Data de início inválida (formato YYYY-MM-DD).'), 
     
     query('data_fim')
         .notEmpty().withMessage('A data final é obrigatória.')
-        .isISO8601().withMessage('Data final inválida (formato YYYY-MM-DD).')
-        .toDate() // Converte para objeto Date
+        // CORREÇÃO: .toDate() REMOVIDO
+        .isISO8601().withMessage('Data final inválida (formato YYYY-MM-DD).') 
         .custom((value, { req }) => {
-             // Garante que data_fim é posterior a data_inicio
+             // A comparação de strings 'YYYY-MM-DD' é segura aqui
              if (!req.query.data_inicio || value < req.query.data_inicio) {
                  throw new Error('A data final deve ser posterior ou igual à data inicial.');
              }
@@ -68,13 +65,13 @@ router.get(
 );
 logger.debug('[Routes Relatorios] Rota GET /dashboard-summary definida (Sumário do Dashboard).');
 
-// 3. [NOVA ROTA] Rota para a percentagem de ocupação por período
+// 3. Rota para a percentagem de ocupação por período
 // GET /api/v1/relatorios/ocupacao-por-periodo?data_inicio=YYYY-MM-DD&data_fim=YYYY-MM-DD
 router.get(
     '/ocupacao-por-periodo',
-    validateOcupacaoPeriodo,    // 1. [NOVO] Aplica validação de query params
-    handleValidationErrors,     // 2. [NOVO] Trata os erros
-    relatorioController.getOcupacaoPorPeriodo // 3. [NOVO] Chama o controller
+    validateOcupacaoPeriodo,    
+    handleValidationErrors,     
+    relatorioController.getOcupacaoPorPeriodo 
 );
 logger.debug('[Routes Relatorios] Rota GET /ocupacao-por-periodo definida (Relatório de Ocupação).');
 

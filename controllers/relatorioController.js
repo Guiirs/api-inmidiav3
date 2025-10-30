@@ -1,14 +1,14 @@
 // controllers/relatorioController.js
-// [MELHORIA] Importa validationResult (necessário para validação de query)
 const { validationResult } = require('express-validator');
 const RelatorioService = require('../services/relatorioService'); 
 const logger = require('../config/logger'); 
+// Não é necessário importar AppError aqui, ele deve ser tratado pelo next(err)
 
 // Instancia o serviço
 const relatorioService = new RelatorioService();
 
 /**
- * Controller para gerar um relatório de placas por região. (Mantido)
+ * Controller para gerar um relatório de placas por região.
  */
 exports.getPlacasPorRegiao = async (req, res, next) => {
     const empresa_id = req.user.empresaId; 
@@ -27,7 +27,7 @@ exports.getPlacasPorRegiao = async (req, res, next) => {
 };
 
 /**
- * Controller para gerar o resumo do dashboard. (Mantido)
+ * Controller para gerar o resumo do dashboard.
  */
 exports.getDashboardSummary = async (req, res, next) => {
     const empresa_id = req.user.empresaId; 
@@ -46,31 +46,39 @@ exports.getDashboardSummary = async (req, res, next) => {
 };
 
 /**
- * [NOVO CONTROLLER] Controller para obter a percentagem de ocupação das placas por período.
+ * Controller para obter a percentagem de ocupação das placas por período.
  * GET /api/v1/relatorios/ocupacao-por-periodo?data_inicio=YYYY-MM-DD&data_fim=YYYY-MM-DD
  */
 exports.getOcupacaoPorPeriodo = async (req, res, next) => {
-    // 1. Confia no authMiddleware
     const empresa_id = req.user.empresaId; 
     const userId = req.user.id;
 
     logger.info(`[RelatorioController] Utilizador ${userId} requisitou getOcupacaoPorPeriodo para empresa ${empresa_id}.`);
     
-    // 2. Validação dos query params (feita na rota, mas re-obtida aqui)
+    // 1. Verifica erros de validação (express-validator)
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const firstError = errors.array({ onlyFirstError: true })[0].msg;
         logger.warn(`[RelatorioController] Ocupacao falhou: Erro de validação: ${firstError}`);
-        // Retorna 400 Bad Request
         return res.status(400).json({ message: firstError });
     }
 
-    // 3. Extrai as datas (já convertidas para Date object na rota)
-    const { data_inicio, data_fim } = req.query; 
+    // 2. Extrai as strings de data
+    const dataInicioString = req.query.data_inicio;
+    const dataFimString = req.query.data_fim;
+    
+    // 3. CORREÇÃO: Converte explicitamente para objetos Date (início do dia)
+    const dataInicio = new Date(dataInicioString);
+    const dataFim = new Date(dataFimString);
+    
+    // Validação de segurança extra
+    if (isNaN(dataInicio.getTime()) || isNaN(dataFim.getTime())) {
+         return res.status(400).json({ message: 'As datas fornecidas são inválidas após a conversão.' });
+    }
 
     try {
-        // 4. Chama o serviço
-        const result = await relatorioService.ocupacaoPorPeriodo(empresa_id, data_inicio, data_fim);
+        // 4. Chama o serviço com os objetos Date
+        const result = await relatorioService.ocupacaoPorPeriodo(empresa_id, dataInicio, dataFim);
         logger.info(`[RelatorioController] getOcupacaoPorPeriodo concluído. Ocupação: ${result.percentagem}%.`);
         res.status(200).json(result); 
     } catch (err) {
