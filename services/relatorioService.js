@@ -64,17 +64,17 @@ class RelatorioService {
     /**
      * Gera um resumo para o dashboard (total de placas, disponíveis, região principal).
      * @param {string} empresa_id - ObjectId da empresa. // 🐞 CORREÇÃO: Alterado de empresaId para empresa_id
-     * @returns {Promise<object>} - Objeto com { totalPlacas, placasDisponiveis, regiaoPrincipal }.
+     * @returns {Promise<object>} - Objeto com { totalPlacas, placasDisponiv
+eis, regiaoPrincipal }.
      * @throws {Error} - Lança erro 500 em caso de falha nas queries.
      */
     async getDashboardSummary(empresa_id) { // 🐞 CORREÇÃO: Alterado de empresaId para empresa_id
         logger.info(`[RelatorioService] Iniciando 'getDashboardSummary' para empresa ${empresa_id}.`);
         const startTime = Date.now(); 
 
-        // 🐞 CORREÇÃO DE BUG: Se empresa_id for undefined (devido à inconsistência), a query falha.
+        // Adiciona verificação para o caso de o ID ainda vir nulo
         if (!empresa_id) {
              logger.warn("[RelatorioService] getDashboardSummary chamado sem empresa_id.");
-             // Retorna 0 para evitar o crash
              return { totalPlacas: 0, placasDisponiveis: 0, regiaoPrincipal: 'N/A' };
         }
 
