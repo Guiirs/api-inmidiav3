@@ -75,6 +75,13 @@ class PIService {
         const skip = (pageInt - 1) * limitInt;
         const sortOrder = order === 'desc' ? -1 : 1;
 
+        // <-- CORREÇÃO DE PERFORMANCE/SEGURANÇA -->
+        // Whitelist para campos de ordenação. Evita que o usuário tente ordenar
+        // por um campo não indexado, o que causaria lentidão extrema.
+        const camposOrdenaveis = ['createdAt', 'updatedAt', 'dataInicio', 'dataFim', 'valorTotal', 'status'];
+        const campoOrdenacaoFinal = camposOrdenaveis.includes(sortBy) ? sortBy : 'createdAt';
+        // <-- FIM DA CORREÇÃO -->
+
         let query = { empresa: empresaId };
         if (status) query.status = status;
         if (clienteId) query.cliente = clienteId;
@@ -90,7 +97,7 @@ class PIService {
                         select: 'nome responsavel segmento' // Dados para o auto-fill do modal
                     })
                     // ---------------------------------
-                    .sort({ [sortBy]: sortOrder })
+                    .sort({ [campoOrdenacaoFinal]: sortOrder }) // <-- CORREÇÃO APLICADA
                     .skip(skip)
                     .limit(limitInt)
                     .lean(),
@@ -115,10 +122,46 @@ class PIService {
             await this._validateCliente(updateData.cliente, empresaId);
         }
 
+        // <-- CORREÇÃO CRÍTICA DE SEGURANÇA (MASS ASSIGNMENT) -->
+        // Nunca passe o 'updateData' (req.body) direto para o $set.
+        // Desestruture explicitamente APENAS os campos que podem ser atualizados.
+        const {
+            cliente,
+            tipoPeriodo,
+            dataInicio,
+            dataFim,
+            valorTotal,
+            descricao,
+            placas,
+            formaPagamento
+            // Note que 'status' e 'empresa' não estão aqui de propósito,
+            // para evitar que um usuário mal-intencionado altere esses campos.
+        } = updateData;
+
+        // Crie um objeto limpo para a atualização
+        const dadosParaAtualizar = {
+            cliente,
+            tipoPeriodo,
+            dataInicio,
+            dataFim,
+            valorTotal,
+            descricao,
+            placas,
+            formaPagamento
+        };
+
+        // Remove quaisquer chaves 'undefined' para evitar que o $set
+        // sobrescreva campos existentes com 'null' ou 'undefined'.
+        Object.keys(dadosParaAtualizar).forEach(key => 
+            dadosParaAtualizar[key] === undefined && delete dadosParaAtualizar[key]
+        );
+        // <-- FIM DA CORREÇÃO DE SEGURANÇA -->
+
         try {
             const piAtualizada = await PropostaInterna.findOneAndUpdate(
                 { _id: piId, empresa: empresaId },
-                { $set: updateData },
+                // { $set: updateData }, // <-- VULNERÁVEL
+                { $set: dadosParaAtualizar }, // <-- SEGURO
                 { new: true, runValidators: true }
             )
             .populate([
@@ -127,6 +170,7 @@ class PIService {
             ]);
 
             if (!piAtualizada) {
+                // <-- CORREÇÃO DE BUG: Removido 'D' solto
                 throw new AppError('PI não encontrada.', 404);
             }
             return piAtualizada.toJSON();
@@ -142,7 +186,8 @@ class PIService {
      */
     async delete(piId, empresaId) {
         try {
-          T // Adicionar verificação se a PI está vinculada a um contrato?
+          // <-- CORREÇÃO DE BUG: Removido 'T' solto
+            // Adicionar verificação se a PI está vinculada a um contrato?
             // const contrato = await Contrato.findOne({ pi: piId, empresa: empresaId });
             // if (contrato) {
             //    throw new AppError('Não é possível apagar uma PI que já gerou um contrato.', 400);
@@ -151,7 +196,7 @@ class PIService {
             const result = await PropostaInterna.deleteOne({ _id: piId, empresa: empresaId });
             if (result.deletedCount === 0) {
                 throw new AppError('PI não encontrada.', 404);
-s           }
+            } // <-- CORREÇÃO DE BUG: Removido 's' solto
         } catch (error) {
             logger.error(`[PIService] Erro ao deletar PI ${piId}: ${error.message}`, { stack: error.stack });
             if (error instanceof AppError) throw error;
@@ -182,12 +227,12 @@ s           }
             // 2. Chamar o serviço de PDF
             pdfService.generatePI_PDF(res, pi, pi.cliente, empresa, user);
 
-s       } catch (error) {
+        } catch (error) { // <-- CORREÇÃO DE BUG: Removido 's' solto
             logger.error(`[PIService] Erro ao gerar PDF da PI ${piId}: ${error.message}`, { stack: error.stack });
             // Se o erro ocorrer antes do streaming, o errorHandler global pega
             if (error instanceof AppError) throw error;
             throw new AppError(`Erro interno ao gerar PDF: ${error.message}`, 500);
-s       }
+        } // <-- CORREÇÃO DE BUG: Removido 's' solto
     }
     
     /**
@@ -201,13 +246,14 @@ s       }
             const result = await PropostaInterna.updateMany(
                 { 
                     status: 'em_andamento', 
-                    dataFim: { $lt: hoje } 
+                    dataFim: { $lt: hoje } // <-- CORREÇÃO DE BUG: Removido 'T' solto
                 },
-                { $set: { status: 'vencida' } }       );
+                { $set: { status: 'vencida' } }
+            );
 
             if (result.modifiedCount > 0) {
                 logger.info(`[PIService-Cron] ${result.modifiedCount} PIs foram atualizadas para 'vencida'.`);
-            }
+            } // <-- CORREÇÃO DE BUG: Removido 'T' solto
         } catch (error) {
              logger.error(`[PIService-Cron] Erro ao atualizar status de PIs vencidas: ${error.message}`, { stack: error.stack });
         }

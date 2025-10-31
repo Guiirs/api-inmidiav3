@@ -17,10 +17,11 @@ const piValidationRules = () => {
             .isMongoId().withMessage('ID do cliente inválido.'),
         
         body('tipoPeriodo')
+            .notEmpty().withMessage('O tipo de período é obrigatório.') // <-- ALTERAÇÃO AQUI
             .isIn(['quinzenal', 'mensal']).withMessage("O tipo de período deve ser 'quinzenal' ou 'mensal'."),
 
         body('dataInicio')
-            .notEmpty().withMessage('Data de início é obrigatória.')
+            .notEmpty().withMessage('Data de início é obrigária.')
             .isISO8601().withMessage('Data de início inválida (formato YYYY-MM-DD).')
             .toDate(),
 

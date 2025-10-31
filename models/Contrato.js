@@ -14,23 +14,14 @@ const contratoSchema = new Schema({
         default: 'rascunho'
     },
     
-    // ... (outros campos, se existirem)
-    
 }, {
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
 });
 
-// Virtual 'id'
 contratoSchema.virtual('id').get(function() {
     return this._id.toHexString();
-});
-
-// Popula automaticamente a PI e o Cliente ao buscar
-contratoSchema.pre(/^find/, function(next) {
-    this.populate('pi').populate('cliente');
-    next();
 });
 
 

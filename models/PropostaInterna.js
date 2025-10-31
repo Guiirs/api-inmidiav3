@@ -15,8 +15,7 @@ const propostaInternaSchema = new Schema({
     dataFim: { type: Date, required: true },
     
     valorTotal: { type: Number, required: true },
-    descricao: { type: String, required: true },
-    
+    descricao: { type: String, required: true, trim: true },    
     // --- CAMPOS NOVOS ADICIONADOS ---
 
     /**
