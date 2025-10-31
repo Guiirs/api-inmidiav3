@@ -1,54 +1,48 @@
 // routes/empresaRoutes.js
 const express = require('express');
 const router = express.Router();
+const empresaController = require('../controllers/empresaController');
+const authMiddleware = require('../middlewares/authMiddleware');
 const logger = require('../config/logger');
 
-// 1. Importa as regras e o handler de validação (como no original)
-let registerValidationRules, handleValidationErrors;
-try {
-    ({ registerValidationRules, handleValidationErrors } = require('../validators/empresaValidator'));
-    if (typeof registerValidationRules !== 'function' || typeof handleValidationErrors !== 'function') {
-        logger.error("[Routes Empresa] ERRO CRÍTICO: Validação não exportada corretamente.");
-        throw new Error("Validação de Empresa incompleta.");
-    }
-    logger.info('[Routes Empresa] Validação de Empresa carregada com sucesso.');
-} catch (error) {
-    logger.error(`[Routes Empresa] ERRO CRÍTICO ao carregar empresaValidator: ${error.message}`);
+// Importa as validações (que já corrigimos)
+const {
+    updateEmpresaRules,
+    handleValidationErrors,
+} = require('../validators/empresaValidator');
+
+// Verificação de segurança (mantida)
+if (!updateEmpresaRules || !handleValidationErrors) { 
+    logger.error('[Routes Empresa] ERRO CRÍTICO: Validação não exportada corretamente.');
+    logger.error('[Routes Empresa] ERRO CRÍTICO ao carregar empresaValidator: Validação de Empresa incompleta.');
     throw new Error('Falha ao carregar validação de Empresa.');
 }
 
-// 2. Importa o controlador (como no original)
-let empresaController;
-try {
-    empresaController = require('../controllers/empresaController');
-    if (typeof empresaController.register !== 'function') {
-        logger.error("[Routes Empresa] ERRO CRÍTICO: Controller 'register' não é função.");
-        throw new Error("Controller de Empresa incompleto.");
-    }
-    logger.info('[Routes Empresa] Controller de Empresa carregado com sucesso.');
-} catch (error) {
-    logger.error(`[Routes Empresa] ERRO CRÍTICO ao carregar empresaController: ${error.message}`);
-    throw new Error('Falha ao carregar controller de Empresa.');
-}
+// Rota para buscar a API Key
+router.get('/api-key', authMiddleware, empresaController.getApiKey);
 
-logger.info('[Routes Empresa] Definindo rotas de Empresa...');
+// Rota para regenerar a API Key
+router.post('/api-key', authMiddleware, empresaController.regenerateApiKey);
 
-// Rota de registo (Esta rota é pública, não usa authMiddleware)
-// POST /api/v1/empresas/register
-router.post(
-    '/register', 
-    (req, res, next) => {
-        logger.debug('[Routes Empresa] Rota POST /register acessada. Iniciando validação...');
-        next();
-    },
-    registerValidationRules(), // 1. Regras de validação (mantido)
-    handleValidationErrors,    // 2. Handler de erros de validação (mantido)
-    empresaController.register // 3. Controller
+
+// --- ROTAS NOVAS ADICIONADAS AQUI ---
+
+// Rota para BUSCAR os detalhes da empresa (Nome, Endereço, etc.)
+router.get(
+    '/details',
+    authMiddleware,
+    empresaController.getEmpresaDetails
 );
-logger.debug('[Routes Empresa] Rota POST /register definida.');
 
-logger.info('[Routes Empresa] Rotas de Empresa definidas com sucesso.');
+// Rota para ATUALIZAR os detalhes da empresa
+router.put(
+    '/details',
+    authMiddleware,
+    updateEmpresaRules(),     // 1. Valida (endereco, bairro, etc.)
+    handleValidationErrors,   // 2. Trata erros de validação
+    empresaController.updateEmpresaDetails // 3. Executa o controlador
+);
 
-// [CORREÇÃO] Exporta o router diretamente em vez de uma função
+// ------------------------------------
+
 module.exports = router;
-logger.debug('[Routes Empresa] Router exportado.');

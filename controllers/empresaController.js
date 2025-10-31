@@ -1,40 +1,53 @@
-// InMidia/backend/controllers/empresaController.js
+// controllers/empresaController.js
 const EmpresaService = require('../services/empresaService');
-// const { validationResult } = require('express-validator'); // Não é mais necessário
 const logger = require('../config/logger');
 
-// Instancia o serviço fora das funções do controller
-const empresaService = new EmpresaService();
-
-/**
- * Controller para registar uma nova empresa e o seu utilizador administrador.
- * POST /api/v1/empresas/register
- */
-exports.register = async (req, res, next) => {
-    logger.info('[EmpresaController] Recebida requisição POST /empresas/register.');
-    logger.debug(`[EmpresaController] Dados recebidos (body): ${JSON.stringify(req.body)}`);
-
-    // [MELHORIA] Remove a verificação de validationResult. Confia que a rota já a executou.
-
+// GET /empresa/api-key
+exports.getApiKey = async (req, res, next) => {
     try {
-        const { nome_empresa, cnpj, username, email, password, nome, sobrenome } = req.body;
-
-        // Monta o objeto esperado pelo serviço
-        const registrationData = {
-            nome_empresa,
-            cnpj,
-            adminUser: { username, email, password, nome, sobrenome }
-        };
-
-        // Chama o serviço refatorado (que já tem tratamento de erros robusto e usa transação)
-        const result = await empresaService.register(registrationData);
-
-        logger.info(`[EmpresaController] Empresa ${result.empresa.nome} (ID: ${result.empresa.id}) e admin ${result.user.username} (ID: ${result.user.id}) registados com sucesso.`);
-        // Retorna 201 Created com os dados (incluindo a fullApiKey)
-        res.status(201).json(result);
+        const empresaId = req.user.empresaId;
+        const apiKey = await EmpresaService.getApiKey(empresaId);
+        res.status(200).json({ apiKey });
     } catch (err) {
-        // O erro (que deve ser um AppError do service) é passado para o errorHandler global
-        logger.error(`[EmpresaController] Erro ao chamar empresaService.register: ${err.message}`, { status: err.status, stack: err.stack });
+        next(err);
+    }
+};
+
+// POST /empresa/api-key
+exports.regenerateApiKey = async (req, res, next) => {
+    try {
+        const empresaId = req.user.empresaId;
+        const userId = req.user.id;
+        // const { password } = req.body; (Lógica de password removida)
+
+        const novaChave = await EmpresaService.regenerateApiKey(userId, empresaId);
+        res.status(200).json({ apiKey: novaChave });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// --- FUNÇÕES NOVAS ADICIONADAS AQUI ---
+
+// GET /empresa/details
+exports.getEmpresaDetails = async (req, res, next) => {
+    try {
+        const empresaId = req.user.empresaId;
+        const detalhes = await EmpresaService.getEmpresaDetailsById(empresaId);
+        res.status(200).json(detalhes);
+    } catch (err) {
+        next(err);
+    }
+};
+
+// PUT /empresa/details
+exports.updateEmpresaDetails = async (req, res, next) => {
+    try {
+        const empresaId = req.user.empresaId;
+        // req.body já foi validado pelo 'updateEmpresaRules'
+        const empresaAtualizada = await EmpresaService.updateEmpresaDetails(empresaId, req.body);
+        res.status(200).json(empresaAtualizada);
+    } catch (err) {
         next(err);
     }
 };
