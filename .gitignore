@@ -26,3 +26,5 @@ build
 # Bancos de dados locais (SQLite, etc.)
 *.db3 
 db/database/*.db3
+
+/backups

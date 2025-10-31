@@ -1,15 +1,17 @@
 // middlewares/uploadMiddleware.js
 const multer = require('multer');
-const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, DeleteObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3'); // Adicionado PutObjectCommand
 const multerS3 = require('multer-s3');
 const crypto = require('crypto');
 const logger = require('../config/logger');
 const path = require('path'); 
+const fs = require('fs'); // [MELHORIA] Adicionado 'fs' para upload de arquivos
 
 // Configuração do cliente S3 (para R2)
 let s3Client = null;
 let upload = null; // Inicializa com null
 let deleteFileFromR2 = null; // Inicializa com null
+let uploadFileToR2 = null; // [MELHORIA] Adicionada função de upload
 
 // 1. Verifica se as variáveis de ambiente necessárias estão presentes
 const isR2ConfigComplete = process.env.R2_ENDPOINT && 
@@ -30,7 +32,7 @@ if (isR2ConfigComplete) {
         });
         logger.info('[UploadMiddleware] Cliente S3/R2 configurado com sucesso.');
 
-        // Configuração do Multer-S3
+        // Configuração do Multer-S3 (Sua lógica original mantida)
         logger.info('[UploadMiddleware] Tentando configurar Multer...'); 
         upload = multer({ 
             storage: multerS3({
@@ -66,6 +68,7 @@ if (isR2ConfigComplete) {
         logger.info('[UploadMiddleware] Multer configurado com sucesso.');
 
         /**
+         * (Sua função original mantida)
          * Apaga um ficheiro do bucket R2/S3.
          * @param {string} fileKey - A key completa do ficheiro (incluindo pasta, se houver).
          */
@@ -88,16 +91,47 @@ if (isR2ConfigComplete) {
                  throw error; 
              }
         };
+
+        /**
+         * [MELHORIA] Faz upload de um arquivo local para o R2/S3.
+         * @param {string} localFilePath - Caminho completo para o arquivo local (ex: /app/backups/bkp.gz).
+         * @param {string} targetKey - A key completa de destino no bucket (ex: inmidia-db-backups/bkp.gz).
+         */
+        uploadFileToR2 = async (localFilePath, targetKey) => {
+            if (!s3Client) {
+                throw new Error('Cliente S3/R2 não inicializado. Verifique as variáveis de ambiente R2.');
+            }
+            if (!fs.existsSync(localFilePath)) {
+                throw new Error(`Arquivo local não encontrado: ${localFilePath}`);
+            }
+
+            const fileStream = fs.createReadStream(localFilePath);
+
+            const command = new PutObjectCommand({
+                Bucket: process.env.R2_BUCKET_NAME,
+                Key: targetKey,
+                Body: fileStream,
+                // ContentType pode ser definido se soubermos (ex: 'application/gzip')
+            });
+
+            try {
+                logger.info(`[UploadMiddleware-upload] Iniciando upload de ${localFilePath} para R2 key: ${targetKey}`);
+                await s3Client.send(command);
+                logger.info(`[UploadMiddleware-upload] Upload de ${targetKey} concluído com sucesso.`);
+            } catch (error) {
+                logger.error(`[UploadMiddleware-upload] Erro ao fazer upload do arquivo ${targetKey}:`, error);
+                throw error;
+            }
+        };
+
     } catch (error) {
-        // 2. Em caso de ERRO de configuração (o que está a acontecer)
+        // ... (Sua lógica de Failsafe original mantida) ...
         logger.error('[UploadMiddleware] ERRO CRÍTICO DURANTE A CONFIGURAÇÃO. Forçando Falha Segura:', error); 
         
-        // Atribui uma função stub (simulada) para 'upload' para que a rota possa iniciar
         upload = { 
             single: (fieldName) => (req, res, next) => {
                 logger.error(`[UploadMiddleware-FAILSAFE] Upload de ${fieldName} abortado. Serviço indisponível.`);
-                req.file = null; // Garante que req.file é nulo
-                // Não lança erro fatal aqui, apenas registra e continua o fluxo sem o arquivo.
+                req.file = null;
                 next(); 
             },
         };
@@ -105,9 +139,13 @@ if (isR2ConfigComplete) {
              logger.warn(`[UploadMiddleware-FAILSAFE] Tentativa de exclusão do R2 ignorada para ${fileKey}. Serviço não inicializado.`);
              throw new Error('Serviço de exclusão de ficheiros (R2) não inicializado.');
          };
+         uploadFileToR2 = async (localFilePath, targetKey) => {
+            logger.error(`[UploadMiddleware-FAILSAFE] Tentativa de upload R2 ignorada para ${targetKey}. Serviço não inicializado.`);
+            throw new Error('Serviço de upload de ficheiros (R2) não inicializado.');
+         };
     }
 } else {
-    // 3. Caso as ENV Vars estejam faltando no início (STUB)
+    // ... (Sua lógica de Failsafe original mantida) ...
      logger.error('[UploadMiddleware] ERRO CRÍTICO: Variáveis de ambiente R2 incompletas no início. Uploads desativados.');
      upload = { 
          single: (fieldName) => (req, res, next) => {
@@ -120,7 +158,15 @@ if (isR2ConfigComplete) {
          logger.warn(`[UploadMiddleware-STUB] Tentativa de exclusão do R2 ignorada para ${fileKey}.`);
          throw new Error('Serviço de exclusão de ficheiros (R2) não inicializado.');
      };
+     uploadFileToR2 = async (localFilePath, targetKey) => {
+        logger.error(`[UploadMiddleware-STUB] Tentativa de upload R2 ignorada para ${targetKey}. Serviço não inicializado.`);
+        throw new Error('Serviço de upload de ficheiros (R2) não inicializado.');
+     };
 }
 
-// 4. Exporta o 'upload' configurado e a função de apagar
-module.exports = { upload, deleteFileFromR2 };
+// 4. Exporta 'upload', 'deleteFileFromR2' e a nova 'uploadFileToR2'
+module.exports = { 
+    upload, 
+    deleteFileFromR2,
+    uploadFileToR2 // [MELHORIA] Exporta a nova função
+};

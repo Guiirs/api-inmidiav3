@@ -2,82 +2,83 @@
 const logger = require('../config/logger'); // Logger existente
 const Placa = require('../models/Placa'); // Modelo Placa Mongoose
 const Aluguel = require('../models/Aluguel'); // Modelo Aluguel Mongoose
-const mongoose = require('mongoose'); // Necessário para ObjectId, se aplicável (não diretamente aqui)
+
+// [MELHORIA] Importa o PIService para a nova verificação de status
+const PIService = require('../services/piService'); 
 
 /**
- * Lógica da tarefa agendada (Cron Job) para atualizar o status das placas com Mongoose.
- * @param {object} db - Parâmetro 'db' não é mais necessário. Removido.
+ * Lógica da tarefa agendada (Cron Job) para atualizar o status das placas E PIs.
  */
 const updatePlacaStatusJob = async () => {
-    logger.info('[CRON JOB - Mongoose] Iniciando a verificação de status de alugueis...');
+    logger.info('[CRON JOB] Iniciando tarefas agendadas (Placas e PIs)...');
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0); // Zera hora, minuto, segundo, ms para comparar apenas a data
 
+    // --- TAREFA 1: Atualizar Status das Placas (Baseado em Aluguéis) ---
+    logger.info('[CRON JOB] Iniciando a verificação de status de ALUGUEIS/PLACAS...');
     try {
         // --- LÓGICA 1: TORNAR PLACAS INDISPONÍVEIS (Aluguel ativo hoje) ---
-
-        // 1. Encontra IDs de placas que têm um aluguel ativo hoje
         const placasComAluguelAtivoIds = await Aluguel.distinct('placa', {
             data_inicio: { $lte: hoje },
             data_fim: { $gte: hoje }
         }).exec();
 
-        // 2. Marca essas placas como indisponíveis (disponivel: false),
-        //    mas *apenas* se elas estiverem atualmente marcadas como disponíveis.
         if (placasComAluguelAtivoIds.length > 0) {
             const updateIndisponivelResult = await Placa.updateMany(
                 {
-                    _id: { $in: placasComAluguelAtivoIds }, // Placas com aluguel ativo
-                    disponivel: true                      // Que ainda estão marcadas como disponíveis
+                    _id: { $in: placasComAluguelAtivoIds }, 
+                    disponivel: true                      
                 },
                 { $set: { disponivel: false } }
             );
             if (updateIndisponivelResult.modifiedCount > 0) {
-                 logger.info(`[CRON JOB - Mongoose] Marcadas ${updateIndisponivelResult.modifiedCount} placas como INDISPONÍVEIS (aluguel iniciado/ativo).`);
+                 logger.info(`[CRON JOB] Marcadas ${updateIndisponivelResult.modifiedCount} placas como INDISPONÍVEIS (aluguel iniciado/ativo).`);
             }
         }
 
         // --- LÓGICA 2: TORNAR PLACAS DISPONÍVEIS (Nenhum aluguel ativo hoje) ---
-
-        // 1. Encontra IDs de todas as placas que estão atualmente indisponíveis
         const placasIndisponiveisIds = await Placa.distinct('_id', {
             disponivel: false
         });
 
-        if (placasIndisponiveisIds.length === 0) {
-            logger.info('[CRON JOB - Mongoose] Nenhuma placa indisponível encontrada para verificar.');
-             logger.info('[CRON JOB - Mongoose] Verificação de status concluída.');
-            return; // Sai se não houver placas indisponíveis
-        }
+        if (placasIndisponiveisIds.length > 0) {
+            const placasIndisponiveisAindaAtivasIds = await Aluguel.distinct('placa', {
+                placa: { $in: placasIndisponiveisIds }, 
+                data_inicio: { $lte: hoje },
+                data_fim: { $gte: hoje }
+            }).exec();
 
-        // 2. Dentre as indisponíveis, encontra os IDs daquelas que AINDA TÊM aluguel ativo hoje
-        //    (Reutiliza a lógica do passo 1, mas filtrando apenas pelas indisponíveis)
-        const placasIndisponiveisAindaAtivasIds = await Aluguel.distinct('placa', {
-            placa: { $in: placasIndisponiveisIds }, // Apenas entre as indisponíveis
-            data_inicio: { $lte: hoje },
-            data_fim: { $gte: hoje }
-        }).exec();
-
-        // 3. Determina quais placas indisponíveis NÃO estão na lista de ativas (devem voltar a ser disponíveis)
-        const placasParaDisponibilizarIds = placasIndisponiveisIds.filter(id =>
-            !placasIndisponiveisAindaAtivasIds.some(activeId => activeId.equals(id)) // Compara ObjectIds corretamente
-        );
-
-        // 4. Marca essas placas como disponíveis (disponivel: true)
-        if (placasParaDisponibilizarIds.length > 0) {
-             const updateDisponivelResult = await Placa.updateMany(
-                { _id: { $in: placasParaDisponibilizarIds } },
-                { $set: { disponivel: true } }
+            const placasParaDisponibilizarIds = placasIndisponiveisIds.filter(id =>
+                !placasIndisponiveisAindaAtivasIds.some(activeId => activeId.equals(id))
             );
-             if (updateDisponivelResult.modifiedCount > 0) {
-                 logger.info(`[CRON JOB - Mongoose] Marcadas ${updateDisponivelResult.modifiedCount} placas como DISPONÍVEIS (nenhum aluguel ativo).`);
-             }
+
+            if (placasParaDisponibilizarIds.length > 0) {
+                 const updateDisponivelResult = await Placa.updateMany(
+                    { _id: { $in: placasParaDisponibilizarIds } },
+                    { $set: { disponivel: true } }
+                );
+                 if (updateDisponivelResult.modifiedCount > 0) {
+                     logger.info(`[CRON JOB] Marcadas ${updateDisponivelResult.modifiedCount} placas como DISPONÍVEIS (nenhum aluguel ativo).`);
+                 }
+            }
+        } else {
+            logger.info('[CRON JOB] Nenhuma placa indisponível encontrada para verificar.');
         }
 
-        logger.info('[CRON JOB - Mongoose] Verificação de status concluída.');
+        logger.info('[CRON JOB] Verificação de status (PLACAS) concluída.');
 
     } catch (error) {
-        logger.error(`[CRON JOB - Mongoose] Erro ao executar a tarefa de atualização de status: ${error.message}`, error);
+        logger.error(`[CRON JOB] Erro ao executar a tarefa de atualização de status (PLACAS): ${error.message}`, error);
+    }
+    
+    // --- [MELHORIA] TAREFA 2: Atualizar Status de PIs Vencidas ---
+    logger.info('[CRON JOB] Iniciando a verificação de status de PIs (Propostas Internas)...');
+    try {
+        // Chama o método estático que criamos no PIService
+        await PIService.updateVencidas(); 
+        logger.info('[CRON JOB] Verificação de status (PIs) concluída.');
+    } catch (error) {
+         logger.error(`[CRON JOB] Erro ao executar a tarefa de atualização de status (PIs): ${error.message}`, error);
     }
 };
 
