@@ -17,6 +17,28 @@ const propostaInternaSchema = new Schema({
     valorTotal: { type: Number, required: true },
     descricao: { type: String, required: true },
     
+    // --- CAMPOS NOVOS ADICIONADOS ---
+
+    /**
+     * Array de IDs de Placas que fazem parte desta PI.
+     * Fazemos referência ao model 'Placa'.
+     */
+    placas: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Placa'
+    }],
+
+    /**
+     * Campo de texto para as condições de pagamento.
+     * Ex: "30/60/90", "Ato, 30 dias", "PIX", etc.
+     */
+    formaPagamento: {
+        type: String,
+        trim: true
+    },
+
+    // ---------------------------------
+    
     status: { 
         type: String, 
         required: true, 

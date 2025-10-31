@@ -10,12 +10,13 @@ const AppError = require('../utils/AppError'); // [MELHORIA] Importa AppError
 /**
  * Cria um novo cliente para uma empresa.
  * @param {object} clienteData - Dados do cliente (nome, cnpj?, telefone?).
+ * (Nota: clienteData agora também pode conter responsavel, segmento, etc.)
  * @param {object} file - Ficheiro de logo (opcional, do Multer/S3).
  * @param {string} empresaId - ObjectId da empresa proprietária.
  * @returns {Promise<object>} - O novo cliente criado (objeto simples com 'id').
  * @throws {AppError} - Lança erro com status 400, 409 ou 500.
  */
-exports.createCliente = async (clienteData, file, empresaId) => {
+const createCliente = async (clienteData, file, empresaId) => {
     logger.info(`[ClienteService] Tentando criar cliente para empresa ${empresaId}.`);
     
     if (!clienteData.nome) {
@@ -23,6 +24,7 @@ exports.createCliente = async (clienteData, file, empresaId) => {
         throw new AppError('O nome do cliente é obrigatório.', 400);
     }
 
+    // 'dadosParaSalvar' incluirá automaticamente os novos campos (responsavel, segmento)
     const dadosParaSalvar = { ...clienteData, empresa: empresaId };
 
     if (file) {
@@ -64,13 +66,13 @@ exports.createCliente = async (clienteData, file, empresaId) => {
 /**
  * Atualiza um cliente existente.
  * @param {string} id - ObjectId do cliente a atualizar.
- * @param {object} clienteData - Novos dados do cliente (nome?, cnpj?, telefone?).
+ * @param {object} clienteData - Novos dados do cliente (nome?, cnpj?, telefone?, responsavel?, segmento?).
  * @param {object} file - Novo ficheiro de logo (opcional).
  * @param {string} empresaId - ObjectId da empresa proprietária.
  * @returns {Promise<object>} - O cliente atualizado (objeto simples com 'id').
  * @throws {AppError} - Lança erro com status 404, 409 ou 500.
  */
-exports.updateCliente = async (id, clienteData, file, empresaId) => {
+const updateCliente = async (id, clienteData, file, empresaId) => {
     logger.info(`[ClienteService] Tentando atualizar cliente ID ${id} para empresa ${empresaId}.`);
 
     let clienteAntigo;
@@ -92,7 +94,7 @@ exports.updateCliente = async (id, clienteData, file, empresaId) => {
         throw new AppError(`Erro interno ao buscar cliente para atualização: ${error.message}`, 500);
     }
 
-
+    // 'dadosParaAtualizar' incluirá automaticamente os novos campos (responsavel, segmento)
     const dadosParaAtualizar = { ...clienteData };
     let logoAntigoKeyCompleta = null; 
 
@@ -156,14 +158,20 @@ exports.updateCliente = async (id, clienteData, file, empresaId) => {
  * @returns {Promise<Array<object>>} - Array de clientes (objetos simples com 'id').
  * @throws {AppError} - Lança erro com status 500 em caso de falha na DB.
  */
-exports.getAllClientes = async (empresaId) => {
+const getAllClientes = async (empresaId) => {
     logger.info(`[ClienteService] Buscando todos os clientes para empresa ${empresaId}.`);
     try {
-        // Usa .lean() e confia na configuração global (Passo 04) para mapear _id -> id
+        // --- ALTERAÇÃO APLICADA (Etapa 3 do Plano) ---
+        // Adicionamos .select() para garantir que o frontend (PIModalForm)
+        // receba os campos 'responsavel' e 'segmento'.
+        // Também incluímos os campos que a tabela ClientesPage usa.
         const clientes = await Cliente.find({ empresa: empresaId })
-                                      .sort({ nome: 1 })
-                                      .lean() 
-                                      .exec();
+            .select('nome email telefone cnpj responsavel segmento logo_url')
+            .sort({ nome: 1 })
+            .lean() 
+            .exec();
+        // ------------------------------------------
+
         logger.info(`[ClienteService] Encontrados ${clientes.length} clientes para empresa ${empresaId}.`);
 
         // [MELHORIA] Removido mapeamento manual redundante.
@@ -183,12 +191,15 @@ exports.getAllClientes = async (empresaId) => {
  * @returns {Promise<object>} - O cliente encontrado (objeto simples com 'id').
  * @throws {AppError} - Lança erro com status 404 ou 500.
  */
-exports.getClienteById = async (id, empresaId) => {
+const getClienteById = async (id, empresaId) => {
     logger.info(`[ClienteService] Buscando cliente ID ${id} para empresa ${empresaId}.`);
     try {
+        // [MELHORIA] A busca por ID deve popular todos os dados,
+        // mas como estamos usando .lean(), vamos selecionar tudo por agora.
+        // Se precisarmos de dados do PDF aqui, teríamos que popular
         const cliente = await Cliente.findOne({ _id: id, empresa: empresaId })
-                                     .lean()
-                                     .exec();
+                                      .lean()
+                                      .exec();
 
         if (!cliente) {
             // [MELHORIA] Usa AppError
@@ -214,7 +225,7 @@ exports.getClienteById = async (id, empresaId) => {
  * @returns {Promise<void>}
  * @throws {AppError} - Lança erro com status 409, 404 ou 500.
  */
-exports.deleteCliente = async (id, empresaId) => {
+const deleteCliente = async (id, empresaId) => {
     logger.info(`[ClienteService] Tentando apagar cliente ID ${id} para empresa ${empresaId}.`);
 
     try {
@@ -231,6 +242,11 @@ exports.deleteCliente = async (id, empresaId) => {
             // [MELHORIA] Usa AppError
             throw new AppError('Não é possível apagar um cliente com alugueis ativos ou agendados.', 409); 
         }
+        
+        // --- NOTA ---
+        // Se 'Aluguel' for substituído por 'PropostaInterna', a lógica acima deve mudar.
+        // Por agora, mantemos a verificação de 'Aluguel'
+        // ----------------
 
         // Encontra e apaga o cliente para obter o logo_url antes de apagar
         const clienteApagado = await Cliente.findOneAndDelete({ _id: id, empresa: empresaId });
@@ -258,4 +274,15 @@ exports.deleteCliente = async (id, empresaId) => {
         if (error instanceof AppError) throw error;
         throw new AppError(`Erro interno ao apagar cliente: ${error.message}`, 500);
     }
+};
+
+
+// --- ALTERAÇÃO AQUI (Refatoração) ---
+// Exporta todas as funções num único objeto no final do ficheiro
+module.exports = {
+    createCliente,
+    updateCliente,
+    getAllClientes,
+    getClienteById,
+    deleteCliente
 };

@@ -34,7 +34,10 @@ class PIService {
 
         try {
             await novaPI.save();
-            await novaPI.populate('cliente', 'nome email telefone cnpj');
+            await novaPI.populate([
+                { path: 'cliente', select: 'nome email telefone cnpj responsavel segmento' },
+                { path: 'placas', select: 'codigo' } // Popula placas no retorno
+            ]);
             return novaPI.toJSON();
         } catch (error) {
             logger.error(`[PIService] Erro ao criar PI: ${error.message}`, { stack: error.stack });
@@ -43,11 +46,16 @@ class PIService {
     }
 
     /**
-     * Busca uma PI pelo ID
+     * Busca uma PI pelo ID (Usado para o PDF)
      */
     async getById(piId, empresaId) {
         const pi = await PropostaInterna.findOne({ _id: piId, empresa: empresaId })
-            .populate('cliente', 'nome email telefone cnpj')
+            .populate('cliente') // Popula todos os campos do cliente
+            .populate({
+                path: 'placas', // Popula as placas
+                select: 'codigo tipo regiao', // Seleciona campos úteis
+                populate: { path: 'regiao', select: 'nome' } // Popula a região dentro da placa
+            })
             .lean();
             
         if (!pi) {
@@ -57,7 +65,7 @@ class PIService {
     }
 
     /**
-     * Lista todas as PIs com filtros e paginação (similar ao placaService)
+     * Lista todas as PIs (Usado pela tabela principal)
      */
     async getAll(empresaId, queryParams) {
         const { page = 1, limit = 10, sortBy = 'createdAt', order = 'desc', status, clienteId } = queryParams;
@@ -74,7 +82,14 @@ class PIService {
         try {
             const [pis, totalDocs] = await Promise.all([
                 PropostaInterna.find(query)
-                    .populate('cliente', 'nome')
+                    // --- ALTERAÇÃO (CORREÇÃO) AQUI ---
+                    // Selecionamos os campos novos para que o "Editar" funcione
+                    .select('cliente tipoPeriodo dataInicio dataFim valorTotal status formaPagamento placas')
+                    .populate({
+                        path: 'cliente',
+                        select: 'nome responsavel segmento' // Dados para o auto-fill do modal
+                    })
+                    // ---------------------------------
                     .sort({ [sortBy]: sortOrder })
                     .skip(skip)
                     .limit(limitInt)
@@ -105,7 +120,11 @@ class PIService {
                 { _id: piId, empresa: empresaId },
                 { $set: updateData },
                 { new: true, runValidators: true }
-            ).populate('cliente', 'nome email telefone cnpj');
+            )
+            .populate([
+                { path: 'cliente', select: 'nome email telefone cnpj responsavel segmento' },
+                { path: 'placas', select: 'codigo' } // Popula placas no retorno
+            ]);
 
             if (!piAtualizada) {
                 throw new AppError('PI não encontrada.', 404);
@@ -147,7 +166,7 @@ class PIService {
         logger.debug(`[PIService] Gerando PDF para PI ${piId}. Buscando dados...`);
         try {
             // 1. Buscar todos os dados necessários
-            const pi = await this.getById(piId, empresaId); // getById já popula o cliente
+            const pi = await this.getById(piId, empresaId); 
             
             const [empresa, user] = await Promise.all([
                 Empresa.findById(empresaId).lean(),
@@ -159,7 +178,6 @@ class PIService {
             }
 
             // 2. Chamar o serviço de PDF
-            // Passamos o 'res' para o pdfService fazer o streaming
             pdfService.generatePI_PDF(res, pi, pi.cliente, empresa, user);
 
         } catch (error) {

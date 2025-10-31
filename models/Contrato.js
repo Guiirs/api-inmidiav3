@@ -3,25 +3,35 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
 const contratoSchema = new Schema({
-    // Vinculado diretamente à PI
-    pi: { type: Schema.Types.ObjectId, ref: 'PropostaInterna', required: true, unique: true },
     empresa: { type: Schema.Types.ObjectId, ref: 'Empresa', required: true, index: true },
     cliente: { type: Schema.Types.ObjectId, ref: 'Cliente', required: true, index: true },
+    pi: { type: Schema.Types.ObjectId, ref: 'PropostaInterna', required: true, index: true, unique: true },
     
-    // Armazena qual template de PDF foi usado (para versionamento)
-    templateUsado: { type: String, default: 'default_v1' },
+    status: {
+        type: String,
+        required: true,
+        enum: ['rascunho', 'ativo', 'concluido', 'cancelado'],
+        default: 'rascunho'
+    },
     
-    // Dados de assinatura (se aplicável, ex: integração com Docusign)
-    dadosAssinatura: { type: Object },
+    // ... (outros campos, se existirem)
     
-    status: { 
-        type: String, 
-        required: true, 
-        enum: ['rascunho', 'enviado', 'assinado'], 
-        default: 'rascunho' 
-    }
 }, {
-  timestamps: true
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
 });
+
+// Virtual 'id'
+contratoSchema.virtual('id').get(function() {
+    return this._id.toHexString();
+});
+
+// Popula automaticamente a PI e o Cliente ao buscar
+contratoSchema.pre(/^find/, function(next) {
+    this.populate('pi').populate('cliente');
+    next();
+});
+
 
 module.exports = mongoose.model('Contrato', contratoSchema);

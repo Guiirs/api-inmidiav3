@@ -59,7 +59,11 @@ class ContratoService {
                         path: 'cliente' // Popula o Cliente DENTRO da PI
                     }
                 })
-                .populate('empresa', 'nome cnpj'); // Popula a Empresa
+                // --- ALTERAÇÃO AQUI ---
+                // Removemos o select 'nome cnpj' para buscar TODOS os dados da empresa
+                // (incluindo endereço, bairro, cidade, telefone)
+                .populate('empresa'); 
+                // ------------------------
 
             if (!contrato) {
                 throw new AppError('Contrato não encontrado.', 404);
@@ -72,6 +76,7 @@ class ContratoService {
             }
 
             // 2. Chamar o serviço de PDF
+            // 'contrato.empresa' agora contém todos os dados (nome, cnpj, endereco, etc.)
             pdfService.generateContrato_PDF(res, contrato.toJSON(), contrato.pi.toJSON(), contrato.pi.cliente.toJSON(), contrato.empresa.toJSON());
 
         } catch (error) {

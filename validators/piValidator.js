@@ -42,7 +42,27 @@ const piValidationRules = () => {
         body('descricao')
             .trim()
             .notEmpty().withMessage('A descrição é obrigatória.')
-            .escape()
+            .escape(),
+
+        // --- VALIDAÇÕES NOVAS ADICIONADAS ---
+
+        // Validação para a Forma de Pagamento
+        // É opcional, mas se vier, limpamos (trim) e escapamos (escape)
+        body('formaPagamento')
+            .optional()
+            .trim()
+            .escape(),
+
+        // Validação para as Placas
+        // É opcional, mas se vier, deve ser um array
+        body('placas')
+            .optional()
+            .isArray().withMessage('A lista de placas deve ser um array.'),
+        
+        // Valida cada item dentro do array 'placas'
+        body('placas.*')
+            .optional()
+            .isMongoId().withMessage('Cada ID de placa na lista deve ser um MongoId válido.')
     ];
 };
 
