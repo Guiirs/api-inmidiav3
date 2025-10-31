@@ -8,11 +8,15 @@ const Cliente = require('../models/Cliente');
 const mongoose = require('mongoose');
 const logger = require('../config/logger');
 const AppError = require('../utils/AppError');
-const axios = require('axios');
 
-// Variáveis de ambiente para a API Externa (Requer configuração no .env)
-const PDF_REST_API_KEY = process.env.PDF_REST_API_KEY || '';
-const PDF_REST_ENDPOINT = process.env.PDF_REST_ENDPOINT || 'https://api.pdfrest.com/pdf';
+// [MELHORIA] Importa o PDFKit (já estava no package.json)
+const PDFDocument = require('pdfkit'); 
+// [MELHORIA] Axios não é mais necessário para esta função
+// const axios = require('axios');
+
+// [MELHORIA] Variáveis de ambiente para a API Externa não são mais necessárias
+// const PDF_REST_API_KEY = process.env.PDF_REST_API_KEY || '';
+// const PDF_REST_ENDPOINT = process.env.PDF_REST_ENDPOINT || 'https://api.pdfrest.com/pdf';
 
 
 class RelatorioService {
@@ -139,7 +143,8 @@ class RelatorioService {
         const ocupacaoPorRegiao = await Placa.aggregate([
             { 
                 $match: { 
-                    is_active: true,
+                    // [CORREÇÃO]: O modelo Placa não possui 'is_active'. 
+                    // A lógica deve ser baseada na existência da placa.
                     empresa: empresaObjectId 
                 } 
             }, 
@@ -175,15 +180,10 @@ class RelatorioService {
                                 in: {
                                     $let: {
                                         vars: {
-                                            // [CORREÇÃO FINAL]
-                                            // As variáveis 'effectiveStart' e 'effectiveEnd'
-                                            // devem ser calculadas diretamente de '$$aluguel.*'
-                                            // e não de outras variáveis 'vars' no mesmo bloco.
                                             effectiveStart: { $max: ['$$aluguel.data_inicio', inicio] },
                                             effectiveEnd: { $min: ['$$aluguel.data_fim', fim] }
                                         },
                                         in: {
-                                            // Agora 'effectiveStart' e 'effectiveEnd' estão disponíveis aqui
                                             $divide: [
                                                 { $subtract: ['$$effectiveEnd', '$$effectiveStart'] },
                                                 1000 * 60 * 60 * 24
@@ -296,7 +296,7 @@ class RelatorioService {
     }
 
     /**
-     * [MÉTODO EXISTENTE] Gera o PDF do relatório de Ocupação via API externa (PDFRest).
+     * [MÉTODO REESCRITO] Gera o PDF do relatório de Ocupação nativamente com PDFKit.
      * @param {object} reportData - O resultado da ocupacaoPorPeriodo (JSON).
      * @param {Date} dataInicio - Início do período (objeto Date).
      * @param {Date} dataFim - Fim do período (objeto Date).
@@ -304,142 +304,182 @@ class RelatorioService {
      * @returns {void}
      */
     async generateOcupacaoPdf(reportData, dataInicio, dataFim, res) {
-        logger.info('[RelatorioService] Iniciando geração do PDF de Ocupação via API Externa (PDFRest).');
+        logger.info('[RelatorioService] Iniciando geração do PDF de Ocupação (Nativo com PDFKit).');
 
-        if (!PDF_REST_API_KEY || !PDF_REST_ENDPOINT) {
-             throw new AppError('As variáveis PDF_REST_API_KEY ou PDF_REST_ENDPOINT estão em falta no .env.', 500);
-        }
-
+        // Helper para formatar a data
         const formatPdfDate = (date) => `${String(date.getUTCDate()).padStart(2, '0')}/${String(date.getUTCMonth() + 1).padStart(2, '0')}/${date.getUTCFullYear()}`;
         
         const dataInicioStr = formatPdfDate(dataInicio);
+        // Corrige a data final de exibição (pois dataFim foi incrementada em 1 dia no service)
         const dataFimExibicao = new Date(dataFim);
-        dataFimExibicao.setDate(dataFimExibicao.getDate() - 1);
+        dataFimExibicao.setUTCDate(dataFimExibicao.getUTCDate() - 1);
         const dataFimStr = formatPdfDate(dataFimExibicao);
         
-        const tabelaRegiaoHtml = reportData.ocupacaoPorRegiao.map(r => `
-            <tr>
-                <td>${r.regiao}</td>
-                <td style="text-align: right;">${r.totalPlacas}</td>
-                <td style="text-align: right;">${r.totalDiasAlugados}</td>
-                <td style="text-align: right;">${r.totalDiasPlacas}</td>
-                <td style="text-align: right; font-weight: bold;">${r.taxa_ocupacao_regiao.toFixed(2)}%</td>
-            </tr>
-        `).join('');
-        
-        const tabelaClientesHtml = reportData.novosAlugueisPorCliente.map(c => `
-            <tr>
-                <td>${c.cliente_nome}</td>
-                <td style="text-align: right;">${c.total_novos_alugueis}</td>
-            </tr>
-        `).join('');
-
-        // --- 1. Formatar o Conteúdo (HTML) ---
-        const htmlContent = `
-            <html>
-                <head>
-                    <style>
-                        body { font-family: sans-serif; margin: 40px; color: #333; font-size: 10px; }
-                        h1 { color: #D32F2F; border-bottom: 2px solid #D32F2F; padding-bottom: 5px; margin-bottom: 10px; font-size: 20px; }
-                        h2 { color: #555; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 25px; font-size: 14px; }
-                        p { margin: 5px 0; }
-                        .summary-grid { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 30px; }
-                        .metric { width: 45%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #f9f9f9; box-sizing: border-box; }
-                        .metric-label { font-size: 9px; color: #666; text-transform: uppercase; margin-bottom: 3px; }
-                        .metric-value { font-size: 16px; font-weight: bold; color: #333; }
-                        
-                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                        th, td { border: 1px solid #ddd; padding: 5px 8px; text-align: left; font-size: 9px; }
-                        th { background-color: #eee; font-weight: bold; text-transform: uppercase; color: #333; }
-                    </style>
-                </head>
-                <body>
-                    <h1>Relatório de Ocupação de Placas</h1>
-                    <p style="font-size: 12px; margin-bottom: 20px;"><strong>Período:</strong> ${dataInicioStr} a ${dataFimStr}</p>
-                    
-                    <h2>Métricas Globais</h2>
-                    <div class="summary-grid">
-                        <div class="metric">
-                            <p class="metric-label">Taxa de Ocupação Média</p>
-                            <p class="metric-value">${reportData.percentagem.toFixed(2)}%</p>
-                        </div>
-                        <div class="metric">
-                            <p class="metric-label">Aluguéis Iniciados no Período</p>
-                            <p class="metric-value">${reportData.totalAlugueisNoPeriodo}</p>
-                        </div>
-                        <div class="metric">
-                            <p class="metric-label">Dias Alugados (Total)</p>
-                            <p class="metric-value">${reportData.totalDiasAlugados}</p>
-                        </div>
-                        <div class="metric">
-                            <p class="metric-label">Capacidade Máxima (Dias/Placa)</p>
-                            <p class="metric-value">${reportData.totalDiasPlacas}</p>
-                        </div>
-                    </div>
-                    
-                    <h2>Ocupação Detalhada por Região</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Região</th>
-                                <th style="text-align: right;">Placas Ativas</th>
-                                <th style="text-align: right;">Dias Alugados</th>
-                                <th style="text-align: right;">Capacidade (Dias)</th>
-                                <th style="text-align: right;">Taxa Ocupação (%)</th>
-                            </tr>
-                        </thead>
-                        <tbody>${tabelaRegiaoHtml}</tbody>
-                    </table>
-
-                    <h2>Top 10 Clientes por Novos Aluguéis</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Cliente</th>
-                                <th style="text-align: right;">Total de Novos Aluguéis</th>
-                            </tr>
-                        </thead>
-                        <tbody>${tabelaClientesHtml}</tbody>
-                    </table>
-                </body>
-            </html>
-        `;
-
-        // --- 2. Chamada à API Externa (PDFRest) ---
         const filename = `relatorio_ocupacao_${dataInicio.toISOString().split('T')[0]}_${dataFimExibicao.toISOString().split('T')[0]}.pdf`;
 
+        // --- 1. Configurar Resposta HTTP para PDF ---
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+        // --- 2. Iniciar Documento PDFKit e "Pipar" (Stream) para a Resposta ---
+        const doc = new PDFDocument({ margin: 40, size: 'A4' });
+        doc.pipe(res);
+
+        // --- 3. Desenhar o Conteúdo do PDF ---
+        
+        // Cabeçalho Principal
+        doc.fontSize(18)
+           .fillColor('#D32F2F') // Vermelho (cor do HTML)
+           .font('Helvetica-Bold')
+           .text('Relatório de Ocupação de Placas', { align: 'center' });
+        
+        doc.moveDown();
+
+        // Período
+        doc.fontSize(12)
+           .fillColor('black')
+           .font('Helvetica')
+           .text(`Período: `, { continued: true })
+           .font('Helvetica-Bold')
+           .text(`${dataInicioStr} a ${dataFimStr}`);
+
+        doc.moveDown(2);
+
+        // --- Métricas Globais ---
+        doc.fontSize(14).font('Helvetica-Bold').text('Métricas Globais');
+        doc.moveDown(0.5);
+
+        // Função helper para desenhar métricas
+        const drawMetric = (label, value) => {
+            doc.fontSize(10).fillColor('#666').font('Helvetica').text(label);
+            doc.fontSize(14).fillColor('black').font('Helvetica-Bold').text(value);
+            doc.moveDown(0.7);
+        };
+        
+        drawMetric('Taxa de Ocupação Média', `${reportData.percentagem.toFixed(2)}%`);
+        drawMetric('Aluguéis Iniciados no Período', `${reportData.totalAlugueisNoPeriodo}`);
+        drawMetric('Dias Alugados (Total)', `${reportData.totalDiasAlugados}`);
+        drawMetric('Capacidade Máxima (Dias/Placa)', `${reportData.totalDiasPlacas}`);
+
+        doc.moveDown(1);
+        
+        // --- Tabela 1: Ocupação por Região ---
+        doc.fontSize(14).font('Helvetica-Bold').text('Ocupação Detalhada por Região');
+        doc.moveDown(0.5);
+        
+        const tableTopRegiao = doc.y;
+        const col1Regiao = 40;
+        const col2Regiao = 160;
+        const col3Regiao = 260;
+        const col4Regiao = 360;
+        const col5Regiao = 480;
+
+        // Cabeçalho da Tabela
+        doc.fontSize(9).font('Helvetica-Bold');
+        doc.text('Região', col1Regiao, tableTopRegiao);
+        doc.text('Placas Ativas', col2Regiao, tableTopRegiao, { width: 80, align: 'right' });
+        doc.text('Dias Alugados', col3Regiao, tableTopRegiao, { width: 80, align: 'right' });
+        doc.text('Capacidade (Dias)', col4Regiao, tableTopRegiao, { width: 80, align: 'right' });
+        doc.text('Taxa Ocupação (%)', col5Regiao, tableTopRegiao, { width: 80, align: 'right' });
+        doc.moveDown();
+        
+        // Linha Divisória
+        const tableHeaderBottomY = doc.y;
+        doc.strokeColor('#aaaaaa')
+           .lineWidth(0.5)
+           .moveTo(col1Regiao, tableHeaderBottomY)
+           .lineTo(col5Regiao + 80, tableHeaderBottomY)
+           .stroke();
+           
+        // Linhas da Tabela
+        doc.font('Helvetica');
+        let currentY = doc.y + 5;
+        
+        reportData.ocupacaoPorRegiao.forEach(r => {
+            // Checa se precisa de nova página
+            if (currentY > 720) { 
+                doc.addPage(); 
+                currentY = doc.page.margins.top;
+            }
+            doc.fontSize(9).text(r.regiao, col1Regiao, currentY, { width: 110, align: 'left' });
+            doc.text(r.totalPlacas, col2Regiao, currentY, { width: 80, align: 'right' });
+            doc.text(r.totalDiasAlugados, col3Regiao, currentY, { width: 80, align: 'right' });
+            doc.text(r.totalDiasPlacas, col4Regiao, currentY, { width: 80, align: 'right' });
+            doc.font('Helvetica-Bold').text(`${r.taxa_ocupacao_regiao.toFixed(2)}%`, col5Regiao, currentY, { width: 80, align: 'right' });
+            
+            doc.font('Helvetica'); // Reseta para fonte normal
+            currentY += 15;
+        });
+
+        doc.moveDown(2); // Espaço extra
+
+        // --- Tabela 2: Top Clientes ---
+        
+        // Garante que a nova tabela não comece muito no final da página
+        if (doc.y > 650) { 
+            doc.addPage();
+            doc.y = doc.page.margins.top;
+        }
+        
+        doc.fontSize(14).font('Helvetica-Bold').text('Top 10 Clientes por Novos Aluguéis');
+        doc.moveDown(0.5);
+
+        const tableTopCliente = doc.y;
+        const col1Cliente = 40;
+        const col2Cliente = 480;
+
+        // Cabeçalho
+        doc.fontSize(9).font('Helvetica-Bold');
+        doc.text('Cliente', col1Cliente, tableTopCliente);
+        doc.text('Total de Novos Aluguéis', col2Cliente, tableTopCliente, { width: 80, align: 'right' });
+        doc.moveDown();
+
+        // Linha Divisória
+        const tableHeaderBottomY2 = doc.y;
+        doc.strokeColor('#aaaaaa')
+           .lineWidth(0.5)
+           .moveTo(col1Cliente, tableHeaderBottomY2)
+           .lineTo(col2Cliente + 80, tableHeaderBottomY2)
+           .stroke();
+           
+        // Linhas
+        doc.font('Helvetica');
+        currentY = doc.y + 5;
+
+        reportData.novosAlugueisPorCliente.forEach(c => {
+             if (currentY > 720) { 
+                doc.addPage(); 
+                currentY = doc.page.margins.top;
+            }
+            doc.fontSize(9).text(c.cliente_nome, col1Cliente, currentY, { width: 400, align: 'left' });
+            doc.text(c.total_novos_alugueis, col2Cliente, currentY, { width: 80, align: 'right' });
+            currentY += 15;
+        });
+
+
+        // --- 4. Finalizar o Documento ---
+        doc.end();
+        logger.info('[RelatorioService] PDF de Ocupação enviado com sucesso (Nativo).');
+
+        /* // --- CÓDIGO ANTIGO (API EXTERNA) ---
+        if (!PDF_REST_API_KEY || !PDF_REST_ENDPOINT) {
+             throw new AppError('As variáveis PDF_REST_API_KEY ou PDF_REST_ENDPOINT estão em falta no .env.', 500);
+        }
+        // ... (geração de HTML) ...
         try {
             const pdfApiEndpoint = `${PDF_REST_ENDPOINT}/html-to-pdf`; 
-            
             const pdfResponse = await axios.post(pdfApiEndpoint, {
-                html: htmlContent, 
-                pdf_options: {
-                    margins: { top: 10, right: 10, bottom: 10, left: 10 },
-                    format: 'A4'
-                },
-                filename: filename
-            }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Api-Key': PDF_REST_API_KEY 
-                },
-                responseType: 'arraybuffer' 
-            });
-
-            // --- 3. Enviar o PDF de Volta para o Cliente (Front-end) ---
+                html: htmlContent, ...
+            }, { ... });
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
             res.send(Buffer.from(pdfResponse.data));
-
             logger.info('[RelatorioService] PDF de Ocupação enviado com sucesso via API Externa.');
-
         } catch (apiError) {
-             logger.error(`[RelatorioService] ERRO NA API EXTERNA (${PDF_REST_ENDPOINT}): ${apiError.message}`, { 
-                 status: apiError.response?.status, 
-                 data: apiError.response?.data?.error || apiError.response?.data?.message || 'Detalhes indisponíveis' 
-             });
+             logger.error(`[RelatorioService] ERRO NA API EXTERNA...`);
              throw new AppError('Falha na comunicação com o serviço de geração de PDF.', 500);
         }
+        */
     }
 }
 
