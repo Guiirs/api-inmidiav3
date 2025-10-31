@@ -3,7 +3,7 @@
     <img alt="Build Status" src="https://img.shields.io/github/actions/workflow/status/SEU_USUARIO/SEU_REPO/main.yml?branch=main&style=for-the-badge">
   </a>
   <a href="#">
-    <img alt="Coverage" src="https://img.shields.io/codecov/c/github/SEU_USUARIO/SEU_REPO?style=for-the-badge&token=SEU_TOKEN_CODECOV">
+    <img alt="Coverage" src="https://img.shields.io/codecov/c/github/Guiirs/api-inmidiav3?style=for-the-badge&token=SEU_TOKEN_72e145c4-3a77-445b-b7bb-859a524bb53d">
   </a>
   <a href="LICENSE">
     <img alt="License" src="https://img.shields.io/github/license/SEU_USUARIO/SEU_REPO?style=for-the-badge&color=blue">
