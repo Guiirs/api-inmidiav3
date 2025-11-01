@@ -16,7 +16,6 @@ const propostaInternaSchema = new Schema({
     
     valorTotal: { type: Number, required: true },
     descricao: { type: String, required: true, trim: true },    
-    // --- CAMPOS NOVOS ADICIONADOS ---
 
     /**
      * Array de IDs de Placas que fazem parte desta PI.
@@ -35,8 +34,6 @@ const propostaInternaSchema = new Schema({
         type: String,
         trim: true
     },
-
-    // ---------------------------------
     
     status: { 
         type: String, 
