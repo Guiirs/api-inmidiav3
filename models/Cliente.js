@@ -70,3 +70,6 @@ clienteSchema.virtual('id').get(function() {
 const Cliente = mongoose.model('Cliente', clienteSchema);
 
 module.exports = Cliente;
+
+//mudanca total no codigo base
+// Mudança total no código base
