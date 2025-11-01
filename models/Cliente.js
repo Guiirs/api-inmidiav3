@@ -36,21 +36,26 @@ const clienteSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
-    // --- CAMPO NOVO ADICIONADO ---
-    // Responsável pelo contrato (conforme imagem de referência)
     responsavel: {
         type: String,
         trim: true
     },
-    // --- CAMPO NOVO ADICIONADO ---
-    // Segmento do cliente (escolas, lojas, etc.)
     segmento: {
         type: String,
         trim: true
+    },
+    
+    // --- CORREÇÃO ADICIONADA AQUI ---
+    // Adiciona a referência à Empresa dona deste cliente.
+    empresa: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Empresa', // Deve corresponder ao nome do modelo em Empresa.js
+        required: [true, 'O cliente deve pertencer a uma empresa.']
     }
+    // ---------------------------------
+
 }, {
     timestamps: true,
-    // Garante que 'id' virtual seja incluído, mesmo que não estejamos usando .lean()
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
 });
