@@ -44,18 +44,20 @@ const clienteSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
-    
+
     // --- CORREÇÃO ADICIONADA AQUI ---
     // Adiciona a referência à Empresa dona deste cliente.
     empresa: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Empresa', // Deve corresponder ao nome do modelo em Empresa.js
-        required: [true, 'O cliente deve pertencer a uma empresa.']
+        required: [true, 'O cliente deve pertencer a uma empresa.'],
+        index: true // Adiciona um índice para performance
     }
-    // ---------------------------------
+    // --- FIM DA CORREÇÃO ---
 
 }, {
     timestamps: true,
+    // Garante que 'id' virtual seja incluído
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
 });
