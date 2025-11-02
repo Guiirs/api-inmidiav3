@@ -40,6 +40,10 @@ const publicApiRoutes = require('./routes/publicApiRoutes');
 const piRoutes = require('./routes/piRoutes');
 const contratoRoutes = require('./routes/contratoRoutes');
 
+// --- [CORREÇÃO] Importa a nova rota de registo pública ---
+const publicRegisterRoutes = require('./routes/publicRegisterRoutes');
+// --- Fim da Correção ---
+
 // Rota de Status (Health Check)
 app.get('/api/v1/status', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date() });
@@ -48,7 +52,14 @@ app.get('/api/v1/status', (req, res) => {
 // Rota da Documentação API (Swagger)
 app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerConfig));
 
-// --- Define as rotas da API ---
+
+// --- [CORREÇÃO] Define a rota de registo pública (sem /v1) ---
+// O front-end chama /api/empresas/register
+app.use('/api/empresas', publicRegisterRoutes);
+// --- Fim da Correção ---
+
+
+// --- Define as rotas da API (Protegidas com /v1) ---
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/user', userRoutes);
 app.use('/api/v1/placas', placaRoutes);

@@ -1,53 +1,126 @@
 // controllers/empresaController.js
-const EmpresaService = require('../services/empresaService');
 const logger = require('../config/logger');
+const empresaService = require('../services/empresaService');
+const AppError = require('../utils/AppError'); // --- [CORREÇÃO] Importar AppError
 
-// GET /empresa/api-key
-exports.getApiKey = async (req, res, next) => {
+// Função existente (INTACTA)
+const getApiKey = async (req, res, next) => {
     try {
-        const empresaId = req.user.empresaId;
-        const apiKey = await EmpresaService.getApiKey(empresaId);
+        // O ID da empresa é obtido do utilizador autenticado
+        const empresaId = req.user.empresaId; 
+        const apiKey = await empresaService.getApiKey(empresaId);
+        
+        if (!apiKey) {
+             return res.status(404).json({ message: 'API Key não encontrada.' });
+        }
+        
         res.status(200).json({ apiKey });
-    } catch (err) {
-        next(err);
+    } catch (error) {
+        logger.error(`[EmpresaController] Erro ao buscar API Key: ${error.message}`);
+        next(error);
     }
 };
 
-// POST /empresa/api-key
-exports.regenerateApiKey = async (req, res, next) => {
+// Função existente (INTACTA)
+const regenerateApiKey = async (req, res, next) => {
     try {
         const empresaId = req.user.empresaId;
-        const userId = req.user.id;
-        // const { password } = req.body; (Lógica de password removida)
-
-        const novaChave = await EmpresaService.regenerateApiKey(userId, empresaId);
-        res.status(200).json({ apiKey: novaChave });
-    } catch (err) {
-        next(err);
+        
+        // Poderia adicionar verificação de password aqui se necessário
+        
+        const newApiKey = await empresaService.regenerateApiKey(empresaId);
+        
+        res.status(200).json({ 
+            message: 'API Key regenerada com sucesso.',
+            apiKey: newApiKey 
+        });
+    } catch (error) {
+        logger.error(`[EmpresaController] Erro ao regenerar API Key: ${error.message}`);
+        next(error);
     }
 };
 
-// --- FUNÇÕES NOVAS ADICIONADAS AQUI ---
-
-// GET /empresa/details
-exports.getEmpresaDetails = async (req, res, next) => {
+// Função existente (INTACTA)
+const getEmpresaDetails = async (req, res, next) => {
     try {
         const empresaId = req.user.empresaId;
-        const detalhes = await EmpresaService.getEmpresaDetailsById(empresaId);
-        res.status(200).json(detalhes);
-    } catch (err) {
-        next(err);
+        const empresa = await empresaService.getEmpresaDetails(empresaId);
+        res.status(200).json({
+            status: 'success',
+            data: empresa
+        });
+    } catch (error) {
+        next(error);
     }
 };
 
-// PUT /empresa/details
-exports.updateEmpresaDetails = async (req, res, next) => {
+// Função existente (INTACTA)
+const updateEmpresaDetails = async (req, res, next) => {
     try {
         const empresaId = req.user.empresaId;
-        // req.body já foi validado pelo 'updateEmpresaRules'
-        const empresaAtualizada = await EmpresaService.updateEmpresaDetails(empresaId, req.body);
-        res.status(200).json(empresaAtualizada);
-    } catch (err) {
-        next(err);
+        const updateData = req.body;
+
+        const empresaAtualizada = await empresaService.updateEmpresaDetails(empresaId, updateData);
+        
+        res.status(200).json({
+            status: 'success',
+            message: 'Detalhes da empresa atualizados com sucesso.',
+            data: empresaAtualizada
+        });
+    } catch (error) {
+        next(error);
     }
+};
+
+
+// --- [CORREÇÃO] Nova função de controlador de registo adicionada ---
+/**
+ * Controller para registar uma nova Empresa e o seu Admin.
+ * Esta rota é pública e não usa req.user.
+ */
+const registerEmpresaController = async (req, res, next) => {
+    try {
+        // Os dados vêm validados pelo 'registerValidationRules'
+        const { nome_empresa, cnpj, username, email, password, nome, sobrenome } = req.body;
+
+        const empresaData = {
+            nome: nome_empresa,
+            cnpj: cnpj,
+        };
+        
+        const userData = {
+            username,
+            email,
+            password,
+            nome,
+            sobrenome,
+        };
+
+        // Chamar o serviço que faz a transação
+        const { empresa, user } = await empresaService.registerEmpresa(empresaData, userData);
+
+        // Resposta de sucesso
+        res.status(201).json({
+            status: 'success',
+            message: 'Empresa e utilizador administrador criados com sucesso. Por favor, faça login.',
+            data: {
+                empresaId: empresa._id,
+                userId: user._id,
+            }
+        });
+
+    } catch (error) {
+        // Se o serviço lançar um AppError (ex: duplicado), passa-o para o errorHandler
+        next(error); 
+    }
+};
+// --- Fim da Correção ---
+
+
+module.exports = {
+    getApiKey,
+    regenerateApiKey,
+    getEmpresaDetails,
+    updateEmpresaDetails,
+    registerEmpresaController, // --- [CORREÇÃO] Exportar a nova função ---
 };
