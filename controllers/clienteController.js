@@ -79,10 +79,17 @@ exports.getAllClientesController = async (req, res, next) => {
     logger.info(`[ClienteController] Utilizador ${userId} requisitou getAllClientes para empresa ${empresaId}.`);
 
     try {
-        const clientes = await getAllClientes(empresaId);
+        // *** CORREÇÃO APLICADA AQUI ***
+        // Passa os query params (page, limit) para o serviço
+        const clientesResult = await getAllClientes(empresaId, req.query);
 
-        logger.info(`[ClienteController] getAllClientes retornou ${clientes.length} clientes para empresa ${empresaId}.`);
-        res.status(200).json(clientes); // Retorna a lista de objetos formatados
+        // O serviço agora retorna { data: [...], pagination: ... }
+        logger.info(`[ClienteController] getAllClientes retornou ${clientesResult.data.length} clientes para empresa ${empresaId}.`);
+        
+        // Retorna o objeto completo que o frontend espera
+        res.status(200).json(clientesResult);
+        // *** FIM DA CORREÇÃO ***
+        
     } catch (error) {
         // O erro (que deve ser um AppError do service) é passado para o errorHandler global
         logger.error(`[ClienteController] Erro ao chamar clienteService.getAllClientes: ${error.message}`, { status: error.status, stack: error.stack });

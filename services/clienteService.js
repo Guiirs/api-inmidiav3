@@ -5,26 +5,19 @@ const Aluguel = require('../models/Aluguel');
 const logger = require('../config/logger');
 const path = require('path');
 const { deleteFileFromR2 } = require('../middlewares/uploadMiddleware'); 
-const AppError = require('../utils/AppError'); // [MELHORIA] Importa AppError
+const AppError = require('../utils/AppError'); 
 
 /**
  * Cria um novo cliente para uma empresa.
- * @param {object} clienteData - Dados do cliente (nome, cnpj?, telefone?).
- * (Nota: clienteData agora também pode conter responsavel, segmento, etc.)
- * @param {object} file - Ficheiro de logo (opcional, do Multer/S3).
- * @param {string} empresaId - ObjectId da empresa proprietária.
- * @returns {Promise<object>} - O novo cliente criado (objeto simples com 'id').
- * @throws {AppError} - Lança erro com status 400, 409 ou 500.
+ * (Função original - sem alterações)
  */
 const createCliente = async (clienteData, file, empresaId) => {
     logger.info(`[ClienteService] Tentando criar cliente para empresa ${empresaId}.`);
     
     if (!clienteData.nome) {
-        // [MELHORIA] Usa AppError
         throw new AppError('O nome do cliente é obrigatório.', 400);
     }
 
-    // 'dadosParaSalvar' incluirá automaticamente os novos campos (responsavel, segmento)
     const dadosParaSalvar = { ...clienteData, empresa: empresaId };
 
     if (file) {
@@ -34,7 +27,6 @@ const createCliente = async (clienteData, file, empresaId) => {
         delete dadosParaSalvar.logo_url;
     }
 
-    // Limpa CNPJ se vazio para evitar problemas com índice sparse unique
     if (dadosParaSalvar.cnpj !== undefined && dadosParaSalvar.cnpj !== null && String(dadosParaSalvar.cnpj).trim() === '') {
         dadosParaSalvar.cnpj = null;
     }
@@ -46,18 +38,14 @@ const createCliente = async (clienteData, file, empresaId) => {
         await novoCliente.save();
         logger.info(`[ClienteService] Cliente ${novoCliente.nome} (ID: ${novoCliente._id}) criado com sucesso para empresa ${empresaId}.`);
 
-        // Usa toJSON() para aplicar a transformação global (_id -> id)
         return novoCliente.toJSON();
     } catch (error) {
         logger.error(`[ClienteService] Erro Mongoose/DB ao criar cliente: ${error.message}`, { stack: error.stack, code: error.code, keyValue: error.keyValue });
 
-        // Trata erro de CNPJ duplicado
         if (error.code === 11000 && error.keyPattern && error.keyPattern.cnpj === 1) {
-            // [MELHORIA] Usa AppError
             throw new AppError(`Já existe um cliente com este CNPJ (${error.keyValue.cnpj}) na sua empresa.`, 409);
         }
         
-        // [MELHORIA] Relança AppErrors ou lança 500
         if (error instanceof AppError) throw error; 
         throw new AppError(`Erro interno ao criar cliente: ${error.message}`, 500);
     }
@@ -65,40 +53,28 @@ const createCliente = async (clienteData, file, empresaId) => {
 
 /**
  * Atualiza um cliente existente.
- * @param {string} id - ObjectId do cliente a atualizar.
- * @param {object} clienteData - Novos dados do cliente (nome?, cnpj?, telefone?, responsavel?, segmento?).
- * @param {object} file - Novo ficheiro de logo (opcional).
- * @param {string} empresaId - ObjectId da empresa proprietária.
- * @returns {Promise<object>} - O cliente atualizado (objeto simples com 'id').
- * @throws {AppError} - Lança erro com status 404, 409 ou 500.
+ * (Função original - sem alterações)
  */
 const updateCliente = async (id, clienteData, file, empresaId) => {
     logger.info(`[ClienteService] Tentando atualizar cliente ID ${id} para empresa ${empresaId}.`);
 
     let clienteAntigo;
     try {
-        // Busca o cliente existente para verificar propriedade e logo antigo
         logger.debug(`[ClienteService] Buscando cliente antigo ID ${id} para verificação.`);
         clienteAntigo = await Cliente.findOne({ _id: id, empresa: empresaId });
         if (!clienteAntigo) {
-            // [MELHORIA] Usa AppError
             throw new AppError('Cliente não encontrado.', 404);
         }
         logger.debug(`[ClienteService] Cliente antigo ${clienteAntigo.nome} (ID: ${id}) encontrado.`);
     } catch (error) {
-        // [MELHORIA] Se for um AppError (404, etc.), relança.
         if (error instanceof AppError) throw error; 
-        
-        // Trata erros de busca como 500
         logger.error(`[ClienteService] Erro Mongoose/DB ao buscar cliente antigo ID ${id}: ${error.message}`, { stack: error.stack });
         throw new AppError(`Erro interno ao buscar cliente para atualização: ${error.message}`, 500);
     }
 
-    // 'dadosParaAtualizar' incluirá automaticamente os novos campos (responsavel, segmento)
     const dadosParaAtualizar = { ...clienteData };
     let logoAntigoKeyCompleta = null; 
 
-    // Lógica para tratar o logo (mantida)
     if (file) {
         logoAntigoKeyCompleta = clienteAntigo.logo_url ? `${process.env.R2_FOLDER_NAME || 'inmidia-uploads-sistema'}/${clienteAntigo.logo_url}` : null;
         dadosParaAtualizar.logo_url = path.basename(file.key);
@@ -109,22 +85,18 @@ const updateCliente = async (id, clienteData, file, empresaId) => {
         delete dadosParaAtualizar.logo_url; 
     }
 
-    // Limpa CNPJ se vazio (mantido)
      if (dadosParaAtualizar.cnpj !== undefined && dadosParaAtualizar.cnpj !== null && String(dadosParaAtualizar.cnpj).trim() === '') {
         dadosParaAtualizar.cnpj = null;
     }
 
     try {
-        // Atualiza o cliente na base de dados
         const clienteAtualizadoDoc = await Cliente.findByIdAndUpdate(id, dadosParaAtualizar, { new: true, runValidators: true });
 
         if (!clienteAtualizadoDoc) {
-             // [MELHORIA] Usa AppError
              throw new AppError('Cliente não encontrado durante a atualização.', 404);
         }
         logger.info(`[ClienteService] Cliente ID ${id} atualizado com sucesso no DB.`);
 
-        // Se uma nova imagem foi carregada OU a existente foi removida, tenta apagar a antiga do R2
         if (logoAntigoKeyCompleta && (!file || logoAntigoKeyCompleta !== file.key)) {
             try {
                 await deleteFileFromR2(logoAntigoKeyCompleta);
@@ -134,102 +106,97 @@ const updateCliente = async (id, clienteData, file, empresaId) => {
             }
         }
 
-        // Usa toJSON() para aplicar a transformação global (_id -> id)
         return clienteAtualizadoDoc.toJSON();
 
     } catch (error) {
         logger.error(`[ClienteService] Erro Mongoose/DB ao atualizar cliente ID ${id}: ${error.message}`, { stack: error.stack, code: error.code, keyValue: error.keyValue });
 
-        // Trata erro de CNPJ duplicado
         if (error.code === 11000 && error.keyPattern && error.keyPattern.cnpj === 1) {
-            // [MELHORIA] Usa AppError
             throw new AppError(`Já existe outro cliente com este CNPJ (${error.keyValue.cnpj}) na sua empresa.`, 409);
         }
         
-        // [MELHORIA] Relança AppErrors (400/404/409) ou lança 500
         if (error instanceof AppError) throw error;
         throw new AppError(`Erro interno ao atualizar cliente: ${error.message}`, 500);
     }
 };
 
+// *** FUNÇÃO MODIFICADA ***
 /**
- * Busca todos os clientes de uma empresa.
+ * Busca todos os clientes de uma empresa (agora com paginação).
  * @param {string} empresaId - ObjectId da empresa.
- * @returns {Promise<Array<object>>} - Array de clientes (objetos simples com 'id').
+ * @param {object} queryParams - Parâmetros de paginação (page, limit).
+ * @returns {Promise<object>} - Objeto { data: Array<object>, pagination: object }.
  * @throws {AppError} - Lança erro com status 500 em caso de falha na DB.
  */
-const getAllClientes = async (empresaId) => {
+const getAllClientes = async (empresaId, queryParams) => {
     logger.info(`[ClienteService] Buscando todos os clientes para empresa ${empresaId}.`);
+    
+    // Extrai paginação ou define padrões
+    const { page = 1, limit = 1000 } = queryParams; // Padrão de 1000 para o PIModalForm
+    const pageInt = parseInt(page, 10);
+    const limitInt = parseInt(limit, 10);
+    const skip = (pageInt - 1) * limitInt;
+    
     try {
-        // --- ALTERAÇÃO APLICADA (Etapa 3 do Plano) ---
-        // Adicionamos .select() para garantir que o frontend (PIModalForm)
-        // receba os campos 'responsavel' e 'segmento'.
-        // Também incluímos os campos que a tabela ClientesPage usa.
-        const clientes = await Cliente.find({ empresa: empresaId })
-            .select('nome email telefone cnpj responsavel segmento logo_url')
-            .sort({ nome: 1 })
-            .lean() 
-            .exec();
-        // ------------------------------------------
+        const query = { empresa: empresaId };
 
-        logger.info(`[ClienteService] Encontrados ${clientes.length} clientes para empresa ${empresaId}.`);
+        const [clientes, totalDocs] = await Promise.all([
+            Cliente.find(query)
+                .select('nome email telefone cnpj responsavel segmento logo_url') // Campos necessários
+                .sort({ nome: 1 })
+                .skip(skip)
+                .limit(limitInt)
+                .lean() 
+                .exec(),
+            Cliente.countDocuments(query) // Contagem total para paginação
+        ]);
 
-        // [MELHORIA] Removido mapeamento manual redundante.
+        logger.info(`[ClienteService] Encontrados ${clientes.length} clientes (Total: ${totalDocs}) para empresa ${empresaId}.`);
 
-        return clientes;
+        const totalPages = Math.ceil(totalDocs / limitInt);
+        const pagination = { totalDocs, totalPages, currentPage: pageInt, limit: limitInt };
+
+        // Retorna o objeto esperado pelo frontend
+        return { data: clientes, pagination: pagination };
+
     } catch (error) {
         logger.error(`[ClienteService] Erro Mongoose/DB ao buscar todos os clientes: ${error.message}`, { stack: error.stack });
-        // [MELHORIA] Usa AppError
         throw new AppError(`Erro interno ao buscar clientes: ${error.message}`, 500);
     }
 };
 
 /**
- * Busca um cliente específico pelo ID, garantindo que pertence à empresa.
- * @param {string} id - ObjectId do cliente.
- * @param {string} empresaId - ObjectId da empresa proprietária.
- * @returns {Promise<object>} - O cliente encontrado (objeto simples com 'id').
- * @throws {AppError} - Lança erro com status 404 ou 500.
+ * Busca um cliente específico pelo ID.
+ * (Função original - sem alterações)
  */
 const getClienteById = async (id, empresaId) => {
     logger.info(`[ClienteService] Buscando cliente ID ${id} para empresa ${empresaId}.`);
     try {
-        // [MELHORIA] A busca por ID deve popular todos os dados,
-        // mas como estamos usando .lean(), vamos selecionar tudo por agora.
-        // Se precisarmos de dados do PDF aqui, teríamos que popular
         const cliente = await Cliente.findOne({ _id: id, empresa: empresaId })
                                       .lean()
                                       .exec();
 
         if (!cliente) {
-            // [MELHORIA] Usa AppError
             throw new AppError('Cliente não encontrado.', 404);
         }
-
-        // [MELHORIA] Removido mapeamento manual redundante.
-
+        
         logger.info(`[ClienteService] Cliente ${cliente.nome} (ID: ${id}) encontrado.`);
         return cliente;
     } catch (error) {
         logger.error(`[ClienteService] Erro Mongoose/DB ao buscar cliente por ID ${id}: ${error.message}`, { stack: error.stack });
-        // [MELHORIA] Relança AppErrors (404) ou lança 500
         if (error instanceof AppError) throw error;
         throw new AppError(`Erro interno ao buscar cliente: ${error.message}`, 500);
     }
 };
 
 /**
- * Apaga um cliente, verificando se não possui alugueis ativos ou futuros.
- * @param {string} id - ObjectId do cliente a apagar.
- * @param {string} empresaId - ObjectId da empresa proprietária.
- * @returns {Promise<void>}
- * @throws {AppError} - Lança erro com status 409, 404 ou 500.
+ * Apaga um cliente.
+ * (Função original - sem alterações)
  */
 const deleteCliente = async (id, empresaId) => {
     logger.info(`[ClienteService] Tentando apagar cliente ID ${id} para empresa ${empresaId}.`);
 
     try {
-        // Verifica se o cliente possui alugueis ativos ou futuros (lógica mantida)
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
         const aluguelExistente = await Aluguel.findOne({
@@ -239,25 +206,16 @@ const deleteCliente = async (id, empresaId) => {
         }).lean();
 
         if (aluguelExistente) {
-            // [MELHORIA] Usa AppError
             throw new AppError('Não é possível apagar um cliente com alugueis ativos ou agendados.', 409); 
         }
         
-        // --- NOTA ---
-        // Se 'Aluguel' for substituído por 'PropostaInterna', a lógica acima deve mudar.
-        // Por agora, mantemos a verificação de 'Aluguel'
-        // ----------------
-
-        // Encontra e apaga o cliente para obter o logo_url antes de apagar
         const clienteApagado = await Cliente.findOneAndDelete({ _id: id, empresa: empresaId });
 
         if (!clienteApagado) {
-            // [MELHORIA] Usa AppError
             throw new AppError('Cliente não encontrado.', 404);
         }
         logger.info(`[ClienteService] Cliente ${clienteApagado.nome} (ID: ${id}) apagado com sucesso do DB.`);
 
-        // Se o cliente tinha logo, tenta apagar do R2 (lógica mantida)
         if (clienteApagado.logo_url) {
             const logoKeyCompleta = `${process.env.R2_FOLDER_NAME || 'inmidia-uploads-sistema'}/${clienteApagado.logo_url}`;
             try {
@@ -270,19 +228,16 @@ const deleteCliente = async (id, empresaId) => {
 
     } catch (error) {
         logger.error(`[ClienteService] Erro Mongoose/DB ao apagar cliente ID ${id}: ${error.message}`, { stack: error.stack, code: error.code });
-        // [MELHORIA] Relança AppErrors (409, 404) ou lança 500
         if (error instanceof AppError) throw error;
         throw new AppError(`Erro interno ao apagar cliente: ${error.message}`, 500);
     }
 };
 
 
-// --- ALTERAÇÃO AQUI (Refatoração) ---
-// Exporta todas as funções num único objeto no final do ficheiro
 module.exports = {
     createCliente,
     updateCliente,
-    getAllClientes,
+    getAllClientes, // Modificado
     getClienteById,
     deleteCliente
 };
