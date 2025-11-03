@@ -405,7 +405,7 @@ exports.getAllPlacaLocations = async (empresaId) => {
 
 
 // =============================================================================
-// == NOVA FUNÇÃO ADICIONADA AQUI ==
+// == FUNÇÃO CORRIGIDA ==
 // =============================================================================
 
 /**
@@ -452,7 +452,14 @@ exports.getPlacasDisponiveis = async (empresaId, dataInicio, dataFim) => {
 
         // pisOcupadas = [ { placas: [id1, id2] }, { placas: [id3] } ]
         // flatMap() achata para [id1, id2, id3]
-        const idsEmPI = pisOcupadas.flatMap(pi => pi.placas.map(p => p.toString()));
+        
+        // *** INÍCIO DA CORREÇÃO (LINHA 233) ***
+        // ANTES:
+        // const idsEmPI = pisOcupadas.flatMap(pi => pi.placas.map(p => p.toString()));
+        // DEPOIS (Verifica se 'pi.placas' existe antes de tentar o .map):
+        const idsEmPI = pisOcupadas.flatMap(pi => (pi.placas || []).map(p => p.toString()));
+        // *** FIM DA CORREÇÃO ***
+
 
         // 3. Juntar todos os IDs ocupados (Set remove duplicatas)
         const placasOcupadasIds = [...new Set([...idsAlugadas, ...idsEmPI])];
