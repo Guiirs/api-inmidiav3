@@ -91,7 +91,11 @@ app.use((req, res, next) => {
 app.use(errorHandler);
 
 // --- Inicialização do Servidor ---
-const PORT = process.env.PORT || 3001;
+// *** CORREÇÃO DA PORTA AQUI ***
+// (Se process.env.PORT for fornecido pela Square Cloud, ele será usado. 
+// Caso contrário, o fallback agora é 3000, que corresponde ao Dockerfile.)
+const PORT = process.env.PORT || 3000;
+// *** FIM DA CORREÇÃO ***
 const server = http.createServer(app);
 
 server.listen(PORT, () => {
