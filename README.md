@@ -118,7 +118,12 @@ R2_SECRET_ACCESS_KEY=...
 R2_ENDPOINT=https://<account_id>.r2.cloudflarestorage.com
 R2_BUCKET_NAME=...
 R2_PUBLIC_URL=https://meu-bucket.cdn/
+```
 
+---
+
+## 🔑 Variáveis de Ambiente
+```bash
 # Admin Inicial
 ADMIN_EMAIL=admin@exemplo.com
 ADMIN_PASSWORD=admin123
@@ -136,6 +141,9 @@ GET	/api/v1/pis	Lista PIs (Propostas Internas)
 POST	/api/v1/pis	Cria nova PI
 GET	/api/v1/users	Lista utilizadores (Admin)
 
+```
+
+---
 ## 👥 Autores & Contribuidores
 
 | Nome | Função | GitHub |
