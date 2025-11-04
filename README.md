@@ -1,53 +1,66 @@
-# InMidia - Sistema de Gestão de Mídia OOH
+# 🧠 InMidia - Sistema de Gestão de Mídia OOH
 
 <div align="center">
   <img src="guiirs/inmidia-react/InMidia-React-6854b95e98580a652a6c50b567d234d55a0cbe6c/public/assets/img/logo 244.png" alt="Logo InMidia" width="200"/>
 </div>
 
-Um sistema **full-stack (MERN)** completo para **gestão de mídia Out-of-Home (OOH)**.  
-Esta aplicação permite o controlo de placas (outdoors), clientes, contratos de aluguer, propostas internas (PIs) e utilizadores.
+<p align="center">
+  <strong>Plataforma full-stack MERN para gestão de mídia Out-of-Home (OOH)</strong><br/>
+  Controle de placas, clientes, contratos, propostas internas (PIs) e utilizadores.
+</p>
 
 ---
 
-## 📦 Estrutura do Projeto
+<p align="center">
+  <img src="https://img.shields.io/badge/Node.js-18+-green?style=for-the-badge&logo=node.js" alt="Node.js"/>
+  <img src="https://img.shields.io/badge/React-18+-61DAFB?style=for-the-badge&logo=react&logoColor=white" alt="React"/>
+  <img src="https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express"/>
+  <img src="https://img.shields.io/badge/MongoDB-Database-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB"/>
+  <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite"/>
+  <img src="https://img.shields.io/badge/Status-Em%20Desenvolvimento-yellow?style=for-the-badge" alt="Status"/>
+</p>
 
-Este repositório contém duas partes principais:
+---
 
-- **`api-inmidiav3/`** → Servidor backend (API) construído com **Node.js, Express e MongoDB**  
-- **`inmidia-react/`** → Cliente frontend (Dashboard) construído com **React e Vite**
+## 🖥️ Preview do Sistema
+
+<div align="center">
+  <img src="https://github.com/guiirs/inmidia-react/assets/preview-dashboard.png" alt="Preview do Dashboard" width="90%"/>
+  <p><em>Exemplo do dashboard de gestão de mídia</em></p>
+</div>
 
 ---
 
 ## 🚀 Funcionalidades Principais
 
-- **Dashboard:** visão geral da saúde do negócio *(pendente implementação)*  
-- **Gestão de Placas:** CRUD completo, com geolocalização, upload para Cloudflare R2 e status de disponibilidade  
-- **Gestão de Clientes:** base de dados de clientes e responsáveis  
-- **Gestão de Regiões:** agrupamento de placas por regiões geográficas  
-- **Propostas Internas (PIs):** criação e gestão de propostas com seleção de placas disponíveis por período  
-- **Gestão de Contratos:** geração de contratos a partir de PIs aprovadas  
-- **Mapa de Placas:** visualização de todas as placas num mapa interativo *(Leaflet)*  
-- **Gestão de Utilizadores:** controlo de acesso baseado em funções *(admin, user)*  
-- **Autenticação Segura:** baseada em **JWT (Tokens)**  
+✅ **Dashboard:** visão geral da saúde do negócio *(em desenvolvimento)*  
+✅ **Gestão de Placas:** CRUD completo com geolocalização e upload para Cloudflare R2  
+✅ **Gestão de Clientes:** base de dados e responsáveis  
+✅ **Gestão de Regiões:** agrupamento de placas por área  
+✅ **Propostas Internas (PIs):** criação, aprovação e histórico  
+✅ **Contratos:** geração automática a partir de PIs  
+✅ **Mapa Interativo:** visualização via **Leaflet**  
+✅ **Controle de Acesso:** roles (admin, user)  
+✅ **Autenticação JWT:** sistema seguro com tokens  
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
-| Área | Tecnologia | Propósito |
-|------|-------------|-----------|
-| **Frontend** | React | Biblioteca principal de UI |
-|  | Vite | Build tool e servidor de desenvolvimento |
-|  | React Router | Roteamento de páginas |
-|  | TanStack Query | Gestão de estado do servidor (data-fetching) |
-|  | React Hook Form | Gestão de formulários |
-|  | Axios | Cliente HTTP para a API |
-| **Backend** | Node.js | Ambiente de execução |
-|  | Express | Framework principal da API |
-|  | MongoDB | Base de dados (via Mongoose) |
-|  | JWT | Autenticação segura |
-|  | Multer & AWS-SDK | Upload para Cloudflare R2/S3 |
-|  | Winston | Sistema de logs da aplicação |
+| Área | Tecnologia | Logo | Propósito |
+|------|-------------|------|-----------|
+| **Frontend** | React | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="28"/> | Biblioteca principal de UI |
+|  | Vite | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vite/vite-original.svg" width="28"/> | Build tool e servidor de desenvolvimento |
+|  | React Router | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="28"/> | Navegação entre páginas |
+|  | TanStack Query | 🧩 | Gestão de estado assíncrono |
+|  | React Hook Form | 🪶 | Manipulação de formulários |
+|  | Axios | 🌐 | Comunicação HTTP com a API |
+| **Backend** | Node.js | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" width="28"/> | Ambiente de execução |
+|  | Express | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg" width="28"/> | Framework da API |
+|  | MongoDB | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg" width="28"/> | Base de dados |
+|  | JWT | 🔒 | Autenticação segura |
+|  | Multer + AWS SDK | ☁️ | Upload para Cloudflare R2 / S3 |
+|  | Winston | 🧾 | Sistema de logs |
 
 ---
 
@@ -83,90 +96,86 @@ Copiar código
 
 ---
 
-## 🏁 Como Começar
+## 🧰 Como Rodar o Projeto
 
-### 📋 Pré-requisitos
+### 1️⃣ Pré-requisitos
 
-- Node.js **v18+**
+- [Node.js](https://nodejs.org/) **v18+**
 - npm
-- Instância do **MongoDB** (local ou MongoDB Atlas)
-- *(Opcional)* credenciais de um bucket **S3/Cloudflare R2**
+- Instância **MongoDB** (local ou Atlas)
+- *(Opcional)* Bucket **S3/Cloudflare R2**
 
 ---
 
-### ⚙️ 1. Configurar o Backend (API)
+### 2️⃣ Configurar o Backend
 
 ```bash
-# Acesse a pasta da API
 cd api-inmidiav3
-
-# Instale as dependências
 npm install
-
-# Copie o .env de exemplo
 cp .env.example .env
-
-# Edite o .env com suas credenciais
 nano .env
-
-# Inicie o servidor
 npm run dev
-A API ficará disponível em http://localhost:5000 (ou a porta definida no .env).
+API: http://localhost:5000
 
-💻 2. Configurar o Frontend (React)
+3️⃣ Configurar o Frontend
 bash
 Copiar código
-# Acesse a pasta do frontend
 cd inmidia-react
-
-# Instale as dependências
 npm install
-
-# Inicie o servidor de desenvolvimento
 npm run dev
-A aplicação React ficará disponível em http://localhost:3000 (ou porta do Vite).
+Frontend: http://localhost:3000
 
-🔑 Variáveis de Ambiente (.env)
-Use o arquivo de exemplo em
-guiirs/api-inmidiav3/api-inmidiav3-8cff9b6d75b43816638ae9e29b22386654a1afbe/.env.example como base.
+🔑 Variáveis de Ambiente
+Use como base o arquivo
+guiirs/api-inmidiav3/api-inmidiav3-8cff9b6d75b43816638ae9e29b22386654a1afbe/.env.example
 
 ini
 Copiar código
-# Configurações do Servidor
+# Servidor
 NODE_ENV=development
 PORT=5000
 
-# Conexão com a Base de Dados
-MONGO_URI=mongodb://... # Sua string de conexão
+# Banco de Dados
+MONGO_URI=mongodb://...
 
-# Segurança (JWT)
+# JWT
 JWT_SECRET=aminhasecretmuitosegura
 JWT_EXPIRES_IN=30d
 
-# Cloudflare R2 / S3
+# Uploads (Cloudflare R2 / S3)
 R2_ACCESS_KEY_ID=...
 R2_SECRET_ACCESS_KEY=...
 R2_ENDPOINT=https://<account_id>.r2.cloudflarestorage.com
 R2_BUCKET_NAME=...
-R2_PUBLIC_URL=https://seubucket.public.url/
+R2_PUBLIC_URL=https://meu-bucket.cdn/
 
-# Admin inicial
+# Admin Inicial
 ADMIN_EMAIL=admin@exemplo.com
 ADMIN_PASSWORD=admin123
-🗺️ Principais Rotas da API
+🗺️ Rotas Principais da API
 Método	Endpoint	Descrição
 POST	/api/v1/auth/login	Login de utilizador
-POST	/api/v1/auth/register	Registo de empresa
+POST	/api/v1/auth/register	Registro de empresa
 GET	/api/v1/placas	Lista todas as placas
 GET	/api/v1/placas/disponiveis	Lista placas disponíveis
 POST	/api/v1/placas	Cria uma nova placa
 GET	/api/v1/clientes	Lista todos os clientes
 POST	/api/v1/clientes	Cria um novo cliente
 GET	/api/v1/regioes	Lista regiões
-GET	/api/v1/pis	Lista propostas internas
+GET	/api/v1/pis	Lista PIs (Propostas Internas)
 POST	/api/v1/pis	Cria nova PI
 GET	/api/v1/users	Lista utilizadores (Admin)
 
-📄 Licença
-Este projeto é privado no momento.
-(Pode ser alterado para licença MIT caso seja tornado open-source.)
+👥 Autores & Contribuidores
+Nome	Função	GitHub
+Guilherme Farias	Desenvolvedor Full Stack / Arquiteto do Sistema	@Guiirs
+Colaborações futuras	—	—
+
+💡 Contribuições são bem-vindas!
+Abra uma issue ou envie um pull request com melhorias.
+
+🪪 Licença
+Este projeto é privado atualmente.
+Futuramente poderá ser licenciado sob MIT License.
+
+<div align="center"> <sub>Feito com ❤️ por <strong>InMidia</strong> — Sistema de Gestão de Mídia OOH.</sub><br/> <sub>© 2025 — Todos os direitos reservados.</sub> </div> ```
