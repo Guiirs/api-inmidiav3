@@ -1,7 +1,7 @@
 # 🧠 InMidia - Sistema de Gestão de Mídia OOH
 
 <div align="center">
-  <img src="guiirs/inmidia-react/InMidia-React-6854b95e98580a652a6c50b567d234d55a0cbe6c/public/assets/img/logo 244.png" alt="Logo InMidia" width="200"/>
+  <img src="./public/InMidia logo png.png" alt="Logo InMidia" width="200"/>
 </div>
 
 <p align="center">
@@ -25,7 +25,7 @@
 ## 🖥️ Preview do Sistema
 
 <div align="center">
-  <img src="https://github.com/guiirs/inmidia-react/assets/preview-dashboard.png" alt="Preview do Dashboard" width="90%"/>
+  <img src="./public/dashboard.jpeg" alt="Preview do Dashboard" width="90%"/>
   <p><em>Exemplo do dashboard de gestão de mídia</em></p>
 </div>
 
