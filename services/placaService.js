@@ -3,7 +3,7 @@
 const Placa = require('../models/Placa');
 const Regiao = require('../models/Regiao'); 
 const Aluguel = require('../models/Aluguel'); 
-const PropostaInterna = require('../models/PropostaInterna'); // <--- ADICIONADO
+const PropostaInterna = require('../models/PropostaInterna');
 const logger = require('../config/logger');
 const path = require('path');
 const mongoose = require('mongoose');
@@ -246,8 +246,8 @@ exports.getPlacaById = async (id, empresaId) => {
     logger.info(`[PlacaService] Buscando placa ID ${id} para empresa ${empresaId}`);
     try {
         const placaDoc = await Placa.findOne({ _id: id, empresa: empresaId })
-                                  .populate('regiao', 'nome') 
-                                  .exec(); 
+                                    .populate('regiao', 'nome') 
+                                    .exec(); 
 
         if (!placaDoc) {
             throw new AppError('Placa não encontrada.', 404);
@@ -405,7 +405,7 @@ exports.getAllPlacaLocations = async (empresaId) => {
 
 
 // =============================================================================
-// == FUNÇÃO CORRIGIDA ==
+// == FUNÇÃO CORRIGIDA (FILTROS MOVIDOS PARA O BACKEND) ==
 // =============================================================================
 
 /**
@@ -413,11 +413,17 @@ exports.getAllPlacaLocations = async (empresaId) => {
  * @param {string} empresaId - ObjectId da empresa.
  * @param {string} dataInicio - Data de início (ISO string).
  * @param {string} dataFim - Data de fim (ISO string).
+ * @param {object} queryParams - Filtros adicionais (ex: { regiao, search }).
  * @returns {Promise<Array<object>>} - Array de placas disponíveis (JSON formatado).
  * @throws {AppError} - Lança erro 400 ou 500.
  */
-exports.getPlacasDisponiveis = async (empresaId, dataInicio, dataFim) => {
+exports.getPlacasDisponiveis = async (empresaId, dataInicio, dataFim, queryParams = {}) => {
     logger.info(`[PlacaService] Buscando placas disponíveis de ${dataInicio} a ${dataFim} para empresa ${empresaId}.`);
+
+    // *** INÍCIO DA CORREÇÃO ***
+    // 1. Extrai os filtros (regiao, search) dos queryParams
+    const { regiao, search } = queryParams;
+    // *** FIM DA CORREÇÃO ***
 
     const startDate = new Date(dataInicio);
     const endDate = new Date(dataFim);
@@ -432,33 +438,23 @@ exports.getPlacasDisponiveis = async (empresaId, dataInicio, dataFim) => {
 
     try {
         // 1. Encontrar IDs de placas em Alugueis que conflitam
-        // (Usa 'data_inicio' e 'data_fim' conforme o resto do service)
         const alugueisOcupados = await Aluguel.find({
             empresa: empresaId,
-            data_inicio: { $lte: endDate }, // Começa antes ou durante o fim
-            data_fim: { $gte: startDate }  // Termina depois ou durante o início
+            data_inicio: { $lte: endDate }, 
+            data_fim: { $gte: startDate } 
         }).select('placa').lean();
         
         const idsAlugadas = alugueisOcupados.map(a => a.placa.toString());
 
         // 2. Encontrar IDs de placas em PIs que conflitam
-        // (Usa 'dataInicio' e 'dataFim' conforme o modelo PropostaInterna)
         const pisOcupadas = await PropostaInterna.find({
             empresa: empresaId,
-            status: { $in: ['em_andamento', 'concluida'] }, // Ignora 'vencida'
-            dataInicio: { $lte: endDate }, // Começa antes ou durante o fim
-            dataFim: { $gte: startDate }  // Termina depois ou durante o início
+            status: { $in: ['em_andamento', 'concluida'] }, 
+            dataInicio: { $lte: endDate }, 
+            dataFim: { $gte: startDate } 
         }).select('placas').lean();
 
-        // pisOcupadas = [ { placas: [id1, id2] }, { placas: [id3] } ]
-        // flatMap() achata para [id1, id2, id3]
-        
-        // *** INÍCIO DA CORREÇÃO (LINHA 233) ***
-        // ANTES:
-        // const idsEmPI = pisOcupadas.flatMap(pi => pi.placas.map(p => p.toString()));
-        // DEPOIS (Verifica se 'pi.placas' existe antes de tentar o .map):
         const idsEmPI = pisOcupadas.flatMap(pi => (pi.placas || []).map(p => p.toString()));
-        // *** FIM DA CORREÇÃO ***
 
 
         // 3. Juntar todos os IDs ocupados (Set remove duplicatas)
@@ -467,18 +463,38 @@ exports.getPlacasDisponiveis = async (empresaId, dataInicio, dataFim) => {
         logger.debug(`[PlacaService] ${placasOcupadasIds.length} placas ocupadas no período.`);
 
         // 4. Buscar todas as placas da empresa que:
-        //    - Estão marcadas como 'disponivel: true' (não em manutenção)
-        //    - E NÃO estão na lista de IDs ocupados ($nin)
-        const placasDisponiveisDocs = await Placa.find({
+        
+        // *** INÍCIO DA CORREÇÃO ***
+        // 4.1. Define a query base
+        const finalQuery = {
             empresa: empresaId,
             disponivel: true, 
             _id: { $nin: placasOcupadasIds } 
-        })
-        .populate('regiao', 'nome') // Popula o nome da região
-        .sort({ 'regiao.nome': 1, 'numero_placa': 1 }) // Ordena
-        .exec(); // Retorna documentos Mongoose
+        };
 
-        // 5. Mapeia para JSON (aplicando transformações do schema)
+        // 4.2. Adiciona filtro de REGIÃO (se fornecido)
+        if (regiao) {
+            finalQuery.regiao = regiao;
+            logger.debug(`[PlacaService] Adicionando filtro de regiao: ${regiao}`);
+        }
+
+        // 4.3. Adiciona filtro de SEARCH (se fornecido)
+        if (search) {
+            const searchRegex = new RegExp(search.trim(), 'i'); 
+            finalQuery.$or = [
+                { numero_placa: searchRegex },
+                { nomeDaRua: searchRegex }
+            ];
+            logger.debug(`[PlacaService] Adicionando filtro de search: ${search}`);
+        }
+        // *** FIM DA CORREÇÃO ***
+
+        const placasDisponiveisDocs = await Placa.find(finalQuery) // <-- USA A QUERY FINAL
+            .populate('regiao', 'nome') // Mantém o populate para o frontend
+            .sort({ 'regiao.nome': 1, 'numero_placa': 1 }) 
+            .exec(); 
+
+        // 5. Mapeia para JSON
         const placasDisponiveis = placasDisponiveisDocs.map(doc => doc.toJSON());
         
         logger.info(`[PlacaService] Encontradas ${placasDisponiveis.length} placas disponíveis.`);

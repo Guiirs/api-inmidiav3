@@ -21,7 +21,15 @@ const app = express();
 
 // --- Middlewares Essenciais ---
 app.use(helmet()); // Adiciona headers de segurança
-app.use(cors());
+
+// *** CORREÇÃO APLICADA AQUI ***
+// Dizemos ao CORS para aceitar explicitamente a URL do frontend
+// que está no seu ficheiro .env.example
+app.use(cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173'
+}));
+// *** FIM DA CORREÇÃO ***
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public')); // Serve ficheiros estáticos (ex: logos para PDF)
@@ -91,7 +99,7 @@ app.use((req, res, next) => {
 app.use(errorHandler);
 
 // --- Inicialização do Servidor ---
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
 
 server.listen(PORT, () => {
