@@ -64,33 +64,6 @@
 
 ---
 
-## 📂 Estrutura das Pastas
-
-/
-├── 📁 api-inmidiav3/ # Backend (API Node.js)
-│ ├── config/ # Configurações (DB, logger, etc.)
-│ ├── controllers/ # Lógica de negócio
-│ ├── middlewares/ # Autenticação e tratamento de erros
-│ ├── models/ # Schemas Mongoose (Placa, Cliente, User, etc.)
-│ ├── routes/ # Rotas da API
-│ ├── services/ # Interação com o banco de dados
-│ ├── utils/ # Funções utilitárias (AppError, etc.)
-│ ├── .env.example # Exemplo de variáveis de ambiente
-│ └── server.js # Ponto de entrada do servidor
-│
-└── 📁 inmidia-react/ # Frontend (React + Vite)
-├── public/ # Assets estáticos
-├── src/
-│ ├── components/ # Componentes reutilizáveis
-│ ├── context/ # Contexto (autenticação)
-│ ├── hooks/ # Hooks customizados
-│ ├── layouts/ # Estruturas de página
-│ ├── pages/ # Páginas principais (Dashboard, Clientes, etc.)
-│ ├── services/ # Configuração do Axios
-│ ├── App.jsx # Rotas principais
-│ └── main.jsx # Ponto de entrada do React
-└── vite.config.js # Configuração do Vite
-
 yaml
 Copiar código
 
