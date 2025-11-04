@@ -64,9 +64,6 @@
 
 ---
 
-yaml
-Copiar código
-
 ---
 
 ## 🧰 Como Rodar o Projeto
@@ -139,16 +136,26 @@ GET	/api/v1/pis	Lista PIs (Propostas Internas)
 POST	/api/v1/pis	Cria nova PI
 GET	/api/v1/users	Lista utilizadores (Admin)
 
-👥 Autores & Contribuidores
-Nome	Função	GitHub
-Guilherme Farias	Desenvolvedor Full Stack / Arquiteto do Sistema	@Guiirs
-Colaborações futuras	—	—
+## 👥 Autores & Contribuidores
 
-💡 Contribuições são bem-vindas!
-Abra uma issue ou envie um pull request com melhorias.
+| Nome | Função | GitHub |
+|------|---------|--------|
+| **Guilherme Farias** | Desenvolvedor Full Stack / Arquiteto do Sistema | [@Guiirs](https://github.com/Guiirs) |
+| *Colaborações futuras* | — | — |
 
-🪪 Licença
-Este projeto é privado atualmente.
-Futuramente poderá ser licenciado sob MIT License.
+💡 **Contribuições são bem-vindas!**  
+Abra uma *issue* ou envie um *pull request* com melhorias.
 
-<div align="center"> <sub>Feito com ❤️ por <strong>InMidia</strong> — Sistema de Gestão de Mídia OOH.</sub><br/> <sub>© 2025 — Todos os direitos reservados.</sub> </div> ```
+---
+
+## 🪪 Licença
+
+Este projeto é **privado** atualmente.  
+Futuramente poderá ser licenciado sob **MIT License**.
+
+---
+
+<div align="center">
+  <sub>Feito com ❤️ por <strong>InMidia</strong> — Sistema de Gestão de Mídia OOH.</sub><br/>
+  <sub>© 2025 — Todos os direitos reservados.</sub>
+</div>
