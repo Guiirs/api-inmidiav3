@@ -57,13 +57,13 @@ Este repositório contém duas partes principais:
 ├── 📁 api-inmidiav3/ # Backend (API Node.js)
 │ ├── config/ # Configurações (DB, logger, etc.)
 │ ├── controllers/ # Lógica de negócio
-│ ├── middlewares/ # Autenticação, tratamento de erros
+│ ├── middlewares/ # Autenticação e tratamento de erros
 │ ├── models/ # Schemas Mongoose (Placa, Cliente, User, etc.)
 │ ├── routes/ # Rotas da API
-│ ├── services/ # Interação com DB
+│ ├── services/ # Interação com o banco de dados
 │ ├── utils/ # Funções utilitárias (AppError, etc.)
 │ ├── .env.example # Exemplo de variáveis de ambiente
-│ └── server.js # Ponto de entrada
+│ └── server.js # Ponto de entrada do servidor
 │
 └── 📁 inmidia-react/ # Frontend (React + Vite)
 ├── public/ # Assets estáticos
@@ -75,7 +75,7 @@ Este repositório contém duas partes principais:
 │ ├── pages/ # Páginas principais (Dashboard, Clientes, etc.)
 │ ├── services/ # Configuração do Axios
 │ ├── App.jsx # Rotas principais
-│ └── main.jsx # Ponto de entrada
+│ └── main.jsx # Ponto de entrada do React
 └── vite.config.js # Configuração do Vite
 
 yaml
@@ -170,5 +170,3 @@ GET	/api/v1/users	Lista utilizadores (Admin)
 📄 Licença
 Este projeto é privado no momento.
 (Pode ser alterado para licença MIT caso seja tornado open-source.)
-
-<div align="center"> Feito com ❤️ por <b>InMidia</b> — Sistema de Gestão de Mídia OOH. </div> ```
