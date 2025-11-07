@@ -4,7 +4,9 @@ const Placa = require('../models/Placa'); // Modelo Placa Mongoose
 const Aluguel = require('../models/Aluguel'); // Modelo Aluguel Mongoose
 
 // [MELHORIA] Importa o PIService para a nova verificação de status
-const PIService = require('../services/piService'); 
+const PIService = require('../services/piService');
+// [NOVO] Importa o PISyncService para validação e sincronização
+const PISyncService = require('../services/piSyncService'); 
 
 /**
  * Lógica da tarefa agendada (Cron Job) para atualizar o status das placas E PIs.
@@ -80,6 +82,34 @@ const updatePlacaStatusJob = async () => {
     } catch (error) {
          logger.error(`[CRON JOB] Erro ao executar a tarefa de atualização de status (PIs): ${error.message}`, error);
     }
+
+    // --- [NOVO] TAREFA 3: Validar e Sincronizar PIs com Aluguéis ---
+    logger.info('[CRON JOB] Iniciando validação e sincronização PI ↔ Aluguéis...');
+    try {
+        await PISyncService.syncPIsWithAlugueis();
+        await PISyncService.cleanOrphanAlugueis();
+        logger.info('[CRON JOB] Validação e sincronização (PI ↔ Aluguéis) concluída.');
+    } catch (error) {
+        logger.error(`[CRON JOB] Erro ao executar validação PI ↔ Aluguéis: ${error.message}`, error);
+    }
 };
 
-module.exports = updatePlacaStatusJob;
+/**
+ * Configura e inicia os cron jobs
+ */
+const iniciarCronJobs = () => {
+    // Executa imediatamente na inicialização
+    updatePlacaStatusJob();
+
+    // Configura para executar a cada 30 minutos
+    const INTERVALO_30_MIN = 30 * 60 * 1000; // 30 minutos em milissegundos
+    
+    setInterval(async () => {
+        logger.info('[CRON JOB] ⏰ Executando verificação agendada (a cada 30 minutos)...');
+        await updatePlacaStatusJob();
+    }, INTERVALO_30_MIN);
+
+    logger.info(`[CRON JOB] ✅ Cron jobs configurados! Próxima execução em 30 minutos.`);
+};
+
+module.exports = iniciarCronJobs;

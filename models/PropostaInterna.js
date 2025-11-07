@@ -6,6 +6,14 @@ const propostaInternaSchema = new Schema({
     empresa: { type: Schema.Types.ObjectId, ref: 'Empresa', required: true, index: true },
     cliente: { type: Schema.Types.ObjectId, ref: 'Cliente', required: true, index: true },
     
+    // [NOVO] Código único de sincronização PI ↔ Aluguéis
+    pi_code: {
+        type: String,
+        required: true,
+        unique: true,
+        index: true,
+    },
+    
     tipoPeriodo: { 
         type: String, 
         required: true, 

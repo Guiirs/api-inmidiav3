@@ -8,11 +8,20 @@ const piService = new PIService();
 exports.createPI = async (req, res, next) => {
     const empresaId = req.user.empresaId;
     logger.info(`[PiController] createPI requisitado por empresa ${empresaId}.`);
+    logger.debug(`[PiController] req.body recebido: ${JSON.stringify(req.body, null, 2)}`);
+    logger.debug(`[PiController] Placas recebidas: ${JSON.stringify(req.body.placas)}`);
+    
     try {
         const piData = { ...req.body, cliente: req.body.clienteId }; // Ajusta o nome do campo
+        logger.debug(`[PiController] piData que será enviado ao service: ${JSON.stringify(piData, null, 2)}`);
+        
         const novaPI = await piService.create(piData, empresaId);
+        
+        logger.info(`[PiController] PI criada com sucesso. ID: ${novaPI._id}, Placas: ${novaPI.placas?.length || 0}`);
+        
         res.status(201).json(novaPI);
     } catch (err) {
+        logger.error(`[PiController] Erro ao criar PI: ${err.message}`, { stack: err.stack });
         next(err);
     }
 };

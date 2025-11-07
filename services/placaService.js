@@ -218,7 +218,11 @@ exports.getAllPlacas = async (empresaId, queryParams) => {
                 const aluguel = aluguelMap[placa.id]; 
                 if (aluguel && aluguel.cliente) {
                     placa.cliente_nome = aluguel.cliente.nome;
+                    placa.aluguel_data_inicio = aluguel.data_inicio;
                     placa.aluguel_data_fim = aluguel.data_fim;
+                    placa.aluguel_ativo = true;
+                } else {
+                    placa.aluguel_ativo = false;
                 }
             });
         }
@@ -413,7 +417,7 @@ exports.getAllPlacaLocations = async (empresaId) => {
  * @param {string} empresaId - ObjectId da empresa.
  * @param {string} dataInicio - Data de início (ISO string).
  * @param {string} dataFim - Data de fim (ISO string).
- * @param {object} queryParams - Filtros adicionais (ex: { regiao, search }).
+ * @param {object} queryParams - Filtros adicionais (ex: { regiao, search, excludePiId }).
  * @returns {Promise<Array<object>>} - Array de placas disponíveis (JSON formatado).
  * @throws {AppError} - Lança erro 400 ou 500.
  */
@@ -421,8 +425,8 @@ exports.getPlacasDisponiveis = async (empresaId, dataInicio, dataFim, queryParam
     logger.info(`[PlacaService] Buscando placas disponíveis de ${dataInicio} a ${dataFim} para empresa ${empresaId}.`);
 
     // *** INÍCIO DA CORREÇÃO ***
-    // 1. Extrai os filtros (regiao, search) dos queryParams
-    const { regiao, search } = queryParams;
+    // 1. Extrai os filtros (regiao, search, excludePiId) dos queryParams
+    const { regiao, search, excludePiId } = queryParams;
     // *** FIM DA CORREÇÃO ***
 
     const startDate = new Date(dataInicio);
@@ -445,30 +449,43 @@ exports.getPlacasDisponiveis = async (empresaId, dataInicio, dataFim, queryParam
         }).select('placa').lean();
         
         const idsAlugadas = alugueisOcupados.map(a => a.placa.toString());
+        logger.debug(`[PlacaService] ${idsAlugadas.length} placas em aluguéis no período.`);
 
         // 2. Encontrar IDs de placas em PIs que conflitam
-        const pisOcupadas = await PropostaInterna.find({
+        const piQuery = {
             empresa: empresaId,
             status: { $in: ['em_andamento', 'concluida'] }, 
             dataInicio: { $lte: endDate }, 
-            dataFim: { $gte: startDate } 
-        }).select('placas').lean();
+            dataFim: { $gte: startDate }
+        };
+        
+        // Exclui a PI atual se estiver editando (para permitir manter as placas já selecionadas)
+        if (excludePiId) {
+            piQuery._id = { $ne: excludePiId };
+            logger.debug(`[PlacaService] Excluindo PI ${excludePiId} da verificação de disponibilidade.`);
+        }
+        
+        const pisOcupadas = await PropostaInterna.find(piQuery).select('placas').lean();
+        logger.debug(`[PlacaService] ${pisOcupadas.length} PIs encontradas no período.`);
 
         const idsEmPI = pisOcupadas.flatMap(pi => (pi.placas || []).map(p => p.toString()));
+        logger.debug(`[PlacaService] ${idsEmPI.length} placas em PIs no período.`);
 
 
         // 3. Juntar todos os IDs ocupados (Set remove duplicatas)
         const placasOcupadasIds = [...new Set([...idsAlugadas, ...idsEmPI])];
         
-        logger.debug(`[PlacaService] ${placasOcupadasIds.length} placas ocupadas no período.`);
+        logger.info(`[PlacaService] Total: ${placasOcupadasIds.length} placas ocupadas no período.`);
 
         // 4. Buscar todas as placas da empresa que:
         
         // *** INÍCIO DA CORREÇÃO ***
         // 4.1. Define a query base
+        // NOTA: Removido o filtro 'disponivel: true' porque o campo 'disponivel'
+        // é usado apenas para manutenção manual. A disponibilidade para PIs/Aluguéis
+        // é gerenciada pela lógica de verificação de datas e conflitos.
         const finalQuery = {
             empresa: empresaId,
-            disponivel: true, 
             _id: { $nin: placasOcupadasIds } 
         };
 
@@ -489,6 +506,8 @@ exports.getPlacasDisponiveis = async (empresaId, dataInicio, dataFim, queryParam
         }
         // *** FIM DA CORREÇÃO ***
 
+        logger.debug(`[PlacaService] Query final para buscar placas: ${JSON.stringify(finalQuery)}`);
+
         const placasDisponiveisDocs = await Placa.find(finalQuery) // <-- USA A QUERY FINAL
             .populate('regiao', 'nome') // Mantém o populate para o frontend
             .sort({ 'regiao.nome': 1, 'numero_placa': 1 }) 
@@ -497,7 +516,12 @@ exports.getPlacasDisponiveis = async (empresaId, dataInicio, dataFim, queryParam
         // 5. Mapeia para JSON
         const placasDisponiveis = placasDisponiveisDocs.map(doc => doc.toJSON());
         
-        logger.info(`[PlacaService] Encontradas ${placasDisponiveis.length} placas disponíveis.`);
+        logger.info(`[PlacaService] ✅ Retornando ${placasDisponiveis.length} placas disponíveis (${idsAlugadas.length} em aluguéis, ${idsEmPI.length} em PIs, ${placasOcupadasIds.length} total ocupadas).`);
+        
+        if (placasDisponiveis.length > 0) {
+            logger.debug(`[PlacaService] Primeiras placas disponíveis: ${placasDisponiveis.slice(0, 3).map(p => p.numero_placa).join(', ')}`);
+        }
+        
         return placasDisponiveis;
 
     } catch (error) {

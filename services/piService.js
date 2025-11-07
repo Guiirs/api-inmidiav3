@@ -3,11 +3,58 @@ const PropostaInterna = require('../models/PropostaInterna');
 const Cliente = require('../models/Cliente');
 const User = require('../models/User'); // Para dados do gerador do PDF
 const Empresa = require('../models/Empresa'); // Para dados do gerador do PDF
+const Placa = require('../models/Placa');
+const Aluguel = require('../models/Aluguel'); // Para criar aluguéis automaticamente
 const AppError = require('../utils/AppError');
 const logger = require('../config/logger');
 const pdfService = require('./pdfService'); // Importa o novo serviço de PDF
+const { v4: uuidv4 } = require('uuid'); // Para gerar códigos únicos
 
 class PIService {
+
+    /**
+     * Gera um código único para sincronização PI ↔ Aluguéis
+     */
+    _generatePICode() {
+        const timestamp = Date.now().toString(36);
+        const random = Math.random().toString(36).substring(2, 8);
+        return `PI-${timestamp}-${random}`.toUpperCase();
+    }
+
+    /**
+     * Cria aluguéis automaticamente para as placas da PI
+     */
+    async _criarAlugueisParaPI(piId, piCode, clienteId, placaIds, dataInicio, dataFim, empresaId) {
+        if (!placaIds || placaIds.length === 0) {
+            logger.debug(`[PIService] Nenhuma placa para criar aluguéis`);
+            return;
+        }
+
+        // Garante que clienteId é um ObjectId, não um objeto populado
+        const clienteIdFinal = clienteId?._id || clienteId;
+
+        logger.info(`[PIService] Criando ${placaIds.length} aluguéis para PI ${piId} (Code: ${piCode})`);
+
+        const alugueis = placaIds.map(placaId => ({
+            placa: placaId,
+            cliente: clienteIdFinal,
+            empresa: empresaId,
+            data_inicio: dataInicio,
+            data_fim: dataFim,
+            pi_code: piCode,
+            proposta_interna: piId,
+            tipo: 'pi'
+        }));
+
+        try {
+            const alugueisCreated = await Aluguel.insertMany(alugueis);
+            logger.info(`[PIService] ${alugueisCreated.length} aluguéis criados com sucesso para PI ${piId}`);
+            return alugueisCreated;
+        } catch (error) {
+            logger.error(`[PIService] Erro ao criar aluguéis para PI ${piId}: ${error.message}`);
+            throw new AppError(`Erro ao criar aluguéis: ${error.message}`, 500);
+        }
+    }
 
     /**
      * Valida se o cliente pertence à empresa
@@ -24,21 +71,48 @@ class PIService {
      * Cria uma nova PI
      */
     async create(piData, empresaId) {
+        logger.info(`[PIService] Criando PI para empresa ${empresaId}`);
+        logger.debug(`[PIService] piData recebido: ${JSON.stringify(piData, null, 2)}`);
+        logger.debug(`[PIService] Placas recebidas: ${piData.placas?.length || 0} placas - ${JSON.stringify(piData.placas)}`);
+        
         // Valida o cliente antes de criar.
         // Note que piData.cliente é o ID.
         await this._validateCliente(piData.cliente, empresaId);
 
+        // Gera código único de sincronização
+        const piCode = this._generatePICode();
+        logger.info(`[PIService] Código de sincronização gerado: ${piCode}`);
+
         const novaPI = new PropostaInterna({
             ...piData,
             empresa: empresaId,
+            pi_code: piCode,
             status: 'em_andamento' // Garante o status inicial
         });
 
+        logger.debug(`[PIService] Documento PI antes de salvar: ${JSON.stringify(novaPI.toObject(), null, 2)}`);
+
         try {
             await novaPI.save();
+            
+            logger.info(`[PIService] PI salva com sucesso. ID: ${novaPI._id}, Code: ${piCode}, Placas no documento: ${novaPI.placas?.length || 0}`);
+            
+            // Criar aluguéis automaticamente para as placas
+            if (novaPI.placas && novaPI.placas.length > 0) {
+                await this._criarAlugueisParaPI(
+                    novaPI._id,
+                    piCode,
+                    novaPI.cliente,
+                    novaPI.placas,
+                    novaPI.dataInicio,
+                    novaPI.dataFim,
+                    empresaId
+                );
+            }
+            
             await novaPI.populate([
                 { path: 'cliente', select: 'nome email telefone cnpj responsavel segmento' },
-                { path: 'placas', select: 'codigo' } // Popula placas no retorno
+                { path: 'placas', select: 'numero_placa nomeDaRua' } // Popula placas no retorno
             ]);
             return novaPI.toJSON();
         } catch (error) {
@@ -119,6 +193,15 @@ class PIService {
             await this._validateCliente(updateData.cliente, empresaId);
         }
 
+        // Busca a PI atual para comparar as placas
+        const piAtual = await PropostaInterna.findOne({ _id: piId, empresa: empresaId }).lean();
+        if (!piAtual) {
+            throw new AppError('PI não encontrada.', 404);
+        }
+
+        const placasAntigas = piAtual.placas?.map(p => p.toString()) || [];
+        const placasNovas = updateData.placas?.map(p => p.toString()) || [];
+
         // <-- CORREÇÃO CRÍTICA DE SEGURANÇA (MASS ASSIGNMENT) -->
         // Desestruture explicitamente APENAS os campos que podem ser atualizados.
         const {
@@ -159,12 +242,62 @@ class PIService {
             )
             .populate([
                 { path: 'cliente', select: 'nome email telefone cnpj responsavel segmento' },
-                { path: 'placas', select: 'codigo' } // Popula placas no retorno
+                { path: 'placas', select: 'numero_placa nomeDaRua' } // Popula placas no retorno
             ]);
 
             if (!piAtualizada) {
                 throw new AppError('PI não encontrada.', 404);
             }
+
+            // Extrai o ID do cliente (pode vir populado do banco)
+            const clienteId = piAtualizada.cliente?._id || piAtualizada.cliente;
+
+            // Gerenciar aluguéis quando as placas mudam
+            if (updateData.placas) {
+                const placasRemovidas = placasAntigas.filter(p => !placasNovas.includes(p));
+                const placasAdicionadas = placasNovas.filter(p => !placasAntigas.includes(p));
+
+                logger.debug(`[PIService] Update PI: ${placasRemovidas.length} placas removidas, ${placasAdicionadas.length} placas adicionadas`);
+
+                // Remove aluguéis das placas removidas usando pi_code para garantir consistência
+                if (placasRemovidas.length > 0) {
+                    const deleted = await Aluguel.deleteMany({
+                        pi_code: piAtualizada.pi_code,
+                        placa: { $in: placasRemovidas }
+                    });
+                    logger.info(`[PIService] ${deleted.deletedCount} aluguéis removidos (pi_code: ${piAtualizada.pi_code})`);
+                }
+
+                // Cria aluguéis para placas adicionadas
+                if (placasAdicionadas.length > 0) {
+                    await this._criarAlugueisParaPI(
+                        piId,
+                        piAtualizada.pi_code,
+                        clienteId,
+                        placasAdicionadas,
+                        piAtualizada.dataInicio,
+                        piAtualizada.dataFim,
+                        empresaId
+                    );
+                }
+            }
+
+            // Se as datas mudaram, atualiza todos os aluguéis usando pi_code
+            if (updateData.dataInicio || updateData.dataFim) {
+                const updated = await Aluguel.updateMany(
+                    {
+                        pi_code: piAtualizada.pi_code
+                    },
+                    {
+                        $set: {
+                            data_inicio: piAtualizada.dataInicio,
+                            data_fim: piAtualizada.dataFim
+                        }
+                    }
+                );
+                logger.info(`[PIService] ${updated.modifiedCount} aluguéis atualizados para PI ${piId} (pi_code: ${piAtualizada.pi_code})`);
+            }
+
             return piAtualizada.toJSON();
         } catch (error) {
             logger.error(`[PIService] Erro ao atualizar PI ${piId}: ${error.message}`, { stack: error.stack });
@@ -178,16 +311,33 @@ class PIService {
      */
     async delete(piId, empresaId) {
         try {
+            // Busca a PI antes de deletar para pegar as placas
+            const pi = await PropostaInterna.findOne({ _id: piId, empresa: empresaId }).lean();
+            
+            if (!pi) {
+                throw new AppError('PI não encontrada.', 404);
+            }
+
             // Adicionar verificação se a PI está vinculada a um contrato?
             // const contrato = await Contrato.findOne({ pi: piId, empresa: empresaId });
             // if (contrato) {
             //    throw new AppError('Não é possível apagar uma PI que já gerou um contrato.', 400);
             // }
             
+            const placas = pi.placas || [];
+            
             const result = await PropostaInterna.deleteOne({ _id: piId, empresa: empresaId });
+            
             if (result.deletedCount === 0) {
                 throw new AppError('PI não encontrada.', 404);
             }
+
+            // Remove todos os aluguéis associados a esta PI usando pi_code para garantir consistência
+            const alugueisRemovidos = await Aluguel.deleteMany({
+                pi_code: pi.pi_code
+            });
+            logger.info(`[PIService] PI ${piId} deletada. ${alugueisRemovidos.deletedCount} aluguéis removidos (pi_code: ${pi.pi_code})`);
+            
         } catch (error) {
             logger.error(`[PIService] Erro ao deletar PI ${piId}: ${error.message}`, { stack: error.stack });
             if (error instanceof AppError) throw error;
@@ -234,6 +384,19 @@ class PIService {
         logger.info(`[PIService-Cron] Verificando PIs vencidas... (Data: ${hoje.toISOString()})`);
         
         try {
+            // Buscar PIs que venceram
+            const pisVencidas = await PropostaInterna.find({
+                status: 'em_andamento',
+                dataFim: { $lt: hoje }
+            }).lean();
+
+            if (pisVencidas.length === 0) {
+                return;
+            }
+
+            logger.info(`[PIService-Cron] ${pisVencidas.length} PIs vencidas encontradas.`);
+
+            // Atualizar status para 'vencida'
             const result = await PropostaInterna.updateMany(
                 { 
                     status: 'em_andamento', 
@@ -242,9 +405,7 @@ class PIService {
                 { $set: { status: 'vencida' } }
             );
 
-            if (result.modifiedCount > 0) {
-                logger.info(`[PIService-Cron] ${result.modifiedCount} PIs foram atualizadas para 'vencida'.`);
-            }
+            logger.info(`[PIService-Cron] ${result.modifiedCount} PIs foram atualizadas para 'vencida'.`);
         } catch (error) {
              logger.error(`[PIService-Cron] Erro ao atualizar status de PIs vencidas: ${error.message}`, { stack: error.stack });
         }

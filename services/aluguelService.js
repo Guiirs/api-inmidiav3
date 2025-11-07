@@ -141,20 +141,9 @@ class AluguelService {
             const hoje = new Date(); hoje.setUTCHours(0, 0, 0, 0);
             const isAtivoHoje = (inicioDate.getTime() <= hoje.getTime() && fimDate.getTime() >= hoje.getTime());
 
-            if (isAtivoHoje) {
-                logger.debug(`[AluguelService] Aluguel ${novoAluguelDoc._id} ATIVO hoje. Atualizando placa ${placa_id} para indisponível.`);
-                const updateOptions = session ? { session } : {};
-                const placaUpdateResult = await Placa.updateOne(
-                    { _id: placa_id, empresa: empresa_id },
-                    { $set: { disponivel: false } },
-                    updateOptions
-                );
-                 if (placaUpdateResult.matchedCount === 0) {
-                     // [MELHORIA] Usa AppError
-                     throw new AppError(`Placa ${placa_id} não encontrada para atualização de status durante a criação do aluguel.`, 404);
-                 }
-                 logger.debug(`[AluguelService] Placa ${placa_id} marcada como indisponível.`);
-            } 
+            // REMOVIDO: A lógica de atualização do campo 'disponivel' foi removida.
+            // O campo 'disponivel' agora é usado APENAS para manutenção manual.
+            // O status de aluguel é determinado dinamicamente pela existência de aluguéis ativos.
 
             // Commita condicionalmente
             if (session) {
@@ -241,33 +230,9 @@ class AluguelService {
             const fimAluguel = new Date(aluguel.data_fim); fimAluguel.setUTCHours(0,0,0,0);
             const eraAtivoHoje = (inicioAluguel.getTime() <= hoje.getTime() && fimAluguel.getTime() >= hoje.getTime());
 
-            // 4. Se era ativo, verifica outros ativos para a MESMA placaId
-            let outroAluguelAtivo = null;
-            if (eraAtivoHoje) {
-                 logger.debug(`[AluguelService] Verificando outros alugueis ativos para placa ${placaId}...`);
-                 outroAluguelAtivo = await Aluguel.findOne({
-                    placa: placaId, 
-                    empresa: empresa_id,
-                    data_inicio: { $lte: hoje },
-                    data_fim: { $gte: hoje }
-                 }).lean().session(session).exec();
-            }
-
-            // 5. Atualiza placa se necessário
-            if (eraAtivoHoje && !outroAluguelAtivo) {
-                logger.debug(`[AluguelService] Nenhum outro aluguel ativo. Marcando placa ${placaId} como disponível.`);
-                 const updateOptions = session ? { session } : {};
-                const placaUpdateResult = await Placa.updateOne(
-                    { _id: placaId, empresa: empresa_id }, 
-                    { $set: { disponivel: true } },
-                    updateOptions
-                );
-                 if (placaUpdateResult.modifiedCount > 0) { 
-                     logger.debug(`[AluguelService] Placa ${placaId} marcada como disponível.`);
-                 }
-            } else if (eraAtivoHoje && outroAluguelAtivo) {
-                 logger.debug(`[AluguelService] Outro aluguel ativo (ID: ${outroAluguelAtivo._id}) encontrado para placa ${placaId}. Mantendo placa indisponível.`);
-            } 
+            // REMOVIDO: A lógica de verificação e atualização do campo 'disponivel' foi removida.
+            // O campo 'disponivel' agora é usado APENAS para manutenção manual.
+            // O status de aluguel é determinado dinamicamente pela existência de aluguéis ativos.
 
             // Commita condicionalmente
             if (session) {
