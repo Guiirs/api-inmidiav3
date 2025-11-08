@@ -48,6 +48,7 @@ const publicApiRoutes = require('./routes/publicApiRoutes');
 const piRoutes = require('./routes/piRoutes');
 const contratoRoutes = require('./routes/contratoRoutes');
 const scriptRoutes = require('./routes/scriptRoutes');
+const piGenRoutes = require('./PISystemGen/routes');
 
 // --- [CORREÇÃO] Importa a nova rota de registo pública ---
 const publicRegisterRoutes = require('./routes/publicRegisterRoutes');
@@ -87,6 +88,8 @@ app.use('/api/v1/pis', piRoutes);
 app.use('/api/v1/contratos', contratoRoutes);
 // Rota para executar scripts internos (apenas para administradores)
 app.use('/api/v1/scripts', scriptRoutes);
+// Rotas do subsistema PISystemGen
+app.use('/api/v1/pi-gen', piGenRoutes);
 
 // --- Rotas de TESTE (SEM AUTENTICAÇÃO) - REMOVER EM PRODUÇÃO ---
 const testExcelRoutes = require('./routes/testExcelRoutes');

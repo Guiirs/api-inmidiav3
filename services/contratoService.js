@@ -7,6 +7,7 @@ const AppError = require('../utils/AppError');
 const logger = require('../config/logger');
 const pdfService = require('./pdfService'); // Importa o novo serviço de PDF
 const excelService = require('./excelServiceV2'); // NOVO: Serviço de Excel V2 (copia CONTRATO.xlsx)
+const piGen = require('../PISystemGen/generator');
 
 class ContratoService {
 
@@ -235,13 +236,8 @@ class ContratoService {
             const user = await User.findOne({ empresa: empresaId, role: 'admin' }).lean();
             const userFallback = user || { nome: 'Atendimento', sobrenome: '' };
 
-            // 3. Gera buffer do Excel
-            const buffer = await excelService.generateContratoExcel(
-                contrato.pi.toJSON(),
-                contrato.pi.cliente.toJSON(),
-                contrato.empresa.toJSON(),
-                userFallback
-            );
+            // 3. Gera buffer do Excel via PISystemGen
+            const buffer = await piGen.generateExcelBufferFromContrato(contratoId, empresaId, userFallback);
 
             // 4. Gera nome do arquivo
             const filename = excelService.generateFilename(contrato.pi.toJSON(), contrato.pi.cliente.toJSON(), 'excel');
@@ -275,13 +271,8 @@ class ContratoService {
             const user = await User.findOne({ empresa: empresaId, role: 'admin' }).lean();
             const userFallback = user || { nome: 'Atendimento', sobrenome: '' };
 
-            // 3. Gera buffer do PDF (Excel + conversão)
-            const buffer = await excelService.generateContratoPDF(
-                contrato.pi.toJSON(),
-                contrato.pi.cliente.toJSON(),
-                contrato.empresa.toJSON(),
-                userFallback
-            );
+            // 3. Gera buffer do PDF via PISystemGen (Excel + conversão)
+            const buffer = await piGen.generatePDFBufferFromContrato(contratoId, empresaId, userFallback, { timeoutMs: 120000 });
 
             // 4. Gera nome do arquivo
             const filename = excelService.generateFilename(contrato.pi.toJSON(), contrato.pi.cliente.toJSON(), 'pdf');

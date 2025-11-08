@@ -226,57 +226,75 @@ class ExcelServiceV2 {
   /**
    * Converte Excel para PDF usando Puppeteer
    */
-  async convertExcelToPDF(excelBuffer) {
+  async convertExcelToPDF(excelBuffer, options = {}) {
     console.log('=== CONVERTENDO EXCEL PARA PDF ===');
-    
+
+    const timeoutMs = typeof options.timeoutMs === 'number' ? options.timeoutMs : 60000; // default 60s
     let browser;
-    try {
-      // Salvar Excel temporariamente
-      const tempExcelPath = path.join(__dirname, '../temp_contrato.xlsx');
-      await fs.writeFile(tempExcelPath, excelBuffer);
-      
-      // Ler Excel e converter para HTML
-      const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.readFile(tempExcelPath);
-      const worksheet = workbook.getWorksheet(1);
-      
-      // Gerar HTML da planilha
-      const html = this.generateHTMLFromWorksheet(worksheet);
-      
-      // Converter HTML para PDF
-      browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-      });
-      
-      const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'networkidle0' });
-      
-      const pdfBuffer = await page.pdf({
-        format: 'A4',
-        landscape: true,
-        printBackground: true,
-        margin: {
-          top: '10mm',
-          right: '10mm',
-          bottom: '10mm',
-          left: '10mm'
-        }
-      });
-      
-      // Limpar arquivo temporário
-      await fs.unlink(tempExcelPath);
-      
-      console.log(`PDF gerado: ${pdfBuffer.length} bytes`);
-      return pdfBuffer;
-      
-    } catch (error) {
-      console.error('Erro ao converter Excel para PDF:', error);
-      throw error;
-    } finally {
-      if (browser) {
-        await browser.close();
+    const tempExcelPath = path.join(__dirname, '../temp_contrato.xlsx');
+
+    const convertPromise = (async () => {
+      try {
+        // Salvar Excel temporariamente
+        await fs.writeFile(tempExcelPath, excelBuffer);
+
+        // Ler Excel e converter para HTML
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.readFile(tempExcelPath);
+        const worksheet = workbook.getWorksheet(1);
+
+        // Gerar HTML da planilha
+        const html = this.generateHTMLFromWorksheet(worksheet);
+
+        // Converter HTML para PDF
+        browser = await puppeteer.launch({
+          headless: true,
+          args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+
+        const pdfBuffer = await page.pdf({
+          format: 'A4',
+          landscape: true,
+          printBackground: true,
+          margin: {
+            top: '10mm',
+            right: '10mm',
+            bottom: '10mm',
+            left: '10mm'
+          }
+        });
+
+        // Limpar arquivo temporário
+        try { await fs.unlink(tempExcelPath); } catch (e) { /* ignore */ }
+
+        console.log(`PDF gerado: ${pdfBuffer.length} bytes`);
+        return pdfBuffer;
+      } catch (error) {
+        console.error('Erro ao converter Excel para PDF:', error);
+        throw error;
       }
+    })();
+
+    // Timeout wrapper
+    const timeoutPromise = new Promise((_, reject) => {
+      const t = setTimeout(() => {
+        reject(new Error(`Timeout ao converter Excel para PDF após ${timeoutMs}ms`));
+      }, timeoutMs);
+      // If convertPromise finishes first, clear timeout
+      convertPromise.finally(() => clearTimeout(t));
+    });
+
+    try {
+      const pdfBuffer = await Promise.race([convertPromise, timeoutPromise]);
+      return pdfBuffer;
+    } finally {
+      // Ensure browser is closed if opened
+      try { if (browser) await browser.close(); } catch (e) { /* ignore */ }
+      // Try to remove temp file in case of error/timeout
+      try { await fs.unlink(tempExcelPath); } catch (e) { /* ignore */ }
     }
   }
   
