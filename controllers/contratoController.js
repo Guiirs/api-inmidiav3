@@ -94,3 +94,27 @@ exports.downloadContrato_PDF = async (req, res, next) => {
         next(err);
     }
 };
+
+// Download Excel do Contrato (NOVO)
+exports.downloadContrato_Excel = async (req, res, next) => {
+    const empresaId = req.user.empresaId;
+    const { id } = req.params;
+    logger.info(`[ContratoController] downloadContrato_Excel ${id} requisitado por empresa ${empresaId}.`);
+    try {
+        await contratoService.generateExcel(id, empresaId, res);
+    } catch (err) {
+        next(err);
+    }
+};
+
+// Download PDF do Contrato (Baseado no Excel - NOVO)
+exports.downloadContrato_PDF_FromExcel = async (req, res, next) => {
+    const empresaId = req.user.empresaId;
+    const { id } = req.params;
+    logger.info(`[ContratoController] downloadContrato_PDF_FromExcel ${id} requisitado por empresa ${empresaId}.`);
+    try {
+        await contratoService.generatePDFFromExcel(id, empresaId, res);
+    } catch (err) {
+        next(err);
+    }
+};

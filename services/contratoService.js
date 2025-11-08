@@ -2,9 +2,11 @@
 const Contrato = require('../models/Contrato');
 const PropostaInterna = require('../models/PropostaInterna');
 const Empresa = require('../models/Empresa');
+const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const logger = require('../config/logger');
 const pdfService = require('./pdfService'); // Importa o novo serviço de PDF
+const excelService = require('./excelServiceV2'); // NOVO: Serviço de Excel V2 (copia CONTRATO.xlsx)
 
 class ContratoService {
 
@@ -212,6 +214,86 @@ class ContratoService {
             // 2. Chamar o serviço de PDF
             // Usamos .toJSON() pois getById retorna um documento Mongoose completo
             pdfService.generateContrato_PDF(res, contrato.toJSON(), contrato.pi.toJSON(), contrato.pi.cliente.toJSON(), contrato.empresa.toJSON());
+
+        } catch (error) {
+            logger.error(`[ContratoService] Erro ao gerar PDF do Contrato ${contratoId}: ${error.message}`, { stack: error.stack });
+            if (error instanceof AppError) throw error;
+            throw new AppError(`Erro interno ao gerar PDF: ${error.message}`, 500);
+        }
+    }
+
+    /**
+     * Gera e envia o EXCEL do Contrato (NOVO)
+     */
+    async generateExcel(contratoId, empresaId, res) {
+        logger.debug(`[ContratoService] Gerando Excel para Contrato ${contratoId}. Buscando dados...`);
+        try {
+            // 1. Busca o contrato completo
+            const contrato = await this.getById(contratoId, empresaId);
+            
+            // 2. Busca o usuário (para contato/atendimento) - usa o primeiro admin da empresa
+            const user = await User.findOne({ empresa: empresaId, role: 'admin' }).lean();
+            const userFallback = user || { nome: 'Atendimento', sobrenome: '' };
+
+            // 3. Gera buffer do Excel
+            const buffer = await excelService.generateContratoExcel(
+                contrato.pi.toJSON(),
+                contrato.pi.cliente.toJSON(),
+                contrato.empresa.toJSON(),
+                userFallback
+            );
+
+            // 4. Gera nome do arquivo
+            const filename = excelService.generateFilename(contrato.pi.toJSON(), contrato.pi.cliente.toJSON(), 'excel');
+
+            // 5. Configura headers e envia
+            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+            res.setHeader('Content-Length', buffer.length);
+            
+            res.send(buffer);
+            
+            logger.info(`[ContratoService] Excel ${filename} gerado com sucesso`);
+
+        } catch (error) {
+            logger.error(`[ContratoService] Erro ao gerar Excel do Contrato ${contratoId}: ${error.message}`, { stack: error.stack });
+            if (error instanceof AppError) throw error;
+            throw new AppError(`Erro interno ao gerar Excel: ${error.message}`, 500);
+        }
+    }
+
+    /**
+     * Gera e envia o PDF do Contrato (baseado no Excel - NOVO)
+     */
+    async generatePDFFromExcel(contratoId, empresaId, res) {
+        logger.debug(`[ContratoService] Gerando PDF (via Excel) para Contrato ${contratoId}. Buscando dados...`);
+        try {
+            // 1. Busca o contrato completo
+            const contrato = await this.getById(contratoId, empresaId);
+            
+            // 2. Busca o usuário (para contato/atendimento)
+            const user = await User.findOne({ empresa: empresaId, role: 'admin' }).lean();
+            const userFallback = user || { nome: 'Atendimento', sobrenome: '' };
+
+            // 3. Gera buffer do PDF (Excel + conversão)
+            const buffer = await excelService.generateContratoPDF(
+                contrato.pi.toJSON(),
+                contrato.pi.cliente.toJSON(),
+                contrato.empresa.toJSON(),
+                userFallback
+            );
+
+            // 4. Gera nome do arquivo
+            const filename = excelService.generateFilename(contrato.pi.toJSON(), contrato.pi.cliente.toJSON(), 'pdf');
+
+            // 5. Configura headers e envia
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+            res.setHeader('Content-Length', buffer.length);
+            
+            res.send(buffer);
+            
+            logger.info(`[ContratoService] PDF ${filename} gerado com sucesso via Excel`);
 
         } catch (error) {
             logger.error(`[ContratoService] Erro ao gerar PDF do Contrato ${contratoId}: ${error.message}`, { stack: error.stack });

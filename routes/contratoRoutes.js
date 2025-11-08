@@ -85,5 +85,21 @@ router.get(
     contratoController.downloadContrato_PDF
 );
 
+// GET /api/v1/contratos/:id/excel - Gera o EXCEL do contrato (NOVO)
+router.get(
+    '/:id/excel',
+    validateIdParam,
+    handleValidationErrors,
+    contratoController.downloadContrato_Excel
+);
+
+// GET /api/v1/contratos/:id/pdf-excel - Gera o PDF baseado no Excel (NOVO)
+router.get(
+    '/:id/pdf-excel',
+    validateIdParam,
+    handleValidationErrors,
+    contratoController.downloadContrato_PDF_FromExcel
+);
+
 logger.info('[Routes Contrato] Rotas de Contratos definidas com sucesso.');
 module.exports = router;

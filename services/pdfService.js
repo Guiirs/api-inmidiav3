@@ -1,238 +1,425 @@
-// services/pdfService.js
+// services/pdfService_horizontal.js
 const PDFDocument = require('pdfkit');
 const logger = require('../config/logger');
 const fs = require('fs');
 const path = require('path');
 
-// --- CONSTANTES DE LAYOUT ---
-// Caminho para o logo (VOCÊ PRECISA ADICIONAR ESTE FICHEIRO NO BACKEND)
+// === CONSTANTES DE LAYOUT HORIZONTAL (LANDSCAPE) ===
 const LOGO_PATH = path.join(__dirname, '..', 'public', 'logo_contrato.png'); 
 const FONT_REGULAR = 'Helvetica';
 const FONT_BOLD = 'Helvetica-Bold';
-const MARGIN = 50; // Margem da página
+const MARGIN = 30;
+const PAGE_WIDTH = 841.89;   // A4 landscape
+const PAGE_HEIGHT = 595.28;  // A4 landscape
 
-/**
- * Helper para desenhar um campo (label + valor)
- * @param {object} doc - O documento PDFKit
- * @param {string} label - O texto da etiqueta (ex: "Razão Social:")
- * @param {string} value - O valor do campo
- * @param {number} x - Posição X inicial
- * @param {number} y - Posição Y
- * @param {number} labelWidth - Largura da etiqueta (para alinhar o valor)
- */
-function drawField(doc, label, value, x, y, labelWidth = 80) {
-    doc.font(FONT_BOLD).text(label, x, y, { continued: false, width: labelWidth });
-    doc.font(FONT_REGULAR).text(value || 'N/A', x + labelWidth, y, { width: 200 }); // 200 é a largura do valor
-    // Retorna a posição Y atual (pode não ser útil se o texto quebrar linha)
+// === HELPERS ===
+
+function formatDate(date) {
+    if (!date) return 'N/A';
+    const d = new Date(date);
+    return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 }
 
-/**
- * Helper para desenhar a secção de detalhes (com colunas)
- * @param {object} doc - O documento PDFKit
- * @param {number} y - Posição Y inicial
- * @param {object} pi - Objeto da PI
- * @param {object} cliente - Objeto do Cliente
- * @param {object} user - Objeto do Usuário
- * @param {string} docId - ID do Documento (PI ou Contrato)
- * @returns {number} - A nova posição Y após desenhar
- */
-function drawDetailsSection(doc, y, pi, cliente, user, docId) {
-    let currentY = y + 10;
-    const col1X = MARGIN;
-    const col2X = 310;
-    const labelWidth = 120; // Mais espaço para "Condições de PGTO"
-
-    doc.fontSize(10);
-    
-    // Linha 1
-    drawField(doc, 'Título:', pi.descricao, col1X, currentY, labelWidth);
-    drawField(doc, 'Autorização Nº:', docId, col2X, currentY, labelWidth);
-    currentY += 20; // Ajuste o espaçamento conforme necessário
-
-    // Linha 2
-    drawField(doc, 'Produto:', 'N/A (Campo não existe)', col1X, currentY, labelWidth);
-    drawField(doc, 'Data emissão:', new Date().toLocaleDateString('pt-BR'), col2X, currentY, labelWidth);
-    currentY += 20;
-
-    // Linha 3
-    const periodo = `${new Date(pi.dataInicio).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} a ${new Date(pi.dataFim).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}`;
-    drawField(doc, 'Período:', periodo, col1X, currentY, labelWidth);
-    drawField(doc, 'Contato/Atendimento:', `${user.nome} ${user.sobrenome}`, col2X, currentY, labelWidth);
-    currentY += 20;
-
-    // Linha 4
-    drawField(doc, 'Condições de PGTO:', pi.formaPagamento, col1X, currentY, labelWidth);
-    drawField(doc, 'Segmento:', cliente.segmento, col2X, currentY, labelWidth);
-    currentY += 20;
-
-    return currentY;
+function formatShortDate(date) {
+    if (!date) return '';
+    const d = new Date(date);
+    return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
-/**
- * Função principal que desenha o layout do PDF
- * @param {object} res - O objeto de resposta do Express
- * @param {object} pi - Objeto da PI (populado)
- * @param {object} cliente - Objeto Cliente (populado)
- * @param {object} empresa - Objeto Empresa (populado)
- * @param {object} user - Objeto User
- * @param {string} tipoDoc - 'PI' ou 'Contrato'
- * @param {object} contrato - (Opcional) Objeto do Contrato
- */
-function generateDynamicPDF(res, pi, cliente, empresa, user, tipoDoc, contrato = null) {
-    const docId = (tipoDoc === 'PI' ? pi._id : contrato._id).toString();
-    const docTitle = tipoDoc === 'PI' ? 'PROPOSTA INTERNA (PI)' : 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS';
-    const filename = `${tipoDoc}_${docId}_${cliente.nome.replace(/\s+/g, '_')}.pdf`;
+function formatMoney(value) {
+    if (value === null || value === undefined) return 'R$ 0,00';
+    return `R$ ${value.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
+}
+
+// Gerar array de datas entre início e fim
+function generateDateRange(dataInicio, dataFim) {
+    const dates = [];
+    const start = new Date(dataInicio + 'T00:00:00-03:00');
+    const end = new Date(dataFim + 'T00:00:00-03:00');
     
-    logger.info(`[PdfService] Gerando ${filename}`);
+    let current = new Date(start);
+    while (current <= end && dates.length < 31) { // Máximo 31 dias
+        dates.push(new Date(current));
+        current.setDate(current.getDate() + 1);
+    }
+    
+    return dates;
+}
 
-    // Configura a resposta HTTP
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+// === LAYOUT HORIZONTAL - ESTRUTURA DE TABELA ===
 
-    const doc = new PDFDocument({ margin: MARGIN, size: 'A4' });
-    doc.pipe(res);
-
-    // --- 1. CABEÇALHO ---
+function drawHorizontalHeader(doc, tipoDoc, docId, empresa, cliente, pi, user) {
+    let y = MARGIN;
+    
+    // Logo e Título
     try {
         if (fs.existsSync(LOGO_PATH)) {
-            doc.image(LOGO_PATH, MARGIN, 40, { width: 150 });
-        } else {
-            doc.fontSize(10).font(FONT_REGULAR).text('LOGO NÃO ENCONTRADO', MARGIN, 50);
-            logger.warn(`[PdfService] Logo não encontrado em ${LOGO_PATH}`);
+            doc.image(LOGO_PATH, MARGIN, y, { width: 80, height: 40 });
         }
     } catch (err) {
         logger.error(`[PdfService] Erro ao carregar logo: ${err.message}`);
-        doc.fontSize(10).font(FONT_REGULAR).text('Erro ao carregar logo', MARGIN, 50);
     }
     
-    doc.fontSize(14).font(FONT_BOLD).text(docTitle, 200, 50, { align: 'right' });
-    doc.fontSize(10).font(FONT_REGULAR).text(`${tipoDoc} N°: ${docId}`, 200, 70, { align: 'right' });
+    const docTitle = tipoDoc === 'PI' ? 'PROPOSTA INTERNA' : 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS';
+    doc.fontSize(14).font(FONT_BOLD)
+       .text(docTitle, MARGIN + 100, y + 5, { width: 400, align: 'center' });
     
-    doc.moveTo(MARGIN, 100).lineTo(doc.page.width - MARGIN, 100).stroke();
-    let currentY = 115;
-
-    // --- 2. COLUNAS (AGÊNCIA E ANUNCIANTE) ---
-    const col1X = MARGIN;
-    const col2X = 310;
-    const labelWidth = 80;
-
-    doc.fontSize(12).font(FONT_BOLD);
-    doc.text('AGÊNCIA (Contratada):', col1X, currentY);
-    doc.text('ANUNCIANTE (Contratante):', col2X, currentY);
-    currentY += 20;
-
-    doc.fontSize(9).font(FONT_REGULAR);
+    doc.fontSize(9).font(FONT_REGULAR)
+       .text(`Nº: ${docId}`, PAGE_WIDTH - MARGIN - 120, y + 10, { width: 120, align: 'right' });
     
-    // --- Coluna Agência (Empresa) ---
-    let yAgencia = currentY;
-    drawField(doc, 'Razão Social:', empresa.nome, col1X, yAgencia, labelWidth); yAgencia += 15;
-    drawField(doc, 'Endereço:', empresa.endereco, col1X, yAgencia, labelWidth); yAgencia += 15;
-    drawField(doc, 'Bairro:', empresa.bairro, col1X, yAgencia, labelWidth); yAgencia += 15;
-    drawField(doc, 'Cidade:', empresa.cidade, col1X, yAgencia, labelWidth); yAgencia += 15;
-    drawField(doc, 'CNPJ/CPF:', empresa.cnpj, col1X, yAgencia, labelWidth); yAgencia += 15;
-    drawField(doc, 'Telefone:', empresa.telefone, col1X, yAgencia, labelWidth);
-
-    // --- Coluna Anunciante (Cliente) ---
-    let yAnunciante = currentY;
-    drawField(doc, 'Razão Social:', cliente.nome, col2X, yAnunciante, labelWidth); yAnunciante += 15;
-    drawField(doc, 'Endereço:', cliente.endereco, col2X, yAnunciante, labelWidth); yAnunciante += 15;
-    drawField(doc, 'Bairro:', cliente.bairro, col2X, yAnunciante, labelWidth); yAnunciante += 15;
-    drawField(doc, 'Cidade:', cliente.cidade, col2X, yAnunciante, labelWidth); yAnunciante += 15;
-    drawField(doc, 'CNPJ:', cliente.cnpj, col2X, yAnunciante, labelWidth); yAnunciante += 15;
-    drawField(doc, 'Responsável:', cliente.responsavel, col2X, yAnunciante, labelWidth);
-
-    currentY = Math.max(yAgencia, yAnunciante) + 20;
-    doc.moveTo(MARGIN, currentY).lineTo(doc.page.width - MARGIN, currentY).stroke();
-
-    // --- 3. DETALHES (TÍTULO, PERÍODO, PGTO...) ---
-    currentY = drawDetailsSection(doc, currentY, pi, cliente, user, docId);
-    doc.moveTo(MARGIN, currentY).lineTo(doc.page.width - MARGIN, currentY).stroke();
+    y += 50;
     
-    // --- 4. PROGRAMAÇÃO (PLACAS) ---
-    currentY += 10;
-    doc.fontSize(12).font(FONT_BOLD).text('PROGRAMAÇÃO / PLACAS SELECIONADAS:', MARGIN, currentY);
-    currentY += 20;
-    doc.fontSize(10).font(FONT_REGULAR);
-
-    if (pi.placas && pi.placas.length > 0) {
-        pi.placas.forEach(placa => {
-            const regiao = placa.regiao?.nome || 'N/A';
-            const textoPlaca = `- Placa Cód: ${placa.codigo} (Região: ${regiao})`;
-            doc.text(textoPlaca, MARGIN + 15, currentY);
-            currentY += 15;
-        });
-    } else {
-        doc.text('Nenhuma placa selecionada.', MARGIN + 15, currentY);
-        currentY += 15;
-    }
-    currentY += 10;
-
-    // --- 5. VALOR TOTAL ---
-    doc.fontSize(12).font(FONT_BOLD).text('VALOR TOTAL:', MARGIN, currentY);
-    doc.font(FONT_REGULAR).text(`R$ ${pi.valorTotal.toFixed(2).replace('.', ',')}`, MARGIN + 100, currentY);
-    currentY += 30;
-
-    // --- 6. TEXTO LEGAL E ASSINATURAS ---
-    // Posiciona o texto legal e as assinaturas perto do fim da página
-    let bottomY = doc.page.height - 150;
-
-    const legalText = "CONTRATO: Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima. Em caso de cancelamento o cliente, pagará, a titulo de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato. Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.";
+    // === TABELA DE INFORMAÇÕES (HORIZONTAL) ===
+    const tableX = MARGIN;
+    const tableWidth = PAGE_WIDTH - (MARGIN * 2);
+    const colWidth = tableWidth / 4; // 4 colunas
     
-    // Verifica se o texto legal cabe
-    if (currentY > bottomY - 60) {
-        // Se o conteúdo (placas) for muito grande, move o 'bottom' para baixo
-        bottomY = currentY + 100;
-        if (bottomY > doc.page.height - 50) {
-            doc.addPage(); // Adiciona nova página se não houver espaço
-            bottomY = 150;
-        }
-    }
+    doc.fontSize(7).font(FONT_BOLD);
     
-    doc.fontSize(8).text(legalText, MARGIN, bottomY, { 
-        align: 'justify', 
-        width: doc.page.width - (MARGIN * 2) 
-    });
+    // Linha 1: Headers
+    doc.rect(tableX, y, tableWidth, 15).stroke();
+    doc.text('AGÊNCIA', tableX + 2, y + 4, { width: colWidth - 4 });
+    doc.text('ANUNCIANTE', tableX + colWidth + 2, y + 4, { width: colWidth - 4 });
+    doc.text('PRODUTO', tableX + (colWidth * 2) + 2, y + 4, { width: colWidth - 4 });
+    doc.text('AUTORIZAÇÃO Nº', tableX + (colWidth * 3) + 2, y + 4, { width: colWidth - 4 });
     
-    bottomY += 60; // Espaço após o texto legal
-
-    // Assinaturas
-    doc.fontSize(10).font(FONT_REGULAR);
-    const signWidth = (doc.page.width - (MARGIN * 2) - 40) / 2; // Largura de cada assinatura
-    const signX1 = MARGIN;
-    const signX2 = MARGIN + signWidth + 40;
-
-    doc.text('_____________________________________', signX1, bottomY, { width: signWidth, align: 'center' });
-    doc.text(empresa.nome, signX1, bottomY + 15, { width: signWidth, align: 'center' });
-    doc.text('CONTRATADA', signX1, bottomY + 30, { width: signWidth, align: 'center' });
-
-    doc.text('_____________________________________', signX2, bottomY, { width: signWidth, align: 'center' });
-    doc.text(cliente.nome, signX2, bottomY + 15, { width: signWidth, align: 'center' });
-    doc.text('CONTRATANTE', signX2, bottomY + 30, { width: signWidth, align: 'center' });
-
-    // --- FIM DO DOCUMENTO ---
-    doc.end();
-    logger.info(`[PdfService] PDF ${filename} enviado para stream.`);
+    y += 15;
+    
+    // Linha 2: Dados
+    doc.font(FONT_REGULAR).fontSize(7);
+    doc.rect(tableX, y, tableWidth, 12).stroke();
+    doc.text(empresa.nome || 'N/A', tableX + 2, y + 3, { width: colWidth - 4 });
+    doc.text(cliente.nome || 'N/A', tableX + colWidth + 2, y + 3, { width: colWidth - 4 });
+    doc.text(pi.produto || 'OUTDOOR', tableX + (colWidth * 2) + 2, y + 3, { width: colWidth - 4 });
+    doc.text(docId, tableX + (colWidth * 3) + 2, y + 3, { width: colWidth - 4 });
+    
+    y += 12;
+    
+    // Linha 3: Headers
+    doc.font(FONT_BOLD);
+    doc.rect(tableX, y, tableWidth, 15).stroke();
+    doc.text('ENDEREÇO', tableX + 2, y + 4, { width: colWidth - 4 });
+    doc.text('ENDEREÇO', tableX + colWidth + 2, y + 4, { width: colWidth - 4 });
+    doc.text('DATA EMISSÃO', tableX + (colWidth * 2) + 2, y + 4, { width: colWidth - 4 });
+    doc.text('PERÍODO', tableX + (colWidth * 3) + 2, y + 4, { width: colWidth - 4 });
+    
+    y += 15;
+    
+    // Linha 4: Dados - ENDEREÇO COMPLETO
+    doc.font(FONT_REGULAR);
+    doc.rect(tableX, y, tableWidth, 12).stroke();
+    const enderecoEmpresa = [empresa.endereco, empresa.bairro, empresa.cidade].filter(Boolean).join(', ') || 'N/A';
+    const enderecoCliente = [cliente.endereco, cliente.bairro, cliente.cidade].filter(Boolean).join(', ') || 'N/A';
+    doc.text(enderecoEmpresa, tableX + 2, y + 3, { width: colWidth - 4 });
+    doc.text(enderecoCliente, tableX + colWidth + 2, y + 3, { width: colWidth - 4 });
+    doc.text(formatDate(new Date()), tableX + (colWidth * 2) + 2, y + 3, { width: colWidth - 4 });
+    doc.text(pi.descricaoPeriodo || pi.tipoPeriodo || 'MENSAL', tableX + (colWidth * 3) + 2, y + 3, { width: colWidth - 4 });
+    
+    y += 12;
+    
+    // Linha 5: Headers - ADICIONA TELEFONES
+    doc.font(FONT_BOLD);
+    doc.rect(tableX, y, tableWidth, 15).stroke();
+    doc.text('CNPJ / TELEFONE', tableX + 2, y + 4, { width: colWidth - 4 });
+    doc.text('CNPJ / TELEFONE', tableX + colWidth + 2, y + 4, { width: colWidth - 4 });
+    doc.text('RESPONSÁVEL', tableX + (colWidth * 2) + 2, y + 4, { width: colWidth - 4 });
+    doc.text('SEGMENTO', tableX + (colWidth * 3) + 2, y + 4, { width: colWidth - 4 });
+    
+    y += 15;
+    
+    // Linha 6: Dados - CNPJ e TELEFONES
+    doc.font(FONT_REGULAR);
+    doc.rect(tableX, y, tableWidth, 15).stroke();
+    const empresaInfo = `${empresa.cnpj || 'N/A'}\n${empresa.telefone || ''}`;
+    const clienteInfo = `${cliente.cnpj || 'N/A'}\n${cliente.telefone || ''}`;
+    doc.fontSize(6).text(empresaInfo, tableX + 2, y + 2, { width: colWidth - 4 });
+    doc.text(clienteInfo, tableX + colWidth + 2, y + 2, { width: colWidth - 4 });
+    doc.fontSize(7).text(cliente.responsavel || 'N/A', tableX + (colWidth * 2) + 2, y + 5, { width: colWidth - 4 });
+    doc.text(cliente.segmento || 'N/A', tableX + (colWidth * 3) + 2, y + 5, { width: colWidth - 4 });
+    
+    y += 15;
+    
+    // Linha 7: Headers - ATENDIMENTO E PAGAMENTO
+    doc.font(FONT_BOLD);
+    doc.rect(tableX, y, tableWidth, 15).stroke();
+    doc.text('CONTATO/ATENDIMENTO', tableX + 2, y + 4, { width: colWidth - 4 });
+    doc.text('CONDIÇÕES DE PGTO', tableX + colWidth + 2, y + 4, { width: colWidth - 4 });
+    doc.text('DATA INÍCIO', tableX + (colWidth * 2) + 2, y + 4, { width: colWidth - 4 });
+    doc.text('DATA FIM', tableX + (colWidth * 3) + 2, y + 4, { width: colWidth - 4 });
+    
+    y += 15;
+    
+    // Linha 8: Dados - ATENDIMENTO E DATAS
+    doc.font(FONT_REGULAR);
+    doc.rect(tableX, y, tableWidth, 12).stroke();
+    const contatoAtendimento = user ? `${user.nome} ${user.sobrenome || ''}`.trim() : 'Atendimento';
+    doc.text(contatoAtendimento, tableX + 2, y + 3, { width: colWidth - 4 });
+    doc.text(pi.formaPagamento || 'A combinar', tableX + colWidth + 2, y + 3, { width: colWidth - 4 });
+    doc.text(formatDate(pi.dataInicio), tableX + (colWidth * 2) + 2, y + 3, { width: colWidth - 4 });
+    doc.text(formatDate(pi.dataFim), tableX + (colWidth * 3) + 2, y + 3, { width: colWidth - 4 });
+    
+    y += 15;
+    
+    return y;
 }
 
+function drawProgramacaoTable(doc, pi, currentY) {
+    const tableX = MARGIN;
+    const tableWidth = PAGE_WIDTH - (MARGIN * 2);
+    
+    // Título da seção
+    doc.fontSize(9).font(FONT_BOLD);
+    doc.text('PROGRAMAÇÃO:', tableX, currentY);
+    currentY += 15;
+    
+    // DESCRIÇÃO DA CAMPANHA
+    if (pi.descricao) {
+        doc.fontSize(7).font(FONT_REGULAR);
+        doc.text(`Descrição: ${pi.descricao}`, tableX, currentY, { width: tableWidth });
+        currentY += 12;
+    }
+    
+    doc.fontSize(7).font(FONT_REGULAR);
+    doc.text('Período de veiculação conforme programação abaixo:', tableX, currentY);
+    currentY += 12;
+    
+    // === GRID DE DIAS (HORIZONTAL) ===
+    const dates = generateDateRange(pi.dataInicio, pi.dataFim);
+    const numDays = dates.length;
+    
+    // Colunas: PLACA + DIAS (máx 31)
+    const placaColWidth = 80;
+    const dayColWidth = (tableWidth - placaColWidth) / Math.min(numDays, 30);
+    
+    // Header: PLACA + Dias
+    doc.font(FONT_BOLD).fontSize(6);
+    doc.rect(tableX, currentY, placaColWidth, 20).stroke();
+    doc.text('PLACA', tableX + 2, currentY + 6, { width: placaColWidth - 4, align: 'center' });
+    
+    // Header dos dias
+    let xPos = tableX + placaColWidth;
+    dates.forEach((date, idx) => {
+        if (idx >= 30) return; // Limita a 30 dias
+        doc.rect(xPos, currentY, dayColWidth, 20).stroke();
+        doc.text(formatShortDate(date), xPos + 1, currentY + 6, { 
+            width: dayColWidth - 2, 
+            align: 'center' 
+        });
+        xPos += dayColWidth;
+    });
+    
+    currentY += 20;
+    
+    // === LINHAS DAS PLACAS ===
+    if (!pi.placas || pi.placas.length === 0) {
+        doc.fontSize(8).font(FONT_REGULAR);
+        doc.text('Nenhuma placa selecionada.', tableX + 10, currentY);
+        return currentY + 20;
+    }
+    
+    doc.font(FONT_REGULAR).fontSize(7);
+    
+    pi.placas.forEach((placa) => {
+        const rowHeight = 25;
+        
+        // Verifica quebra de página
+        if (currentY + rowHeight > PAGE_HEIGHT - MARGIN - 100) {
+            doc.addPage({ size: 'A4', layout: 'landscape', margin: MARGIN });
+            currentY = MARGIN;
+        }
+        
+        // Coluna PLACA
+        doc.rect(tableX, currentY, placaColWidth, rowHeight).stroke();
+        const codigoPlaca = placa.numero_placa || placa.codigo || 'N/A';
+        const regiao = placa.regiao?.nome || '';
+        doc.fontSize(7).text(`${codigoPlaca}`, tableX + 2, currentY + 3, { width: placaColWidth - 4 });
+        doc.fontSize(6).text(regiao, tableX + 2, currentY + 12, { width: placaColWidth - 4 });
+        
+        // Grid de dias (marcados)
+        xPos = tableX + placaColWidth;
+        dates.forEach((date, idx) => {
+            if (idx >= 30) return;
+            doc.rect(xPos, currentY, dayColWidth, rowHeight).stroke();
+            // Marca com "X" para indicar que a placa está ativa nesse dia
+            doc.fontSize(8).text('X', xPos + 1, currentY + 8, { 
+                width: dayColWidth - 2, 
+                align: 'center' 
+            });
+            xPos += dayColWidth;
+        });
+        
+        currentY += rowHeight;
+    });
+    
+    // RESUMO DE PLACAS
+    currentY += 10;
+    doc.fontSize(8).font(FONT_BOLD);
+    doc.text(`TOTAL DE PLACAS: ${pi.placas.length}`, tableX, currentY);
+    
+    currentY += 15;
+    
+    return currentY;
+}
 
-/**
- * Exporta a função que gera o PDF da PI
- */
-exports.generatePI_PDF = (res, pi, cliente, empresa, user) => {
-    // A PI e o Contrato agora usam o mesmo layout
+function drawTotalizacao(doc, pi, currentY) {
+    const tableX = MARGIN;
+    const tableWidth = PAGE_WIDTH - (MARGIN * 2);
+    
+    // Observações
+    doc.fontSize(8).font(FONT_BOLD);
+    doc.text('OBSERVAÇÕES:', tableX, currentY);
+    currentY += 12;
+    
+    doc.fontSize(7).font(FONT_REGULAR);
+    const obsText = 'Produção a ser paga pelo cliente conforme orçamento fornecido pela empresa responsável pela produção.';
+    doc.text(obsText, tableX, currentY, { width: tableWidth * 0.6, align: 'justify' });
+    
+    // Valores (tabela à direita)
+    const valoresX = tableX + (tableWidth * 0.65);
+    const valoresWidth = tableWidth * 0.35;
+    
+    let yValores = currentY;
+    
+    doc.fontSize(8).font(FONT_BOLD);
+    
+    // Linha: Valor Produção
+    doc.rect(valoresX, yValores, valoresWidth, 15).stroke();
+    doc.text('VALOR PRODUÇÃO:', valoresX + 5, yValores + 4, { width: valoresWidth * 0.6 });
+    doc.text(formatMoney(pi.valorProducao || 0), valoresX + (valoresWidth * 0.6), yValores + 4, { 
+        width: valoresWidth * 0.4 - 5, 
+        align: 'right' 
+    });
+    yValores += 15;
+    
+    // Linha: Valor Veiculação
+    const valorVeiculacao = (pi.valorTotal || 0) - (pi.valorProducao || 0);
+    doc.rect(valoresX, yValores, valoresWidth, 15).stroke();
+    doc.text('VALOR VEICULAÇÃO:', valoresX + 5, yValores + 4, { width: valoresWidth * 0.6 });
+    doc.text(formatMoney(valorVeiculacao), valoresX + (valoresWidth * 0.6), yValores + 4, { 
+        width: valoresWidth * 0.4 - 5, 
+        align: 'right' 
+    });
+    yValores += 15;
+    
+    // Linha: Valor Total (destaque)
+    doc.fontSize(9);
+    doc.rect(valoresX, yValores, valoresWidth, 18).stroke();
+    doc.text('VALOR TOTAL:', valoresX + 5, yValores + 5, { width: valoresWidth * 0.6 });
+    doc.text(formatMoney(pi.valorTotal || 0), valoresX + (valoresWidth * 0.6), yValores + 5, { 
+        width: valoresWidth * 0.4 - 5, 
+        align: 'right' 
+    });
+    yValores += 18;
+    
+    // Linha: Vencimento
+    doc.fontSize(8);
+    doc.rect(valoresX, yValores, valoresWidth, 15).stroke();
+    doc.text('VENCIMENTO:', valoresX + 5, yValores + 4, { width: valoresWidth * 0.6 });
+    doc.text(formatDate(pi.dataFim), valoresX + (valoresWidth * 0.6), yValores + 4, { 
+        width: valoresWidth * 0.4 - 5, 
+        align: 'right' 
+    });
+    
+    currentY = Math.max(currentY + 60, yValores + 20);
+    
+    return currentY;
+}
+
+function drawFooter(doc, empresa, cliente, currentY) {
+    const tableX = MARGIN;
+    const tableWidth = PAGE_WIDTH - (MARGIN * 2);
+    
+    // Verifica espaço
+    if (currentY > PAGE_HEIGHT - 150) {
+        doc.addPage({ size: 'A4', layout: 'landscape', margin: MARGIN });
+        currentY = MARGIN;
+    }
+    
+    // Texto legal
+    doc.fontSize(6).font(FONT_REGULAR);
+    const legalText = 'CONTRATO: Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima. Em caso de cancelamento pelo cliente, o mesmo pagará, a título de multa, a quantia de 30% do valor total acima ou proporcionalmente ao tempo restante até o término do contrato.';
+    
+    doc.text(legalText, tableX, currentY, { 
+        width: tableWidth, 
+        align: 'justify' 
+    });
+    currentY += 30;
+    
+    // Assinaturas (4 campos horizontais)
+    const signWidth = (tableWidth - 30) / 4;
+    
+    doc.fontSize(7).font(FONT_REGULAR);
+    
+    // Linhas de assinatura
+    let signY = currentY;
+    for (let i = 0; i < 4; i++) {
+        const xSign = tableX + (i * (signWidth + 10));
+        doc.moveTo(xSign, signY).lineTo(xSign + signWidth, signY).stroke();
+    }
+    
+    signY += 10;
+    
+    // Nomes
+    doc.font(FONT_BOLD);
+    doc.text(empresa.nome, tableX, signY, { width: signWidth, align: 'center' });
+    doc.text(cliente.nome, tableX + signWidth + 10, signY, { width: signWidth, align: 'center' });
+    doc.text('VEÍCULO', tableX + (signWidth + 10) * 2, signY, { width: signWidth, align: 'center' });
+    doc.text('CONTATO', tableX + (signWidth + 10) * 3, signY, { width: signWidth, align: 'center' });
+    
+    signY += 10;
+    
+    // Labels
+    doc.font(FONT_REGULAR).fontSize(6);
+    doc.text('AGÊNCIA / CONTRATADA', tableX, signY, { width: signWidth, align: 'center' });
+    doc.text('ANUNCIANTE / CONTRATANTE', tableX + signWidth + 10, signY, { width: signWidth, align: 'center' });
+    doc.text('VEÍCULO / GERÊNCIA', tableX + (signWidth + 10) * 2, signY, { width: signWidth, align: 'center' });
+    doc.text('CONTATO / APROVAÇÃO', tableX + (signWidth + 10) * 3, signY, { width: signWidth, align: 'center' });
+}
+
+// === FUNÇÃO PRINCIPAL ===
+
+function generateDynamicPDF(res, pi, cliente, empresa, user, tipoDoc, contrato) {
+    contrato = contrato || null;
+    const docId = (tipoDoc === 'PI' ? pi._id : contrato._id).toString();
+    const filename = `${tipoDoc}_${docId}_${cliente.nome.replace(/\s+/g, '_')}.pdf`;
+    
+    logger.info(`[PdfService] Gerando ${filename} em LANDSCAPE (horizontal)`);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    // LANDSCAPE MODE
+    const doc = new PDFDocument({ 
+        size: 'A4', 
+        layout: 'landscape',  // <-- HORIZONTAL
+        margin: MARGIN 
+    });
+    
+    doc.pipe(res);
+
+    try {
+        let currentY = drawHorizontalHeader(doc, tipoDoc, docId, empresa, cliente, pi, user);
+        currentY = drawProgramacaoTable(doc, pi, currentY);
+        currentY = drawTotalizacao(doc, pi, currentY);
+        drawFooter(doc, empresa, cliente, currentY);
+
+        doc.end();
+        logger.info(`[PdfService] PDF ${filename} gerado com sucesso em LANDSCAPE`);
+        
+    } catch (error) {
+        logger.error(`[PdfService] Erro ao gerar PDF: ${error.message}`, { stack: error.stack });
+        doc.end();
+        throw error;
+    }
+}
+
+// === EXPORTS ===
+
+exports.generatePI_PDF = function(res, pi, cliente, empresa, user) {
     generateDynamicPDF(res, pi, cliente, empresa, user, 'PI');
 };
 
-
-/**
- * Exporta a função que gera o PDF do Contrato
- */
-exports.generateContrato_PDF = (res, contrato, pi, cliente, empresa) => {
-    // Buscamos o 'user' do contrato (se precisarmos, mas não é passado)
-    // Vamos usar um placeholder ou buscar o user da PI (se ele existir lá)
-    // Por agora, vamos passar um user "dummy" já que não o temos no contratoService
-    const dummyUser = { nome: 'Sistema', sobrenome: '' }; // TODO: Passar o user real se necessário
-    
-    // A PI e o Contrato agora usam o mesmo layout
+exports.generateContrato_PDF = function(res, contrato, pi, cliente, empresa) {
+    const dummyUser = { nome: 'Sistema', sobrenome: '' };
     generateDynamicPDF(res, pi, cliente, empresa, dummyUser, 'Contrato', contrato);
 };

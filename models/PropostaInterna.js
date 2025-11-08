@@ -42,6 +42,33 @@ const propostaInternaSchema = new Schema({
         type: String,
         trim: true
     },
+
+    // --- NOVOS CAMPOS PARA PDF COMPATÍVEL COM XLSX ---
+    
+    /**
+     * Tipo de produto/serviço (Ex: "OUTDOOR", "PAINEL", etc.)
+     */
+    produto: {
+        type: String,
+        trim: true,
+        default: 'OUTDOOR'
+    },
+
+    /**
+     * Descrição textual do período (Ex: "BISEMANA 26", "MENSAL - MARÇO/2025")
+     */
+    descricaoPeriodo: {
+        type: String,
+        trim: true
+    },
+
+    /**
+     * Valor específico para produção (separado do valor de veiculação)
+     */
+    valorProducao: {
+        type: Number,
+        default: 0
+    },
     
     status: { 
         type: String, 

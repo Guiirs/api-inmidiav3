@@ -1,0 +1,7305 @@
+{
+  "template": "CONTRATO.xlsx",
+  "analyzedAt": "2025-11-08T03:02:09.321Z",
+  "cells": [
+    {
+      "address": "H1",
+      "row": 1,
+      "col": 8,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 3
+    },
+    {
+      "address": "I1",
+      "row": 1,
+      "col": 9,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "J1",
+      "row": 1,
+      "col": 10,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "K1",
+      "row": 1,
+      "col": 11,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "L1",
+      "row": 1,
+      "col": 12,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "M1",
+      "row": 1,
+      "col": 13,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "N1",
+      "row": 1,
+      "col": 14,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "O1",
+      "row": 1,
+      "col": 15,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "P1",
+      "row": 1,
+      "col": 16,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "Q1",
+      "row": 1,
+      "col": 17,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "R1",
+      "row": 1,
+      "col": 18,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "S1",
+      "row": 1,
+      "col": 19,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "T1",
+      "row": 1,
+      "col": 20,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "U1",
+      "row": 1,
+      "col": 21,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "V1",
+      "row": 1,
+      "col": 22,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "W1",
+      "row": 1,
+      "col": 23,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "X1",
+      "row": 1,
+      "col": 24,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "Y1",
+      "row": 1,
+      "col": 25,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "Z1",
+      "row": 1,
+      "col": 26,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "AA1",
+      "row": 1,
+      "col": 27,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "AB1",
+      "row": 1,
+      "col": 28,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "AC1",
+      "row": 1,
+      "col": 29,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "AD1",
+      "row": 1,
+      "col": 30,
+      "value": "Agência: FUTURE OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "AF1",
+      "row": 1,
+      "col": 32,
+      "value": "Anunciante: ",
+      "type": 3
+    },
+    {
+      "address": "AG1",
+      "row": 1,
+      "col": 33,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "AH1",
+      "row": 1,
+      "col": 34,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "AI1",
+      "row": 1,
+      "col": 35,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "AJ1",
+      "row": 1,
+      "col": 36,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "AK1",
+      "row": 1,
+      "col": 37,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "AL1",
+      "row": 1,
+      "col": 38,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "AM1",
+      "row": 1,
+      "col": 39,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "AN1",
+      "row": 1,
+      "col": 40,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "AO1",
+      "row": 1,
+      "col": 41,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "AP1",
+      "row": 1,
+      "col": 42,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "AQ1",
+      "row": 1,
+      "col": 43,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "AR1",
+      "row": 1,
+      "col": 44,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "AS1",
+      "row": 1,
+      "col": 45,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "AT1",
+      "row": 1,
+      "col": 46,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "AU1",
+      "row": 1,
+      "col": 47,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "AV1",
+      "row": 1,
+      "col": 48,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "AW1",
+      "row": 1,
+      "col": 49,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "AX1",
+      "row": 1,
+      "col": 50,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "AY1",
+      "row": 1,
+      "col": 51,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "AZ1",
+      "row": 1,
+      "col": 52,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "BA1",
+      "row": 1,
+      "col": 53,
+      "value": "Anunciante: ",
+      "type": 1
+    },
+    {
+      "address": "H2",
+      "row": 2,
+      "col": 8,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 3
+    },
+    {
+      "address": "I2",
+      "row": 2,
+      "col": 9,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "J2",
+      "row": 2,
+      "col": 10,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "K2",
+      "row": 2,
+      "col": 11,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "L2",
+      "row": 2,
+      "col": 12,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "M2",
+      "row": 2,
+      "col": 13,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "N2",
+      "row": 2,
+      "col": 14,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "O2",
+      "row": 2,
+      "col": 15,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "P2",
+      "row": 2,
+      "col": 16,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "Q2",
+      "row": 2,
+      "col": 17,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "R2",
+      "row": 2,
+      "col": 18,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "S2",
+      "row": 2,
+      "col": 19,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "T2",
+      "row": 2,
+      "col": 20,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "U2",
+      "row": 2,
+      "col": 21,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "V2",
+      "row": 2,
+      "col": 22,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "W2",
+      "row": 2,
+      "col": 23,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "X2",
+      "row": 2,
+      "col": 24,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "Y2",
+      "row": 2,
+      "col": 25,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "Z2",
+      "row": 2,
+      "col": 26,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "AA2",
+      "row": 2,
+      "col": 27,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "AB2",
+      "row": 2,
+      "col": 28,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "AC2",
+      "row": 2,
+      "col": 29,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "AD2",
+      "row": 2,
+      "col": 30,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "AE2",
+      "row": 2,
+      "col": 31,
+      "value": "Razão Social: FUTURE OUTDOORS E PROPAGANDA LTDA ",
+      "type": 1
+    },
+    {
+      "address": "AF2",
+      "row": 2,
+      "col": 32,
+      "value": "Razão Social: ",
+      "type": 3
+    },
+    {
+      "address": "AG2",
+      "row": 2,
+      "col": 33,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "AH2",
+      "row": 2,
+      "col": 34,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "AI2",
+      "row": 2,
+      "col": 35,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "AJ2",
+      "row": 2,
+      "col": 36,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "AK2",
+      "row": 2,
+      "col": 37,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "AL2",
+      "row": 2,
+      "col": 38,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "AM2",
+      "row": 2,
+      "col": 39,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "AN2",
+      "row": 2,
+      "col": 40,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "AO2",
+      "row": 2,
+      "col": 41,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "AP2",
+      "row": 2,
+      "col": 42,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "AQ2",
+      "row": 2,
+      "col": 43,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "AR2",
+      "row": 2,
+      "col": 44,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "AS2",
+      "row": 2,
+      "col": 45,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "AT2",
+      "row": 2,
+      "col": 46,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "AU2",
+      "row": 2,
+      "col": 47,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "AV2",
+      "row": 2,
+      "col": 48,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "AW2",
+      "row": 2,
+      "col": 49,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "AX2",
+      "row": 2,
+      "col": 50,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "AY2",
+      "row": 2,
+      "col": 51,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "AZ2",
+      "row": 2,
+      "col": 52,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "BA2",
+      "row": 2,
+      "col": 53,
+      "value": "Razão Social: ",
+      "type": 1
+    },
+    {
+      "address": "H3",
+      "row": 3,
+      "col": 8,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 3
+    },
+    {
+      "address": "I3",
+      "row": 3,
+      "col": 9,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "J3",
+      "row": 3,
+      "col": 10,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "K3",
+      "row": 3,
+      "col": 11,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "L3",
+      "row": 3,
+      "col": 12,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "M3",
+      "row": 3,
+      "col": 13,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "N3",
+      "row": 3,
+      "col": 14,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "O3",
+      "row": 3,
+      "col": 15,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "P3",
+      "row": 3,
+      "col": 16,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "Q3",
+      "row": 3,
+      "col": 17,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "R3",
+      "row": 3,
+      "col": 18,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "S3",
+      "row": 3,
+      "col": 19,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "T3",
+      "row": 3,
+      "col": 20,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "U3",
+      "row": 3,
+      "col": 21,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "V3",
+      "row": 3,
+      "col": 22,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "W3",
+      "row": 3,
+      "col": 23,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "X3",
+      "row": 3,
+      "col": 24,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "Y3",
+      "row": 3,
+      "col": 25,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "Z3",
+      "row": 3,
+      "col": 26,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "AA3",
+      "row": 3,
+      "col": 27,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "AB3",
+      "row": 3,
+      "col": 28,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "AC3",
+      "row": 3,
+      "col": 29,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "AD3",
+      "row": 3,
+      "col": 30,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "AE3",
+      "row": 3,
+      "col": 31,
+      "value": "Endereço: RUA POEBLA, 420 ",
+      "type": 1
+    },
+    {
+      "address": "AF3",
+      "row": 3,
+      "col": 32,
+      "value": "Endereço: \n",
+      "type": 3
+    },
+    {
+      "address": "AG3",
+      "row": 3,
+      "col": 33,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "AH3",
+      "row": 3,
+      "col": 34,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "AI3",
+      "row": 3,
+      "col": 35,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "AJ3",
+      "row": 3,
+      "col": 36,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "AK3",
+      "row": 3,
+      "col": 37,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "AL3",
+      "row": 3,
+      "col": 38,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "AM3",
+      "row": 3,
+      "col": 39,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "AN3",
+      "row": 3,
+      "col": 40,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "AO3",
+      "row": 3,
+      "col": 41,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "AP3",
+      "row": 3,
+      "col": 42,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "AQ3",
+      "row": 3,
+      "col": 43,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "AR3",
+      "row": 3,
+      "col": 44,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "AS3",
+      "row": 3,
+      "col": 45,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "AT3",
+      "row": 3,
+      "col": 46,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "AU3",
+      "row": 3,
+      "col": 47,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "AV3",
+      "row": 3,
+      "col": 48,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "AW3",
+      "row": 3,
+      "col": 49,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "AX3",
+      "row": 3,
+      "col": 50,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "AY3",
+      "row": 3,
+      "col": 51,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "AZ3",
+      "row": 3,
+      "col": 52,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "BA3",
+      "row": 3,
+      "col": 53,
+      "value": "Endereço: \n",
+      "type": 1
+    },
+    {
+      "address": "H4",
+      "row": 4,
+      "col": 8,
+      "value": "Bairro: JUREMA ",
+      "type": 3
+    },
+    {
+      "address": "I4",
+      "row": 4,
+      "col": 9,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "J4",
+      "row": 4,
+      "col": 10,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "K4",
+      "row": 4,
+      "col": 11,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "L4",
+      "row": 4,
+      "col": 12,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "M4",
+      "row": 4,
+      "col": 13,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "N4",
+      "row": 4,
+      "col": 14,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "O4",
+      "row": 4,
+      "col": 15,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "P4",
+      "row": 4,
+      "col": 16,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "Q4",
+      "row": 4,
+      "col": 17,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "R4",
+      "row": 4,
+      "col": 18,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "S4",
+      "row": 4,
+      "col": 19,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "T4",
+      "row": 4,
+      "col": 20,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "U4",
+      "row": 4,
+      "col": 21,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "V4",
+      "row": 4,
+      "col": 22,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "W4",
+      "row": 4,
+      "col": 23,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "X4",
+      "row": 4,
+      "col": 24,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "Y4",
+      "row": 4,
+      "col": 25,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "Z4",
+      "row": 4,
+      "col": 26,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "AA4",
+      "row": 4,
+      "col": 27,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "AB4",
+      "row": 4,
+      "col": 28,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "AC4",
+      "row": 4,
+      "col": 29,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "AD4",
+      "row": 4,
+      "col": 30,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "AE4",
+      "row": 4,
+      "col": 31,
+      "value": "Bairro: JUREMA ",
+      "type": 1
+    },
+    {
+      "address": "AF4",
+      "row": 4,
+      "col": 32,
+      "value": "Bairro:  ",
+      "type": 3
+    },
+    {
+      "address": "AG4",
+      "row": 4,
+      "col": 33,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "AH4",
+      "row": 4,
+      "col": 34,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "AI4",
+      "row": 4,
+      "col": 35,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "AJ4",
+      "row": 4,
+      "col": 36,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "AK4",
+      "row": 4,
+      "col": 37,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "AL4",
+      "row": 4,
+      "col": 38,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "AM4",
+      "row": 4,
+      "col": 39,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "AN4",
+      "row": 4,
+      "col": 40,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "AO4",
+      "row": 4,
+      "col": 41,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "AP4",
+      "row": 4,
+      "col": 42,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "AQ4",
+      "row": 4,
+      "col": 43,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "AR4",
+      "row": 4,
+      "col": 44,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "AS4",
+      "row": 4,
+      "col": 45,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "AT4",
+      "row": 4,
+      "col": 46,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "AU4",
+      "row": 4,
+      "col": 47,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "AV4",
+      "row": 4,
+      "col": 48,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "AW4",
+      "row": 4,
+      "col": 49,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "AX4",
+      "row": 4,
+      "col": 50,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "AY4",
+      "row": 4,
+      "col": 51,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "AZ4",
+      "row": 4,
+      "col": 52,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "BA4",
+      "row": 4,
+      "col": 53,
+      "value": "Bairro:  ",
+      "type": 1
+    },
+    {
+      "address": "H5",
+      "row": 5,
+      "col": 8,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 3
+    },
+    {
+      "address": "I5",
+      "row": 5,
+      "col": 9,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "J5",
+      "row": 5,
+      "col": 10,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "K5",
+      "row": 5,
+      "col": 11,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "L5",
+      "row": 5,
+      "col": 12,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "M5",
+      "row": 5,
+      "col": 13,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "N5",
+      "row": 5,
+      "col": 14,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "O5",
+      "row": 5,
+      "col": 15,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "P5",
+      "row": 5,
+      "col": 16,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "Q5",
+      "row": 5,
+      "col": 17,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "R5",
+      "row": 5,
+      "col": 18,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "S5",
+      "row": 5,
+      "col": 19,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "T5",
+      "row": 5,
+      "col": 20,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "U5",
+      "row": 5,
+      "col": 21,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "V5",
+      "row": 5,
+      "col": 22,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "W5",
+      "row": 5,
+      "col": 23,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "X5",
+      "row": 5,
+      "col": 24,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "Y5",
+      "row": 5,
+      "col": 25,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "Z5",
+      "row": 5,
+      "col": 26,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "AA5",
+      "row": 5,
+      "col": 27,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "AB5",
+      "row": 5,
+      "col": 28,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "AC5",
+      "row": 5,
+      "col": 29,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "AD5",
+      "row": 5,
+      "col": 30,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "AE5",
+      "row": 5,
+      "col": 31,
+      "value": "Cidade: CAUCAIA -CE",
+      "type": 1
+    },
+    {
+      "address": "AF5",
+      "row": 5,
+      "col": 32,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 3
+    },
+    {
+      "address": "AG5",
+      "row": 5,
+      "col": 33,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "AH5",
+      "row": 5,
+      "col": 34,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "AI5",
+      "row": 5,
+      "col": 35,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "AJ5",
+      "row": 5,
+      "col": 36,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "AK5",
+      "row": 5,
+      "col": 37,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "AL5",
+      "row": 5,
+      "col": 38,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "AM5",
+      "row": 5,
+      "col": 39,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "AN5",
+      "row": 5,
+      "col": 40,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "AO5",
+      "row": 5,
+      "col": 41,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "AP5",
+      "row": 5,
+      "col": 42,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "AQ5",
+      "row": 5,
+      "col": 43,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "AR5",
+      "row": 5,
+      "col": 44,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "AS5",
+      "row": 5,
+      "col": 45,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "AT5",
+      "row": 5,
+      "col": 46,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "AU5",
+      "row": 5,
+      "col": 47,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "AV5",
+      "row": 5,
+      "col": 48,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "AW5",
+      "row": 5,
+      "col": 49,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "AX5",
+      "row": 5,
+      "col": 50,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "AY5",
+      "row": 5,
+      "col": 51,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "AZ5",
+      "row": 5,
+      "col": 52,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "BA5",
+      "row": 5,
+      "col": 53,
+      "value": "Cidade: FORTALEZA - CE ",
+      "type": 1
+    },
+    {
+      "address": "H6",
+      "row": 6,
+      "col": 8,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 3
+    },
+    {
+      "address": "I6",
+      "row": 6,
+      "col": 9,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "J6",
+      "row": 6,
+      "col": 10,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "K6",
+      "row": 6,
+      "col": 11,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "L6",
+      "row": 6,
+      "col": 12,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "M6",
+      "row": 6,
+      "col": 13,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "N6",
+      "row": 6,
+      "col": 14,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "O6",
+      "row": 6,
+      "col": 15,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "P6",
+      "row": 6,
+      "col": 16,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "Q6",
+      "row": 6,
+      "col": 17,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "R6",
+      "row": 6,
+      "col": 18,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "S6",
+      "row": 6,
+      "col": 19,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "T6",
+      "row": 6,
+      "col": 20,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "U6",
+      "row": 6,
+      "col": 21,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "V6",
+      "row": 6,
+      "col": 22,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "W6",
+      "row": 6,
+      "col": 23,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "X6",
+      "row": 6,
+      "col": 24,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "Y6",
+      "row": 6,
+      "col": 25,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "Z6",
+      "row": 6,
+      "col": 26,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "AA6",
+      "row": 6,
+      "col": 27,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "AB6",
+      "row": 6,
+      "col": 28,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "AC6",
+      "row": 6,
+      "col": 29,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "AD6",
+      "row": 6,
+      "col": 30,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "AE6",
+      "row": 6,
+      "col": 31,
+      "value": "CNPJ/CPF: 55.710.147/0001-67",
+      "type": 1
+    },
+    {
+      "address": "AF6",
+      "row": 6,
+      "col": 32,
+      "value": "CNPJ: \n    ",
+      "type": 3
+    },
+    {
+      "address": "AG6",
+      "row": 6,
+      "col": 33,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "AH6",
+      "row": 6,
+      "col": 34,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "AI6",
+      "row": 6,
+      "col": 35,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "AJ6",
+      "row": 6,
+      "col": 36,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "AK6",
+      "row": 6,
+      "col": 37,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "AL6",
+      "row": 6,
+      "col": 38,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "AM6",
+      "row": 6,
+      "col": 39,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "AN6",
+      "row": 6,
+      "col": 40,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "AO6",
+      "row": 6,
+      "col": 41,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "AP6",
+      "row": 6,
+      "col": 42,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "AQ6",
+      "row": 6,
+      "col": 43,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "AR6",
+      "row": 6,
+      "col": 44,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "AS6",
+      "row": 6,
+      "col": 45,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "AT6",
+      "row": 6,
+      "col": 46,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "AU6",
+      "row": 6,
+      "col": 47,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "AV6",
+      "row": 6,
+      "col": 48,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "AW6",
+      "row": 6,
+      "col": 49,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "AX6",
+      "row": 6,
+      "col": 50,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "AY6",
+      "row": 6,
+      "col": 51,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "AZ6",
+      "row": 6,
+      "col": 52,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "BA6",
+      "row": 6,
+      "col": 53,
+      "value": "CNPJ: \n    ",
+      "type": 1
+    },
+    {
+      "address": "H7",
+      "row": 7,
+      "col": 8,
+      "value": "Telefone: 85 3237.3305",
+      "type": 3
+    },
+    {
+      "address": "I7",
+      "row": 7,
+      "col": 9,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "J7",
+      "row": 7,
+      "col": 10,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "K7",
+      "row": 7,
+      "col": 11,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "L7",
+      "row": 7,
+      "col": 12,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "M7",
+      "row": 7,
+      "col": 13,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "N7",
+      "row": 7,
+      "col": 14,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "O7",
+      "row": 7,
+      "col": 15,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "P7",
+      "row": 7,
+      "col": 16,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "Q7",
+      "row": 7,
+      "col": 17,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "R7",
+      "row": 7,
+      "col": 18,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "S7",
+      "row": 7,
+      "col": 19,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "T7",
+      "row": 7,
+      "col": 20,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "U7",
+      "row": 7,
+      "col": 21,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "V7",
+      "row": 7,
+      "col": 22,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "W7",
+      "row": 7,
+      "col": 23,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "X7",
+      "row": 7,
+      "col": 24,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "Y7",
+      "row": 7,
+      "col": 25,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "Z7",
+      "row": 7,
+      "col": 26,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "AA7",
+      "row": 7,
+      "col": 27,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "AB7",
+      "row": 7,
+      "col": 28,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "AC7",
+      "row": 7,
+      "col": 29,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "AD7",
+      "row": 7,
+      "col": 30,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "AE7",
+      "row": 7,
+      "col": 31,
+      "value": "Telefone: 85 3237.3305",
+      "type": 1
+    },
+    {
+      "address": "AF7",
+      "row": 7,
+      "col": 32,
+      "value": "Responsável:                        Telefone:",
+      "type": 3
+    },
+    {
+      "address": "AG7",
+      "row": 7,
+      "col": 33,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "AH7",
+      "row": 7,
+      "col": 34,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "AI7",
+      "row": 7,
+      "col": 35,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "AJ7",
+      "row": 7,
+      "col": 36,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "AK7",
+      "row": 7,
+      "col": 37,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "AL7",
+      "row": 7,
+      "col": 38,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "AM7",
+      "row": 7,
+      "col": 39,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "AN7",
+      "row": 7,
+      "col": 40,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "AO7",
+      "row": 7,
+      "col": 41,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "AP7",
+      "row": 7,
+      "col": 42,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "AQ7",
+      "row": 7,
+      "col": 43,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "AR7",
+      "row": 7,
+      "col": 44,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "AS7",
+      "row": 7,
+      "col": 45,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "AT7",
+      "row": 7,
+      "col": 46,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "AU7",
+      "row": 7,
+      "col": 47,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "AV7",
+      "row": 7,
+      "col": 48,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "AW7",
+      "row": 7,
+      "col": 49,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "AX7",
+      "row": 7,
+      "col": 50,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "AY7",
+      "row": 7,
+      "col": 51,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "AZ7",
+      "row": 7,
+      "col": 52,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "BA7",
+      "row": 7,
+      "col": 53,
+      "value": "Responsável:                        Telefone:",
+      "type": 1
+    },
+    {
+      "address": "A8",
+      "row": 8,
+      "col": 1,
+      "value": "Título",
+      "type": 3
+    },
+    {
+      "address": "B8",
+      "row": 8,
+      "col": 2,
+      "value": "Título",
+      "type": 1
+    },
+    {
+      "address": "C8",
+      "row": 8,
+      "col": 3,
+      "value": "Título",
+      "type": 1
+    },
+    {
+      "address": "D8",
+      "row": 8,
+      "col": 4,
+      "value": "Título",
+      "type": 1
+    },
+    {
+      "address": "E8",
+      "row": 8,
+      "col": 5,
+      "value": "Título",
+      "type": 1
+    },
+    {
+      "address": "F8",
+      "row": 8,
+      "col": 6,
+      "value": "Título",
+      "type": 1
+    },
+    {
+      "address": "G8",
+      "row": 8,
+      "col": 7,
+      "value": "Título",
+      "type": 1
+    },
+    {
+      "address": "H8",
+      "row": 8,
+      "col": 8,
+      "value": "Título",
+      "type": 1
+    },
+    {
+      "address": "I8",
+      "row": 8,
+      "col": 9,
+      "value": "Título",
+      "type": 1
+    },
+    {
+      "address": "J8",
+      "row": 8,
+      "col": 10,
+      "value": "Produto",
+      "type": 3
+    },
+    {
+      "address": "K8",
+      "row": 8,
+      "col": 11,
+      "value": "Produto",
+      "type": 1
+    },
+    {
+      "address": "L8",
+      "row": 8,
+      "col": 12,
+      "value": "Produto",
+      "type": 1
+    },
+    {
+      "address": "M8",
+      "row": 8,
+      "col": 13,
+      "value": "Produto",
+      "type": 1
+    },
+    {
+      "address": "N8",
+      "row": 8,
+      "col": 14,
+      "value": "Produto",
+      "type": 1
+    },
+    {
+      "address": "O8",
+      "row": 8,
+      "col": 15,
+      "value": "Período",
+      "type": 3
+    },
+    {
+      "address": "P8",
+      "row": 8,
+      "col": 16,
+      "value": "Período",
+      "type": 1
+    },
+    {
+      "address": "Q8",
+      "row": 8,
+      "col": 17,
+      "value": "Período",
+      "type": 1
+    },
+    {
+      "address": "R8",
+      "row": 8,
+      "col": 18,
+      "value": "Período",
+      "type": 1
+    },
+    {
+      "address": "S8",
+      "row": 8,
+      "col": 19,
+      "value": "Período",
+      "type": 1
+    },
+    {
+      "address": "T8",
+      "row": 8,
+      "col": 20,
+      "value": "Mês",
+      "type": 3
+    },
+    {
+      "address": "U8",
+      "row": 8,
+      "col": 21,
+      "value": "Mês",
+      "type": 1
+    },
+    {
+      "address": "V8",
+      "row": 8,
+      "col": 22,
+      "value": "Mês",
+      "type": 1
+    },
+    {
+      "address": "W8",
+      "row": 8,
+      "col": 23,
+      "value": "Condições de PGTO",
+      "type": 3
+    },
+    {
+      "address": "X8",
+      "row": 8,
+      "col": 24,
+      "value": "Condições de PGTO",
+      "type": 1
+    },
+    {
+      "address": "Y8",
+      "row": 8,
+      "col": 25,
+      "value": "Condições de PGTO",
+      "type": 1
+    },
+    {
+      "address": "Z8",
+      "row": 8,
+      "col": 26,
+      "value": "Condições de PGTO",
+      "type": 1
+    },
+    {
+      "address": "AA8",
+      "row": 8,
+      "col": 27,
+      "value": "Condições de PGTO",
+      "type": 1
+    },
+    {
+      "address": "AB8",
+      "row": 8,
+      "col": 28,
+      "value": "Condições de PGTO",
+      "type": 1
+    },
+    {
+      "address": "AC8",
+      "row": 8,
+      "col": 29,
+      "value": "Condições de PGTO",
+      "type": 1
+    },
+    {
+      "address": "AD8",
+      "row": 8,
+      "col": 30,
+      "value": "Condições de PGTO",
+      "type": 1
+    },
+    {
+      "address": "AE8",
+      "row": 8,
+      "col": 31,
+      "value": "Condições de PGTO",
+      "type": 1
+    },
+    {
+      "address": "AF8",
+      "row": 8,
+      "col": 32,
+      "value": "Segmento",
+      "type": 3
+    },
+    {
+      "address": "AG8",
+      "row": 8,
+      "col": 33,
+      "value": "Segmento",
+      "type": 1
+    },
+    {
+      "address": "AH8",
+      "row": 8,
+      "col": 34,
+      "value": "Segmento",
+      "type": 1
+    },
+    {
+      "address": "AI8",
+      "row": 8,
+      "col": 35,
+      "value": "Segmento",
+      "type": 1
+    },
+    {
+      "address": "AJ8",
+      "row": 8,
+      "col": 36,
+      "value": "Segmento",
+      "type": 1
+    },
+    {
+      "address": "AK8",
+      "row": 8,
+      "col": 37,
+      "value": "Segmento",
+      "type": 1
+    },
+    {
+      "address": "AL8",
+      "row": 8,
+      "col": 38,
+      "value": "Contato Publicitário/Atendimento",
+      "type": 3
+    },
+    {
+      "address": "AM8",
+      "row": 8,
+      "col": 39,
+      "value": "Contato Publicitário/Atendimento",
+      "type": 1
+    },
+    {
+      "address": "AN8",
+      "row": 8,
+      "col": 40,
+      "value": "Contato Publicitário/Atendimento",
+      "type": 1
+    },
+    {
+      "address": "AO8",
+      "row": 8,
+      "col": 41,
+      "value": "Contato Publicitário/Atendimento",
+      "type": 1
+    },
+    {
+      "address": "AP8",
+      "row": 8,
+      "col": 42,
+      "value": "Contato Publicitário/Atendimento",
+      "type": 1
+    },
+    {
+      "address": "AQ8",
+      "row": 8,
+      "col": 43,
+      "value": "Contato Publicitário/Atendimento",
+      "type": 1
+    },
+    {
+      "address": "AR8",
+      "row": 8,
+      "col": 44,
+      "value": "Contato Publicitário/Atendimento",
+      "type": 1
+    },
+    {
+      "address": "AS8",
+      "row": 8,
+      "col": 45,
+      "value": "Contato Publicitário/Atendimento",
+      "type": 1
+    },
+    {
+      "address": "AT8",
+      "row": 8,
+      "col": 46,
+      "value": "Contato Publicitário/Atendimento",
+      "type": 1
+    },
+    {
+      "address": "AU8",
+      "row": 8,
+      "col": 47,
+      "value": "Autorização Nº:",
+      "type": 3
+    },
+    {
+      "address": "AV8",
+      "row": 8,
+      "col": 48,
+      "value": "Autorização Nº:",
+      "type": 1
+    },
+    {
+      "address": "AW8",
+      "row": 8,
+      "col": 49,
+      "value": "Autorização Nº:",
+      "type": 1
+    },
+    {
+      "address": "AX8",
+      "row": 8,
+      "col": 50,
+      "value": "Autorização Nº:",
+      "type": 1
+    },
+    {
+      "address": "AY8",
+      "row": 8,
+      "col": 51,
+      "value": "Autorização Nº:",
+      "type": 1
+    },
+    {
+      "address": "AZ8",
+      "row": 8,
+      "col": 52,
+      "value": "Autorização Nº:",
+      "type": 1
+    },
+    {
+      "address": "BA8",
+      "row": 8,
+      "col": 53,
+      "value": "Autorização Nº:",
+      "type": 1
+    },
+    {
+      "address": "J9",
+      "row": 9,
+      "col": 10,
+      "value": "OUTDOOR",
+      "type": 3
+    },
+    {
+      "address": "K9",
+      "row": 9,
+      "col": 11,
+      "value": "OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "L9",
+      "row": 9,
+      "col": 12,
+      "value": "OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "M9",
+      "row": 9,
+      "col": 13,
+      "value": "OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "N9",
+      "row": 9,
+      "col": 14,
+      "value": "OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "O9",
+      "row": 9,
+      "col": 15,
+      "value": "BISEMANA 26",
+      "type": 3
+    },
+    {
+      "address": "P9",
+      "row": 9,
+      "col": 16,
+      "value": "BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "Q9",
+      "row": 9,
+      "col": 17,
+      "value": "BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "R9",
+      "row": 9,
+      "col": 18,
+      "value": "BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "S9",
+      "row": 9,
+      "col": 19,
+      "value": "BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "W9",
+      "row": 9,
+      "col": 23,
+      "value": "BOLETO BANCÁRIO",
+      "type": 3
+    },
+    {
+      "address": "X9",
+      "row": 9,
+      "col": 24,
+      "value": "BOLETO BANCÁRIO",
+      "type": 1
+    },
+    {
+      "address": "Y9",
+      "row": 9,
+      "col": 25,
+      "value": "BOLETO BANCÁRIO",
+      "type": 1
+    },
+    {
+      "address": "Z9",
+      "row": 9,
+      "col": 26,
+      "value": "BOLETO BANCÁRIO",
+      "type": 1
+    },
+    {
+      "address": "AA9",
+      "row": 9,
+      "col": 27,
+      "value": "BOLETO BANCÁRIO",
+      "type": 1
+    },
+    {
+      "address": "AB9",
+      "row": 9,
+      "col": 28,
+      "value": "BOLETO BANCÁRIO",
+      "type": 1
+    },
+    {
+      "address": "AC9",
+      "row": 9,
+      "col": 29,
+      "value": "BOLETO BANCÁRIO",
+      "type": 1
+    },
+    {
+      "address": "AD9",
+      "row": 9,
+      "col": 30,
+      "value": "BOLETO BANCÁRIO",
+      "type": 1
+    },
+    {
+      "address": "AE9",
+      "row": 9,
+      "col": 31,
+      "value": "BOLETO BANCÁRIO",
+      "type": 1
+    },
+    {
+      "address": "AU9",
+      "row": 9,
+      "col": 47,
+      "value": "Data emissão: 18/06/2025",
+      "type": 3
+    },
+    {
+      "address": "AV9",
+      "row": 9,
+      "col": 48,
+      "value": "Data emissão: 18/06/2025",
+      "type": 1
+    },
+    {
+      "address": "AW9",
+      "row": 9,
+      "col": 49,
+      "value": "Data emissão: 18/06/2025",
+      "type": 1
+    },
+    {
+      "address": "AX9",
+      "row": 9,
+      "col": 50,
+      "value": "Data emissão: 18/06/2025",
+      "type": 1
+    },
+    {
+      "address": "AY9",
+      "row": 9,
+      "col": 51,
+      "value": "Data emissão: 18/06/2025",
+      "type": 1
+    },
+    {
+      "address": "AZ9",
+      "row": 9,
+      "col": 52,
+      "value": "Data emissão: 18/06/2025",
+      "type": 1
+    },
+    {
+      "address": "BA9",
+      "row": 9,
+      "col": 53,
+      "value": "Data emissão: 18/06/2025",
+      "type": 1
+    },
+    {
+      "address": "J10",
+      "row": 10,
+      "col": 10,
+      "value": "OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "K10",
+      "row": 10,
+      "col": 11,
+      "value": "OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "L10",
+      "row": 10,
+      "col": 12,
+      "value": "OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "M10",
+      "row": 10,
+      "col": 13,
+      "value": "OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "N10",
+      "row": 10,
+      "col": 14,
+      "value": "OUTDOOR",
+      "type": 1
+    },
+    {
+      "address": "O10",
+      "row": 10,
+      "col": 15,
+      "value": "BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "P10",
+      "row": 10,
+      "col": 16,
+      "value": "BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "Q10",
+      "row": 10,
+      "col": 17,
+      "value": "BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "R10",
+      "row": 10,
+      "col": 18,
+      "value": "BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "S10",
+      "row": 10,
+      "col": 19,
+      "value": "BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "W10",
+      "row": 10,
+      "col": 23,
+      "value": "BOLETO BANCÁRIO",
+      "type": 1
+    },
+    {
+      "address": "X10",
+      "row": 10,
+      "col": 24,
+      "value": "BOLETO BANCÁRIO",
+      "type": 1
+    },
+    {
+      "address": "Y10",
+      "row": 10,
+      "col": 25,
+      "value": "BOLETO BANCÁRIO",
+      "type": 1
+    },
+    {
+      "address": "Z10",
+      "row": 10,
+      "col": 26,
+      "value": "BOLETO BANCÁRIO",
+      "type": 1
+    },
+    {
+      "address": "AA10",
+      "row": 10,
+      "col": 27,
+      "value": "BOLETO BANCÁRIO",
+      "type": 1
+    },
+    {
+      "address": "AB10",
+      "row": 10,
+      "col": 28,
+      "value": "BOLETO BANCÁRIO",
+      "type": 1
+    },
+    {
+      "address": "AC10",
+      "row": 10,
+      "col": 29,
+      "value": "BOLETO BANCÁRIO",
+      "type": 1
+    },
+    {
+      "address": "AD10",
+      "row": 10,
+      "col": 30,
+      "value": "BOLETO BANCÁRIO",
+      "type": 1
+    },
+    {
+      "address": "AE10",
+      "row": 10,
+      "col": 31,
+      "value": "BOLETO BANCÁRIO",
+      "type": 1
+    },
+    {
+      "address": "AU10",
+      "row": 10,
+      "col": 47,
+      "value": "Data emissão: 18/06/2025",
+      "type": 1
+    },
+    {
+      "address": "AV10",
+      "row": 10,
+      "col": 48,
+      "value": "Data emissão: 18/06/2025",
+      "type": 1
+    },
+    {
+      "address": "AW10",
+      "row": 10,
+      "col": 49,
+      "value": "Data emissão: 18/06/2025",
+      "type": 1
+    },
+    {
+      "address": "AX10",
+      "row": 10,
+      "col": 50,
+      "value": "Data emissão: 18/06/2025",
+      "type": 1
+    },
+    {
+      "address": "AY10",
+      "row": 10,
+      "col": 51,
+      "value": "Data emissão: 18/06/2025",
+      "type": 1
+    },
+    {
+      "address": "AZ10",
+      "row": 10,
+      "col": 52,
+      "value": "Data emissão: 18/06/2025",
+      "type": 1
+    },
+    {
+      "address": "BA10",
+      "row": 10,
+      "col": 53,
+      "value": "Data emissão: 18/06/2025",
+      "type": 1
+    },
+    {
+      "address": "A11",
+      "row": 11,
+      "col": 1,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 8
+    },
+    {
+      "address": "B11",
+      "row": 11,
+      "col": 2,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "C11",
+      "row": 11,
+      "col": 3,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "D11",
+      "row": 11,
+      "col": 4,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "E11",
+      "row": 11,
+      "col": 5,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "F11",
+      "row": 11,
+      "col": 6,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "G11",
+      "row": 11,
+      "col": 7,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "H11",
+      "row": 11,
+      "col": 8,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "I11",
+      "row": 11,
+      "col": 9,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "J11",
+      "row": 11,
+      "col": 10,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "K11",
+      "row": 11,
+      "col": 11,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "L11",
+      "row": 11,
+      "col": 12,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "M11",
+      "row": 11,
+      "col": 13,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "N11",
+      "row": 11,
+      "col": 14,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "O11",
+      "row": 11,
+      "col": 15,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "P11",
+      "row": 11,
+      "col": 16,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "Q11",
+      "row": 11,
+      "col": 17,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "R11",
+      "row": 11,
+      "col": 18,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "S11",
+      "row": 11,
+      "col": 19,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "T11",
+      "row": 11,
+      "col": 20,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "U11",
+      "row": 11,
+      "col": 21,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "V11",
+      "row": 11,
+      "col": 22,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "W11",
+      "row": 11,
+      "col": 23,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "X11",
+      "row": 11,
+      "col": 24,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "Y11",
+      "row": 11,
+      "col": 25,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "Z11",
+      "row": 11,
+      "col": 26,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AA11",
+      "row": 11,
+      "col": 27,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AB11",
+      "row": 11,
+      "col": 28,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AC11",
+      "row": 11,
+      "col": 29,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AD11",
+      "row": 11,
+      "col": 30,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AE11",
+      "row": 11,
+      "col": 31,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AF11",
+      "row": 11,
+      "col": 32,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AG11",
+      "row": 11,
+      "col": 33,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AH11",
+      "row": 11,
+      "col": 34,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AI11",
+      "row": 11,
+      "col": 35,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AJ11",
+      "row": 11,
+      "col": 36,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AK11",
+      "row": 11,
+      "col": 37,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AL11",
+      "row": 11,
+      "col": 38,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AM11",
+      "row": 11,
+      "col": 39,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AN11",
+      "row": 11,
+      "col": 40,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AO11",
+      "row": 11,
+      "col": 41,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AP11",
+      "row": 11,
+      "col": 42,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AQ11",
+      "row": 11,
+      "col": 43,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AR11",
+      "row": 11,
+      "col": 44,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AS11",
+      "row": 11,
+      "col": 45,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AT11",
+      "row": 11,
+      "col": 46,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AU11",
+      "row": 11,
+      "col": 47,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AV11",
+      "row": 11,
+      "col": 48,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AW11",
+      "row": 11,
+      "col": 49,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AX11",
+      "row": 11,
+      "col": 50,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AY11",
+      "row": 11,
+      "col": 51,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "AZ11",
+      "row": 11,
+      "col": 52,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "BA11",
+      "row": 11,
+      "col": 53,
+      "value": "Período de veiculação: BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "A12",
+      "row": 12,
+      "col": 1,
+      "value": "Programação",
+      "type": 3
+    },
+    {
+      "address": "B12",
+      "row": 12,
+      "col": 2,
+      "value": "Programação",
+      "type": 1
+    },
+    {
+      "address": "C12",
+      "row": 12,
+      "col": 3,
+      "value": "Programação",
+      "type": 1
+    },
+    {
+      "address": "D12",
+      "row": 12,
+      "col": 4,
+      "value": "Programação",
+      "type": 1
+    },
+    {
+      "address": "E12",
+      "row": 12,
+      "col": 5,
+      "value": "Programação",
+      "type": 1
+    },
+    {
+      "address": "F12",
+      "row": 12,
+      "col": 6,
+      "value": "Programação",
+      "type": 1
+    },
+    {
+      "address": "G12",
+      "row": 12,
+      "col": 7,
+      "value": "Dia",
+      "type": 3
+    },
+    {
+      "address": "H12",
+      "row": 12,
+      "col": 8,
+      "value": "Dia",
+      "type": 1
+    },
+    {
+      "address": "I12",
+      "row": 12,
+      "col": 9,
+      "value": "Dia",
+      "type": 1
+    },
+    {
+      "address": "J12",
+      "row": 12,
+      "col": 10,
+      "value": 1,
+      "type": 2
+    },
+    {
+      "address": "K12",
+      "row": 12,
+      "col": 11,
+      "value": 2,
+      "type": 2
+    },
+    {
+      "address": "L12",
+      "row": 12,
+      "col": 12,
+      "value": 3,
+      "type": 2
+    },
+    {
+      "address": "M12",
+      "row": 12,
+      "col": 13,
+      "value": 4,
+      "type": 2
+    },
+    {
+      "address": "N12",
+      "row": 12,
+      "col": 14,
+      "value": 5,
+      "type": 2
+    },
+    {
+      "address": "O12",
+      "row": 12,
+      "col": 15,
+      "value": 6,
+      "type": 2
+    },
+    {
+      "address": "P12",
+      "row": 12,
+      "col": 16,
+      "value": 7,
+      "type": 2
+    },
+    {
+      "address": "Q12",
+      "row": 12,
+      "col": 17,
+      "value": 8,
+      "type": 2
+    },
+    {
+      "address": "R12",
+      "row": 12,
+      "col": 18,
+      "value": 9,
+      "type": 2
+    },
+    {
+      "address": "S12",
+      "row": 12,
+      "col": 19,
+      "value": 10,
+      "type": 2
+    },
+    {
+      "address": "T12",
+      "row": 12,
+      "col": 20,
+      "value": 11,
+      "type": 2
+    },
+    {
+      "address": "U12",
+      "row": 12,
+      "col": 21,
+      "value": 12,
+      "type": 2
+    },
+    {
+      "address": "V12",
+      "row": 12,
+      "col": 22,
+      "value": 13,
+      "type": 2
+    },
+    {
+      "address": "W12",
+      "row": 12,
+      "col": 23,
+      "value": 14,
+      "type": 2
+    },
+    {
+      "address": "X12",
+      "row": 12,
+      "col": 24,
+      "value": 15,
+      "type": 2
+    },
+    {
+      "address": "Y12",
+      "row": 12,
+      "col": 25,
+      "value": 16,
+      "type": 2
+    },
+    {
+      "address": "Z12",
+      "row": 12,
+      "col": 26,
+      "value": 17,
+      "type": 2
+    },
+    {
+      "address": "AA12",
+      "row": 12,
+      "col": 27,
+      "value": 18,
+      "type": 2
+    },
+    {
+      "address": "AB12",
+      "row": 12,
+      "col": 28,
+      "value": 19,
+      "type": 2
+    },
+    {
+      "address": "AC12",
+      "row": 12,
+      "col": 29,
+      "value": 20,
+      "type": 2
+    },
+    {
+      "address": "AD12",
+      "row": 12,
+      "col": 30,
+      "value": 21,
+      "type": 2
+    },
+    {
+      "address": "AE12",
+      "row": 12,
+      "col": 31,
+      "value": 22,
+      "type": 2
+    },
+    {
+      "address": "AF12",
+      "row": 12,
+      "col": 32,
+      "value": 23,
+      "type": 2
+    },
+    {
+      "address": "AG12",
+      "row": 12,
+      "col": 33,
+      "value": 24,
+      "type": 2
+    },
+    {
+      "address": "AH12",
+      "row": 12,
+      "col": 34,
+      "value": 25,
+      "type": 2
+    },
+    {
+      "address": "AI12",
+      "row": 12,
+      "col": 35,
+      "value": 26,
+      "type": 2
+    },
+    {
+      "address": "AJ12",
+      "row": 12,
+      "col": 36,
+      "value": 27,
+      "type": 2
+    },
+    {
+      "address": "AK12",
+      "row": 12,
+      "col": 37,
+      "value": 28,
+      "type": 2
+    },
+    {
+      "address": "AL12",
+      "row": 12,
+      "col": 38,
+      "value": 29,
+      "type": 2
+    },
+    {
+      "address": "AM12",
+      "row": 12,
+      "col": 39,
+      "value": 30,
+      "type": 2
+    },
+    {
+      "address": "AR12",
+      "row": 12,
+      "col": 44,
+      "value": "Valor da",
+      "type": 3
+    },
+    {
+      "address": "AS12",
+      "row": 12,
+      "col": 45,
+      "value": "Valor da",
+      "type": 1
+    },
+    {
+      "address": "AT12",
+      "row": 12,
+      "col": 46,
+      "value": "Valor da",
+      "type": 1
+    },
+    {
+      "address": "AU12",
+      "row": 12,
+      "col": 47,
+      "value": "Valor da",
+      "type": 1
+    },
+    {
+      "address": "AV12",
+      "row": 12,
+      "col": 48,
+      "value": "Valor da",
+      "type": 1
+    },
+    {
+      "address": "AW12",
+      "row": 12,
+      "col": 49,
+      "value": "Custo total",
+      "type": 3
+    },
+    {
+      "address": "AX12",
+      "row": 12,
+      "col": 50,
+      "value": "Custo total",
+      "type": 1
+    },
+    {
+      "address": "AY12",
+      "row": 12,
+      "col": 51,
+      "value": "Custo total",
+      "type": 1
+    },
+    {
+      "address": "AZ12",
+      "row": 12,
+      "col": 52,
+      "value": "Custo total",
+      "type": 1
+    },
+    {
+      "address": "BA12",
+      "row": 12,
+      "col": 53,
+      "value": "Custo total",
+      "type": 1
+    },
+    {
+      "address": "A13",
+      "row": 13,
+      "col": 1,
+      "value": "Programação",
+      "type": 1
+    },
+    {
+      "address": "B13",
+      "row": 13,
+      "col": 2,
+      "value": "Programação",
+      "type": 1
+    },
+    {
+      "address": "C13",
+      "row": 13,
+      "col": 3,
+      "value": "Programação",
+      "type": 1
+    },
+    {
+      "address": "D13",
+      "row": 13,
+      "col": 4,
+      "value": "Programação",
+      "type": 1
+    },
+    {
+      "address": "E13",
+      "row": 13,
+      "col": 5,
+      "value": "Programação",
+      "type": 1
+    },
+    {
+      "address": "F13",
+      "row": 13,
+      "col": 6,
+      "value": "Programação",
+      "type": 1
+    },
+    {
+      "address": "G13",
+      "row": 13,
+      "col": 7,
+      "value": "Dia",
+      "type": 1
+    },
+    {
+      "address": "H13",
+      "row": 13,
+      "col": 8,
+      "value": "Dia",
+      "type": 1
+    },
+    {
+      "address": "I13",
+      "row": 13,
+      "col": 9,
+      "value": "Dia",
+      "type": 1
+    },
+    {
+      "address": "J13",
+      "row": 13,
+      "col": 10,
+      "value": 1,
+      "type": 1
+    },
+    {
+      "address": "K13",
+      "row": 13,
+      "col": 11,
+      "value": 2,
+      "type": 1
+    },
+    {
+      "address": "L13",
+      "row": 13,
+      "col": 12,
+      "value": 3,
+      "type": 1
+    },
+    {
+      "address": "M13",
+      "row": 13,
+      "col": 13,
+      "value": 4,
+      "type": 1
+    },
+    {
+      "address": "N13",
+      "row": 13,
+      "col": 14,
+      "value": 5,
+      "type": 1
+    },
+    {
+      "address": "O13",
+      "row": 13,
+      "col": 15,
+      "value": 6,
+      "type": 1
+    },
+    {
+      "address": "P13",
+      "row": 13,
+      "col": 16,
+      "value": 7,
+      "type": 1
+    },
+    {
+      "address": "Q13",
+      "row": 13,
+      "col": 17,
+      "value": 8,
+      "type": 1
+    },
+    {
+      "address": "R13",
+      "row": 13,
+      "col": 18,
+      "value": 9,
+      "type": 1
+    },
+    {
+      "address": "S13",
+      "row": 13,
+      "col": 19,
+      "value": 10,
+      "type": 1
+    },
+    {
+      "address": "T13",
+      "row": 13,
+      "col": 20,
+      "value": 11,
+      "type": 1
+    },
+    {
+      "address": "U13",
+      "row": 13,
+      "col": 21,
+      "value": 12,
+      "type": 1
+    },
+    {
+      "address": "V13",
+      "row": 13,
+      "col": 22,
+      "value": 13,
+      "type": 1
+    },
+    {
+      "address": "W13",
+      "row": 13,
+      "col": 23,
+      "value": 14,
+      "type": 1
+    },
+    {
+      "address": "X13",
+      "row": 13,
+      "col": 24,
+      "value": 15,
+      "type": 1
+    },
+    {
+      "address": "Y13",
+      "row": 13,
+      "col": 25,
+      "value": 16,
+      "type": 1
+    },
+    {
+      "address": "Z13",
+      "row": 13,
+      "col": 26,
+      "value": 17,
+      "type": 1
+    },
+    {
+      "address": "AA13",
+      "row": 13,
+      "col": 27,
+      "value": 18,
+      "type": 1
+    },
+    {
+      "address": "AB13",
+      "row": 13,
+      "col": 28,
+      "value": 19,
+      "type": 1
+    },
+    {
+      "address": "AC13",
+      "row": 13,
+      "col": 29,
+      "value": 20,
+      "type": 1
+    },
+    {
+      "address": "AD13",
+      "row": 13,
+      "col": 30,
+      "value": 21,
+      "type": 1
+    },
+    {
+      "address": "AE13",
+      "row": 13,
+      "col": 31,
+      "value": 22,
+      "type": 1
+    },
+    {
+      "address": "AF13",
+      "row": 13,
+      "col": 32,
+      "value": 23,
+      "type": 1
+    },
+    {
+      "address": "AG13",
+      "row": 13,
+      "col": 33,
+      "value": 24,
+      "type": 1
+    },
+    {
+      "address": "AH13",
+      "row": 13,
+      "col": 34,
+      "value": 25,
+      "type": 1
+    },
+    {
+      "address": "AI13",
+      "row": 13,
+      "col": 35,
+      "value": 26,
+      "type": 1
+    },
+    {
+      "address": "AJ13",
+      "row": 13,
+      "col": 36,
+      "value": 27,
+      "type": 1
+    },
+    {
+      "address": "AK13",
+      "row": 13,
+      "col": 37,
+      "value": 28,
+      "type": 1
+    },
+    {
+      "address": "AL13",
+      "row": 13,
+      "col": 38,
+      "value": 29,
+      "type": 1
+    },
+    {
+      "address": "AM13",
+      "row": 13,
+      "col": 39,
+      "value": 30,
+      "type": 1
+    },
+    {
+      "address": "AR13",
+      "row": 13,
+      "col": 44,
+      "value": "Tabela",
+      "type": 3
+    },
+    {
+      "address": "AS13",
+      "row": 13,
+      "col": 45,
+      "value": "Tabela",
+      "type": 1
+    },
+    {
+      "address": "AT13",
+      "row": 13,
+      "col": 46,
+      "value": "Tabela",
+      "type": 1
+    },
+    {
+      "address": "AU13",
+      "row": 13,
+      "col": 47,
+      "value": "Tabela",
+      "type": 1
+    },
+    {
+      "address": "AV13",
+      "row": 13,
+      "col": 48,
+      "value": "Tabela",
+      "type": 1
+    },
+    {
+      "address": "AW13",
+      "row": 13,
+      "col": 49,
+      "value": "por produto",
+      "type": 3
+    },
+    {
+      "address": "AX13",
+      "row": 13,
+      "col": 50,
+      "value": "por produto",
+      "type": 1
+    },
+    {
+      "address": "AY13",
+      "row": 13,
+      "col": 51,
+      "value": "por produto",
+      "type": 1
+    },
+    {
+      "address": "AZ13",
+      "row": 13,
+      "col": 52,
+      "value": "por produto",
+      "type": 1
+    },
+    {
+      "address": "BA13",
+      "row": 13,
+      "col": 53,
+      "value": "por produto",
+      "type": 1
+    },
+    {
+      "address": "A14",
+      "row": 14,
+      "col": 1,
+      "value": "Programação",
+      "type": 1
+    },
+    {
+      "address": "B14",
+      "row": 14,
+      "col": 2,
+      "value": "Programação",
+      "type": 1
+    },
+    {
+      "address": "C14",
+      "row": 14,
+      "col": 3,
+      "value": "Programação",
+      "type": 1
+    },
+    {
+      "address": "D14",
+      "row": 14,
+      "col": 4,
+      "value": "Programação",
+      "type": 1
+    },
+    {
+      "address": "E14",
+      "row": 14,
+      "col": 5,
+      "value": "Programação",
+      "type": 1
+    },
+    {
+      "address": "F14",
+      "row": 14,
+      "col": 6,
+      "value": "Programação",
+      "type": 1
+    },
+    {
+      "address": "G14",
+      "row": 14,
+      "col": 7,
+      "value": "Vlr.",
+      "type": 3
+    },
+    {
+      "address": "H14",
+      "row": 14,
+      "col": 8,
+      "value": "Vlr.",
+      "type": 1
+    },
+    {
+      "address": "I14",
+      "row": 14,
+      "col": 9,
+      "value": "Vlr.",
+      "type": 1
+    },
+    {
+      "address": "J14",
+      "row": 14,
+      "col": 10,
+      "value": "S",
+      "type": 3
+    },
+    {
+      "address": "K14",
+      "row": 14,
+      "col": 11,
+      "value": "T",
+      "type": 3
+    },
+    {
+      "address": "L14",
+      "row": 14,
+      "col": 12,
+      "value": "Q",
+      "type": 3
+    },
+    {
+      "address": "M14",
+      "row": 14,
+      "col": 13,
+      "value": "Q",
+      "type": 3
+    },
+    {
+      "address": "N14",
+      "row": 14,
+      "col": 14,
+      "value": "S",
+      "type": 3
+    },
+    {
+      "address": "O14",
+      "row": 14,
+      "col": 15,
+      "value": "S",
+      "type": 3
+    },
+    {
+      "address": "P14",
+      "row": 14,
+      "col": 16,
+      "value": "D",
+      "type": 3
+    },
+    {
+      "address": "Q14",
+      "row": 14,
+      "col": 17,
+      "value": "S",
+      "type": 3
+    },
+    {
+      "address": "R14",
+      "row": 14,
+      "col": 18,
+      "value": "T",
+      "type": 3
+    },
+    {
+      "address": "S14",
+      "row": 14,
+      "col": 19,
+      "value": "Q",
+      "type": 3
+    },
+    {
+      "address": "T14",
+      "row": 14,
+      "col": 20,
+      "value": "Q",
+      "type": 3
+    },
+    {
+      "address": "U14",
+      "row": 14,
+      "col": 21,
+      "value": "S",
+      "type": 3
+    },
+    {
+      "address": "V14",
+      "row": 14,
+      "col": 22,
+      "value": "S",
+      "type": 3
+    },
+    {
+      "address": "W14",
+      "row": 14,
+      "col": 23,
+      "value": "D",
+      "type": 3
+    },
+    {
+      "address": "X14",
+      "row": 14,
+      "col": 24,
+      "value": "S",
+      "type": 3
+    },
+    {
+      "address": "Y14",
+      "row": 14,
+      "col": 25,
+      "value": "T",
+      "type": 3
+    },
+    {
+      "address": "Z14",
+      "row": 14,
+      "col": 26,
+      "value": "Q",
+      "type": 3
+    },
+    {
+      "address": "AA14",
+      "row": 14,
+      "col": 27,
+      "value": "Q",
+      "type": 3
+    },
+    {
+      "address": "AB14",
+      "row": 14,
+      "col": 28,
+      "value": "S",
+      "type": 3
+    },
+    {
+      "address": "AC14",
+      "row": 14,
+      "col": 29,
+      "value": "S",
+      "type": 3
+    },
+    {
+      "address": "AD14",
+      "row": 14,
+      "col": 30,
+      "value": "D",
+      "type": 3
+    },
+    {
+      "address": "AE14",
+      "row": 14,
+      "col": 31,
+      "value": "S",
+      "type": 3
+    },
+    {
+      "address": "AF14",
+      "row": 14,
+      "col": 32,
+      "value": "T",
+      "type": 3
+    },
+    {
+      "address": "AG14",
+      "row": 14,
+      "col": 33,
+      "value": "Q",
+      "type": 3
+    },
+    {
+      "address": "AH14",
+      "row": 14,
+      "col": 34,
+      "value": "Q",
+      "type": 3
+    },
+    {
+      "address": "AI14",
+      "row": 14,
+      "col": 35,
+      "value": "S",
+      "type": 3
+    },
+    {
+      "address": "AJ14",
+      "row": 14,
+      "col": 36,
+      "value": "S",
+      "type": 3
+    },
+    {
+      "address": "AK14",
+      "row": 14,
+      "col": 37,
+      "value": "D",
+      "type": 3
+    },
+    {
+      "address": "AL14",
+      "row": 14,
+      "col": 38,
+      "value": "S",
+      "type": 3
+    },
+    {
+      "address": "AM14",
+      "row": 14,
+      "col": 39,
+      "value": "T",
+      "type": 3
+    },
+    {
+      "address": "A16",
+      "row": 16,
+      "col": 1,
+      "value": "1 PRODUÇÃO",
+      "type": 3
+    },
+    {
+      "address": "B16",
+      "row": 16,
+      "col": 2,
+      "value": "1 PRODUÇÃO",
+      "type": 1
+    },
+    {
+      "address": "C16",
+      "row": 16,
+      "col": 3,
+      "value": "1 PRODUÇÃO",
+      "type": 1
+    },
+    {
+      "address": "D16",
+      "row": 16,
+      "col": 4,
+      "value": "1 PRODUÇÃO",
+      "type": 1
+    },
+    {
+      "address": "E16",
+      "row": 16,
+      "col": 5,
+      "value": "1 PRODUÇÃO",
+      "type": 1
+    },
+    {
+      "address": "F16",
+      "row": 16,
+      "col": 6,
+      "value": "1 PRODUÇÃO",
+      "type": 1
+    },
+    {
+      "address": "G16",
+      "row": 16,
+      "col": 7,
+      "value": "1 PRODUÇÃO",
+      "type": 1
+    },
+    {
+      "address": "H16",
+      "row": 16,
+      "col": 8,
+      "value": "1 PRODUÇÃO",
+      "type": 1
+    },
+    {
+      "address": "I16",
+      "row": 16,
+      "col": 9,
+      "value": "1 PRODUÇÃO",
+      "type": 1
+    },
+    {
+      "address": "A17",
+      "row": 17,
+      "col": 1,
+      "value": "PLACA 23 - BISEMANA 26",
+      "type": 3
+    },
+    {
+      "address": "B17",
+      "row": 17,
+      "col": 2,
+      "value": "PLACA 23 - BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "C17",
+      "row": 17,
+      "col": 3,
+      "value": "PLACA 23 - BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "D17",
+      "row": 17,
+      "col": 4,
+      "value": "PLACA 23 - BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "E17",
+      "row": 17,
+      "col": 5,
+      "value": "PLACA 23 - BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "F17",
+      "row": 17,
+      "col": 6,
+      "value": "PLACA 23 - BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "G17",
+      "row": 17,
+      "col": 7,
+      "value": "PLACA 23 - BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "H17",
+      "row": 17,
+      "col": 8,
+      "value": "PLACA 23 - BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "I17",
+      "row": 17,
+      "col": 9,
+      "value": "PLACA 23 - BISEMANA 26",
+      "type": 1
+    },
+    {
+      "address": "A23",
+      "row": 23,
+      "col": 1,
+      "value": "OBSERVAÇÕES:",
+      "type": 3
+    },
+    {
+      "address": "B23",
+      "row": 23,
+      "col": 2,
+      "value": "OBSERVAÇÕES:",
+      "type": 1
+    },
+    {
+      "address": "C23",
+      "row": 23,
+      "col": 3,
+      "value": "OBSERVAÇÕES:",
+      "type": 1
+    },
+    {
+      "address": "D23",
+      "row": 23,
+      "col": 4,
+      "value": "OBSERVAÇÕES:",
+      "type": 1
+    },
+    {
+      "address": "E23",
+      "row": 23,
+      "col": 5,
+      "value": "OBSERVAÇÕES:",
+      "type": 1
+    },
+    {
+      "address": "F23",
+      "row": 23,
+      "col": 6,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 3
+    },
+    {
+      "address": "G23",
+      "row": 23,
+      "col": 7,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "H23",
+      "row": 23,
+      "col": 8,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "I23",
+      "row": 23,
+      "col": 9,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "J23",
+      "row": 23,
+      "col": 10,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "K23",
+      "row": 23,
+      "col": 11,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "L23",
+      "row": 23,
+      "col": 12,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "M23",
+      "row": 23,
+      "col": 13,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "N23",
+      "row": 23,
+      "col": 14,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "O23",
+      "row": 23,
+      "col": 15,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "P23",
+      "row": 23,
+      "col": 16,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "Q23",
+      "row": 23,
+      "col": 17,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "R23",
+      "row": 23,
+      "col": 18,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "S23",
+      "row": 23,
+      "col": 19,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "T23",
+      "row": 23,
+      "col": 20,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "U23",
+      "row": 23,
+      "col": 21,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "V23",
+      "row": 23,
+      "col": 22,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "W23",
+      "row": 23,
+      "col": 23,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "X23",
+      "row": 23,
+      "col": 24,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "Y23",
+      "row": 23,
+      "col": 25,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "Z23",
+      "row": 23,
+      "col": 26,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "AA23",
+      "row": 23,
+      "col": 27,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "AB23",
+      "row": 23,
+      "col": 28,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "AC23",
+      "row": 23,
+      "col": 29,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "AD23",
+      "row": 23,
+      "col": 30,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "AE23",
+      "row": 23,
+      "col": 31,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "AF23",
+      "row": 23,
+      "col": 32,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "AG23",
+      "row": 23,
+      "col": 33,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "AH23",
+      "row": 23,
+      "col": 34,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "AI23",
+      "row": 23,
+      "col": 35,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "AJ23",
+      "row": 23,
+      "col": 36,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "AK23",
+      "row": 23,
+      "col": 37,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "AL23",
+      "row": 23,
+      "col": 38,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "AM23",
+      "row": 23,
+      "col": 39,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "AN23",
+      "row": 23,
+      "col": 40,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "AO23",
+      "row": 23,
+      "col": 41,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "AP23",
+      "row": 23,
+      "col": 42,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "AQ23",
+      "row": 23,
+      "col": 43,
+      "value": "Produção a ser paga na assinatura do contrato, se caso houver necessidade de uma nova produção, será cobrado o valor de ",
+      "type": 1
+    },
+    {
+      "address": "AR23",
+      "row": 23,
+      "col": 44,
+      "value": "VALOR TOTAL",
+      "type": 3
+    },
+    {
+      "address": "AS23",
+      "row": 23,
+      "col": 45,
+      "value": "VALOR TOTAL",
+      "type": 1
+    },
+    {
+      "address": "AT23",
+      "row": 23,
+      "col": 46,
+      "value": "VALOR TOTAL",
+      "type": 1
+    },
+    {
+      "address": "AU23",
+      "row": 23,
+      "col": 47,
+      "value": "VALOR TOTAL",
+      "type": 1
+    },
+    {
+      "address": "AV23",
+      "row": 23,
+      "col": 48,
+      "value": "VALOR TOTAL",
+      "type": 1
+    },
+    {
+      "address": "A24",
+      "row": 24,
+      "col": 1,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 8
+    },
+    {
+      "address": "B24",
+      "row": 24,
+      "col": 2,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "C24",
+      "row": 24,
+      "col": 3,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "D24",
+      "row": 24,
+      "col": 4,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "E24",
+      "row": 24,
+      "col": 5,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "F24",
+      "row": 24,
+      "col": 6,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "G24",
+      "row": 24,
+      "col": 7,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "H24",
+      "row": 24,
+      "col": 8,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "I24",
+      "row": 24,
+      "col": 9,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "J24",
+      "row": 24,
+      "col": 10,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "K24",
+      "row": 24,
+      "col": 11,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "L24",
+      "row": 24,
+      "col": 12,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "M24",
+      "row": 24,
+      "col": 13,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "N24",
+      "row": 24,
+      "col": 14,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "O24",
+      "row": 24,
+      "col": 15,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "P24",
+      "row": 24,
+      "col": 16,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "Q24",
+      "row": 24,
+      "col": 17,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "R24",
+      "row": 24,
+      "col": 18,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "S24",
+      "row": 24,
+      "col": 19,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "T24",
+      "row": 24,
+      "col": 20,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "U24",
+      "row": 24,
+      "col": 21,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "V24",
+      "row": 24,
+      "col": 22,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "W24",
+      "row": 24,
+      "col": 23,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "X24",
+      "row": 24,
+      "col": 24,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "Y24",
+      "row": 24,
+      "col": 25,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "Z24",
+      "row": 24,
+      "col": 26,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "AA24",
+      "row": 24,
+      "col": 27,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "AB24",
+      "row": 24,
+      "col": 28,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "AC24",
+      "row": 24,
+      "col": 29,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "AD24",
+      "row": 24,
+      "col": 30,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "AE24",
+      "row": 24,
+      "col": 31,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "AF24",
+      "row": 24,
+      "col": 32,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "AG24",
+      "row": 24,
+      "col": 33,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "AH24",
+      "row": 24,
+      "col": 34,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "AI24",
+      "row": 24,
+      "col": 35,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "AJ24",
+      "row": 24,
+      "col": 36,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "AK24",
+      "row": 24,
+      "col": 37,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "AL24",
+      "row": 24,
+      "col": 38,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "AM24",
+      "row": 24,
+      "col": 39,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "AN24",
+      "row": 24,
+      "col": 40,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "AO24",
+      "row": 24,
+      "col": 41,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "AP24",
+      "row": 24,
+      "col": 42,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "AQ24",
+      "row": 24,
+      "col": 43,
+      "value": "VALOR PRODUÇÃO: R$ ",
+      "type": 1
+    },
+    {
+      "address": "AR24",
+      "row": 24,
+      "col": 44,
+      "value": " ",
+      "type": 3
+    },
+    {
+      "address": "AS24",
+      "row": 24,
+      "col": 45,
+      "value": " ",
+      "type": 1
+    },
+    {
+      "address": "AT24",
+      "row": 24,
+      "col": 46,
+      "value": " ",
+      "type": 1
+    },
+    {
+      "address": "AU24",
+      "row": 24,
+      "col": 47,
+      "value": " ",
+      "type": 1
+    },
+    {
+      "address": "AV24",
+      "row": 24,
+      "col": 48,
+      "value": " ",
+      "type": 1
+    },
+    {
+      "address": "A25",
+      "row": 25,
+      "col": 1,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 8
+    },
+    {
+      "address": "B25",
+      "row": 25,
+      "col": 2,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "C25",
+      "row": 25,
+      "col": 3,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "D25",
+      "row": 25,
+      "col": 4,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "E25",
+      "row": 25,
+      "col": 5,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "F25",
+      "row": 25,
+      "col": 6,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "G25",
+      "row": 25,
+      "col": 7,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "H25",
+      "row": 25,
+      "col": 8,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "I25",
+      "row": 25,
+      "col": 9,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "J25",
+      "row": 25,
+      "col": 10,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "K25",
+      "row": 25,
+      "col": 11,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "L25",
+      "row": 25,
+      "col": 12,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "M25",
+      "row": 25,
+      "col": 13,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "N25",
+      "row": 25,
+      "col": 14,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "O25",
+      "row": 25,
+      "col": 15,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "P25",
+      "row": 25,
+      "col": 16,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "Q25",
+      "row": 25,
+      "col": 17,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "R25",
+      "row": 25,
+      "col": 18,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "S25",
+      "row": 25,
+      "col": 19,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "T25",
+      "row": 25,
+      "col": 20,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "U25",
+      "row": 25,
+      "col": 21,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "V25",
+      "row": 25,
+      "col": 22,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "W25",
+      "row": 25,
+      "col": 23,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "X25",
+      "row": 25,
+      "col": 24,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "Y25",
+      "row": 25,
+      "col": 25,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "Z25",
+      "row": 25,
+      "col": 26,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "AA25",
+      "row": 25,
+      "col": 27,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "AB25",
+      "row": 25,
+      "col": 28,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "AC25",
+      "row": 25,
+      "col": 29,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "AD25",
+      "row": 25,
+      "col": 30,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "AE25",
+      "row": 25,
+      "col": 31,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "AF25",
+      "row": 25,
+      "col": 32,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "AG25",
+      "row": 25,
+      "col": 33,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "AH25",
+      "row": 25,
+      "col": 34,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "AI25",
+      "row": 25,
+      "col": 35,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "AJ25",
+      "row": 25,
+      "col": 36,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "AK25",
+      "row": 25,
+      "col": 37,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "AL25",
+      "row": 25,
+      "col": 38,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "AM25",
+      "row": 25,
+      "col": 39,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "AN25",
+      "row": 25,
+      "col": 40,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "AO25",
+      "row": 25,
+      "col": 41,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "AP25",
+      "row": 25,
+      "col": 42,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "AQ25",
+      "row": 25,
+      "col": 43,
+      "value": "PLACA 23: localizado na Rua Coronel Correia - Parque Soledade, Caucaia - CE - BISEMANA 26: 16 de Junho a 29 de Junho/25",
+      "type": 1
+    },
+    {
+      "address": "A26",
+      "row": 26,
+      "col": 1,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 8
+    },
+    {
+      "address": "B26",
+      "row": 26,
+      "col": 2,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "C26",
+      "row": 26,
+      "col": 3,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "D26",
+      "row": 26,
+      "col": 4,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "E26",
+      "row": 26,
+      "col": 5,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "F26",
+      "row": 26,
+      "col": 6,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "G26",
+      "row": 26,
+      "col": 7,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "H26",
+      "row": 26,
+      "col": 8,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "I26",
+      "row": 26,
+      "col": 9,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "J26",
+      "row": 26,
+      "col": 10,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "K26",
+      "row": 26,
+      "col": 11,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "L26",
+      "row": 26,
+      "col": 12,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "M26",
+      "row": 26,
+      "col": 13,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "N26",
+      "row": 26,
+      "col": 14,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "O26",
+      "row": 26,
+      "col": 15,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "P26",
+      "row": 26,
+      "col": 16,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "Q26",
+      "row": 26,
+      "col": 17,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "R26",
+      "row": 26,
+      "col": 18,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "S26",
+      "row": 26,
+      "col": 19,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "T26",
+      "row": 26,
+      "col": 20,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "U26",
+      "row": 26,
+      "col": 21,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "V26",
+      "row": 26,
+      "col": 22,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "W26",
+      "row": 26,
+      "col": 23,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "X26",
+      "row": 26,
+      "col": 24,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "Y26",
+      "row": 26,
+      "col": 25,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "Z26",
+      "row": 26,
+      "col": 26,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "AA26",
+      "row": 26,
+      "col": 27,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "AB26",
+      "row": 26,
+      "col": 28,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "AC26",
+      "row": 26,
+      "col": 29,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "AD26",
+      "row": 26,
+      "col": 30,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "AE26",
+      "row": 26,
+      "col": 31,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "AF26",
+      "row": 26,
+      "col": 32,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "AG26",
+      "row": 26,
+      "col": 33,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "AH26",
+      "row": 26,
+      "col": 34,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "AI26",
+      "row": 26,
+      "col": 35,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "AJ26",
+      "row": 26,
+      "col": 36,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "AK26",
+      "row": 26,
+      "col": 37,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "AL26",
+      "row": 26,
+      "col": 38,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "AM26",
+      "row": 26,
+      "col": 39,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "AN26",
+      "row": 26,
+      "col": 40,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "AO26",
+      "row": 26,
+      "col": 41,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "AP26",
+      "row": 26,
+      "col": 42,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "AQ26",
+      "row": 26,
+      "col": 43,
+      "value": "VENCIMENTO VEICULAÇÃO: 25/06/2025  VALOR VEICULAÇÃO: R$  - Faturamento pelo líquido, sem emissão de NF. ",
+      "type": 1
+    },
+    {
+      "address": "A27",
+      "row": 27,
+      "col": 1,
+      "value": "CONTRATO:",
+      "type": 3
+    },
+    {
+      "address": "B27",
+      "row": 27,
+      "col": 2,
+      "value": "CONTRATO:",
+      "type": 1
+    },
+    {
+      "address": "C27",
+      "row": 27,
+      "col": 3,
+      "value": "CONTRATO:",
+      "type": 1
+    },
+    {
+      "address": "D27",
+      "row": 27,
+      "col": 4,
+      "value": "CONTRATO:",
+      "type": 1
+    },
+    {
+      "address": "A28",
+      "row": 28,
+      "col": 1,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 3
+    },
+    {
+      "address": "B28",
+      "row": 28,
+      "col": 2,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "C28",
+      "row": 28,
+      "col": 3,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "D28",
+      "row": 28,
+      "col": 4,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "E28",
+      "row": 28,
+      "col": 5,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "F28",
+      "row": 28,
+      "col": 6,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "G28",
+      "row": 28,
+      "col": 7,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "H28",
+      "row": 28,
+      "col": 8,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "I28",
+      "row": 28,
+      "col": 9,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "J28",
+      "row": 28,
+      "col": 10,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "K28",
+      "row": 28,
+      "col": 11,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "L28",
+      "row": 28,
+      "col": 12,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "M28",
+      "row": 28,
+      "col": 13,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "N28",
+      "row": 28,
+      "col": 14,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "O28",
+      "row": 28,
+      "col": 15,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "P28",
+      "row": 28,
+      "col": 16,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "Q28",
+      "row": 28,
+      "col": 17,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "R28",
+      "row": 28,
+      "col": 18,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "S28",
+      "row": 28,
+      "col": 19,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "T28",
+      "row": 28,
+      "col": 20,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "U28",
+      "row": 28,
+      "col": 21,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "V28",
+      "row": 28,
+      "col": 22,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "W28",
+      "row": 28,
+      "col": 23,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "X28",
+      "row": 28,
+      "col": 24,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "Y28",
+      "row": 28,
+      "col": 25,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "Z28",
+      "row": 28,
+      "col": 26,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "AA28",
+      "row": 28,
+      "col": 27,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "AB28",
+      "row": 28,
+      "col": 28,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "AC28",
+      "row": 28,
+      "col": 29,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "AD28",
+      "row": 28,
+      "col": 30,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "AE28",
+      "row": 28,
+      "col": 31,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "AF28",
+      "row": 28,
+      "col": 32,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "AG28",
+      "row": 28,
+      "col": 33,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "AH28",
+      "row": 28,
+      "col": 34,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "AI28",
+      "row": 28,
+      "col": 35,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "AJ28",
+      "row": 28,
+      "col": 36,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "AK28",
+      "row": 28,
+      "col": 37,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "AL28",
+      "row": 28,
+      "col": 38,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "AM28",
+      "row": 28,
+      "col": 39,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "AN28",
+      "row": 28,
+      "col": 40,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "AO28",
+      "row": 28,
+      "col": 41,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "AP28",
+      "row": 28,
+      "col": 42,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "AQ28",
+      "row": 28,
+      "col": 43,
+      "value": "Declaro que, neste ato, recebi e tomei ciência e concordei com o teor deste contrato, bem como as condições de pagamento e forma de negociação acima.",
+      "type": 1
+    },
+    {
+      "address": "A29",
+      "row": 29,
+      "col": 1,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 3
+    },
+    {
+      "address": "B29",
+      "row": 29,
+      "col": 2,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "C29",
+      "row": 29,
+      "col": 3,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "D29",
+      "row": 29,
+      "col": 4,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "E29",
+      "row": 29,
+      "col": 5,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "F29",
+      "row": 29,
+      "col": 6,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "G29",
+      "row": 29,
+      "col": 7,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "H29",
+      "row": 29,
+      "col": 8,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "I29",
+      "row": 29,
+      "col": 9,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "J29",
+      "row": 29,
+      "col": 10,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "K29",
+      "row": 29,
+      "col": 11,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "L29",
+      "row": 29,
+      "col": 12,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "M29",
+      "row": 29,
+      "col": 13,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "N29",
+      "row": 29,
+      "col": 14,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "O29",
+      "row": 29,
+      "col": 15,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "P29",
+      "row": 29,
+      "col": 16,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "Q29",
+      "row": 29,
+      "col": 17,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "R29",
+      "row": 29,
+      "col": 18,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "S29",
+      "row": 29,
+      "col": 19,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "T29",
+      "row": 29,
+      "col": 20,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "U29",
+      "row": 29,
+      "col": 21,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "V29",
+      "row": 29,
+      "col": 22,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "W29",
+      "row": 29,
+      "col": 23,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "X29",
+      "row": 29,
+      "col": 24,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "Y29",
+      "row": 29,
+      "col": 25,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "Z29",
+      "row": 29,
+      "col": 26,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "AA29",
+      "row": 29,
+      "col": 27,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "AB29",
+      "row": 29,
+      "col": 28,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "AC29",
+      "row": 29,
+      "col": 29,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "AD29",
+      "row": 29,
+      "col": 30,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "AE29",
+      "row": 29,
+      "col": 31,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "AF29",
+      "row": 29,
+      "col": 32,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "AG29",
+      "row": 29,
+      "col": 33,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "AH29",
+      "row": 29,
+      "col": 34,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "AI29",
+      "row": 29,
+      "col": 35,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "AJ29",
+      "row": 29,
+      "col": 36,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "AK29",
+      "row": 29,
+      "col": 37,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "AL29",
+      "row": 29,
+      "col": 38,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "AM29",
+      "row": 29,
+      "col": 39,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "AN29",
+      "row": 29,
+      "col": 40,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "AO29",
+      "row": 29,
+      "col": 41,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "AP29",
+      "row": 29,
+      "col": 42,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "AQ29",
+      "row": 29,
+      "col": 43,
+      "value": "Em caso de cancelamento o cliente, pagará, a título de multa, a quantia de 30% do valor acima ou proporcionalmente ao tempo restante do término do contrato.",
+      "type": 1
+    },
+    {
+      "address": "A30",
+      "row": 30,
+      "col": 1,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 3
+    },
+    {
+      "address": "B30",
+      "row": 30,
+      "col": 2,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "C30",
+      "row": 30,
+      "col": 3,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "D30",
+      "row": 30,
+      "col": 4,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "E30",
+      "row": 30,
+      "col": 5,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "F30",
+      "row": 30,
+      "col": 6,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "G30",
+      "row": 30,
+      "col": 7,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "H30",
+      "row": 30,
+      "col": 8,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "I30",
+      "row": 30,
+      "col": 9,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "J30",
+      "row": 30,
+      "col": 10,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "K30",
+      "row": 30,
+      "col": 11,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "L30",
+      "row": 30,
+      "col": 12,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "M30",
+      "row": 30,
+      "col": 13,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "N30",
+      "row": 30,
+      "col": 14,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "O30",
+      "row": 30,
+      "col": 15,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "P30",
+      "row": 30,
+      "col": 16,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "Q30",
+      "row": 30,
+      "col": 17,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "R30",
+      "row": 30,
+      "col": 18,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "S30",
+      "row": 30,
+      "col": 19,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "T30",
+      "row": 30,
+      "col": 20,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "U30",
+      "row": 30,
+      "col": 21,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "V30",
+      "row": 30,
+      "col": 22,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "W30",
+      "row": 30,
+      "col": 23,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "X30",
+      "row": 30,
+      "col": 24,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "Y30",
+      "row": 30,
+      "col": 25,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "Z30",
+      "row": 30,
+      "col": 26,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "AA30",
+      "row": 30,
+      "col": 27,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "AB30",
+      "row": 30,
+      "col": 28,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "AC30",
+      "row": 30,
+      "col": 29,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "AD30",
+      "row": 30,
+      "col": 30,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "AE30",
+      "row": 30,
+      "col": 31,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "AF30",
+      "row": 30,
+      "col": 32,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "AG30",
+      "row": 30,
+      "col": 33,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "AH30",
+      "row": 30,
+      "col": 34,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "AI30",
+      "row": 30,
+      "col": 35,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "AJ30",
+      "row": 30,
+      "col": 36,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "AK30",
+      "row": 30,
+      "col": 37,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "AL30",
+      "row": 30,
+      "col": 38,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "AM30",
+      "row": 30,
+      "col": 39,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "AN30",
+      "row": 30,
+      "col": 40,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "AO30",
+      "row": 30,
+      "col": 41,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "AP30",
+      "row": 30,
+      "col": 42,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "AQ30",
+      "row": 30,
+      "col": 43,
+      "value": "Em caso de cancelamento, será necessário envio de um documento por escrito e em papel timbrado com no mínimo 30 dias antes do cancelamento.  ",
+      "type": 1
+    },
+    {
+      "address": "A31",
+      "row": 31,
+      "col": 1,
+      "value": "Visto Agência",
+      "type": 3
+    },
+    {
+      "address": "B31",
+      "row": 31,
+      "col": 2,
+      "value": "Visto Agência",
+      "type": 1
+    },
+    {
+      "address": "C31",
+      "row": 31,
+      "col": 3,
+      "value": "Visto Agência",
+      "type": 1
+    },
+    {
+      "address": "D31",
+      "row": 31,
+      "col": 4,
+      "value": "Visto Agência",
+      "type": 1
+    },
+    {
+      "address": "E31",
+      "row": 31,
+      "col": 5,
+      "value": "Visto Agência",
+      "type": 1
+    },
+    {
+      "address": "F31",
+      "row": 31,
+      "col": 6,
+      "value": "Visto Agência",
+      "type": 1
+    },
+    {
+      "address": "G31",
+      "row": 31,
+      "col": 7,
+      "value": "Visto Agência",
+      "type": 1
+    },
+    {
+      "address": "H31",
+      "row": 31,
+      "col": 8,
+      "value": "Visto Agência",
+      "type": 1
+    },
+    {
+      "address": "I31",
+      "row": 31,
+      "col": 9,
+      "value": "Visto Agência",
+      "type": 1
+    },
+    {
+      "address": "J31",
+      "row": 31,
+      "col": 10,
+      "value": "Visto Agência",
+      "type": 1
+    },
+    {
+      "address": "K31",
+      "row": 31,
+      "col": 11,
+      "value": "Visto Agência",
+      "type": 1
+    },
+    {
+      "address": "L31",
+      "row": 31,
+      "col": 12,
+      "value": "Visto Agência",
+      "type": 1
+    },
+    {
+      "address": "M31",
+      "row": 31,
+      "col": 13,
+      "value": "Visto Agência",
+      "type": 1
+    },
+    {
+      "address": "N31",
+      "row": 31,
+      "col": 14,
+      "value": "Visto Anunciante",
+      "type": 3
+    },
+    {
+      "address": "O31",
+      "row": 31,
+      "col": 15,
+      "value": "Visto Anunciante",
+      "type": 1
+    },
+    {
+      "address": "P31",
+      "row": 31,
+      "col": 16,
+      "value": "Visto Anunciante",
+      "type": 1
+    },
+    {
+      "address": "Q31",
+      "row": 31,
+      "col": 17,
+      "value": "Visto Anunciante",
+      "type": 1
+    },
+    {
+      "address": "R31",
+      "row": 31,
+      "col": 18,
+      "value": "Visto Anunciante",
+      "type": 1
+    },
+    {
+      "address": "S31",
+      "row": 31,
+      "col": 19,
+      "value": "Visto Anunciante",
+      "type": 1
+    },
+    {
+      "address": "T31",
+      "row": 31,
+      "col": 20,
+      "value": "Visto Anunciante",
+      "type": 1
+    },
+    {
+      "address": "U31",
+      "row": 31,
+      "col": 21,
+      "value": "Visto Anunciante",
+      "type": 1
+    },
+    {
+      "address": "V31",
+      "row": 31,
+      "col": 22,
+      "value": "Visto Anunciante",
+      "type": 1
+    },
+    {
+      "address": "W31",
+      "row": 31,
+      "col": 23,
+      "value": "Visto Anunciante",
+      "type": 1
+    },
+    {
+      "address": "X31",
+      "row": 31,
+      "col": 24,
+      "value": "Visto Anunciante",
+      "type": 1
+    },
+    {
+      "address": "Y31",
+      "row": 31,
+      "col": 25,
+      "value": "Visto Anunciante",
+      "type": 1
+    },
+    {
+      "address": "Z31",
+      "row": 31,
+      "col": 26,
+      "value": "Visto Anunciante",
+      "type": 1
+    },
+    {
+      "address": "AA31",
+      "row": 31,
+      "col": 27,
+      "value": "Visto Veículo/Gerência",
+      "type": 3
+    },
+    {
+      "address": "AB31",
+      "row": 31,
+      "col": 28,
+      "value": "Visto Veículo/Gerência",
+      "type": 1
+    },
+    {
+      "address": "AC31",
+      "row": 31,
+      "col": 29,
+      "value": "Visto Veículo/Gerência",
+      "type": 1
+    },
+    {
+      "address": "AD31",
+      "row": 31,
+      "col": 30,
+      "value": "Visto Veículo/Gerência",
+      "type": 1
+    },
+    {
+      "address": "AE31",
+      "row": 31,
+      "col": 31,
+      "value": "Visto Veículo/Gerência",
+      "type": 1
+    },
+    {
+      "address": "AF31",
+      "row": 31,
+      "col": 32,
+      "value": "Visto Veículo/Gerência",
+      "type": 1
+    },
+    {
+      "address": "AG31",
+      "row": 31,
+      "col": 33,
+      "value": "Visto Veículo/Gerência",
+      "type": 1
+    },
+    {
+      "address": "AH31",
+      "row": 31,
+      "col": 34,
+      "value": "Visto Veículo/Gerência",
+      "type": 1
+    },
+    {
+      "address": "AI31",
+      "row": 31,
+      "col": 35,
+      "value": "Visto Veículo/Gerência",
+      "type": 1
+    },
+    {
+      "address": "AJ31",
+      "row": 31,
+      "col": 36,
+      "value": "Visto Veículo/Gerência",
+      "type": 1
+    },
+    {
+      "address": "AK31",
+      "row": 31,
+      "col": 37,
+      "value": "Visto Veículo/Gerência",
+      "type": 1
+    },
+    {
+      "address": "AL31",
+      "row": 31,
+      "col": 38,
+      "value": "Visto Veículo/Gerência",
+      "type": 1
+    },
+    {
+      "address": "AM31",
+      "row": 31,
+      "col": 39,
+      "value": "Visto Veículo/Gerência",
+      "type": 1
+    },
+    {
+      "address": "AN31",
+      "row": 31,
+      "col": 40,
+      "value": "Visto Contato",
+      "type": 3
+    },
+    {
+      "address": "AO31",
+      "row": 31,
+      "col": 41,
+      "value": "Visto Contato",
+      "type": 1
+    },
+    {
+      "address": "AP31",
+      "row": 31,
+      "col": 42,
+      "value": "Visto Contato",
+      "type": 1
+    },
+    {
+      "address": "AQ31",
+      "row": 31,
+      "col": 43,
+      "value": "Visto Contato",
+      "type": 1
+    },
+    {
+      "address": "AR31",
+      "row": 31,
+      "col": 44,
+      "value": "Visto Contato",
+      "type": 1
+    },
+    {
+      "address": "AS31",
+      "row": 31,
+      "col": 45,
+      "value": "Visto Contato",
+      "type": 1
+    },
+    {
+      "address": "AT31",
+      "row": 31,
+      "col": 46,
+      "value": "Visto Contato",
+      "type": 1
+    },
+    {
+      "address": "AU31",
+      "row": 31,
+      "col": 47,
+      "value": "Visto Contato",
+      "type": 1
+    },
+    {
+      "address": "AV31",
+      "row": 31,
+      "col": 48,
+      "value": "Visto Contato",
+      "type": 1
+    },
+    {
+      "address": "AW31",
+      "row": 31,
+      "col": 49,
+      "value": "Visto Contato",
+      "type": 1
+    },
+    {
+      "address": "AX31",
+      "row": 31,
+      "col": 50,
+      "value": "Visto Contato",
+      "type": 1
+    },
+    {
+      "address": "AY31",
+      "row": 31,
+      "col": 51,
+      "value": "Visto Contato",
+      "type": 1
+    },
+    {
+      "address": "AZ31",
+      "row": 31,
+      "col": 52,
+      "value": "Visto Contato",
+      "type": 1
+    },
+    {
+      "address": "BA31",
+      "row": 31,
+      "col": 53,
+      "value": "Visto Contato",
+      "type": 1
+    }
+  ],
+  "mergedCells": [
+    "A20:I20",
+    "H1:AD1",
+    "H2:AE2",
+    "H3:AE3",
+    "H4:AE4",
+    "H5:AE5",
+    "H6:AE6",
+    "H7:AE7",
+    "AF1:BA1",
+    "AF2:BA2",
+    "AF3:BA3",
+    "AF4:BA4",
+    "AF5:BA5",
+    "AF6:BA6",
+    "AF7:BA7",
+    "AL8:AT8",
+    "AL9:AT10",
+    "AF8:AK8",
+    "AF9:AK10",
+    "W8:AE8",
+    "A31:M31",
+    "N31:Z31",
+    "AA31:AM31",
+    "AN31:BA31",
+    "AR27:AV27",
+    "AR28:AV28",
+    "AR29:AV29",
+    "AW24:BA24",
+    "AW27:BA27",
+    "AW28:BA29",
+    "A28:AQ28",
+    "AR24:AV24",
+    "A27:D27",
+    "A30:AQ30",
+    "AR30:BA30",
+    "A25:AQ25",
+    "A26:AQ26",
+    "AR26:AV26",
+    "X12:X13",
+    "AW15:BA15",
+    "AH12:AH13",
+    "Z12:Z13",
+    "AR15:AV15",
+    "AM12:AM13",
+    "AL12:AL13",
+    "AK12:AK13",
+    "AA12:AA13",
+    "Y12:Y13",
+    "AG12:AG13",
+    "AR23:AV23",
+    "AW23:BA23",
+    "AR16:AV16",
+    "AR17:AV17",
+    "AF12:AF13",
+    "AE12:AE13",
+    "AW21:BA21",
+    "AW22:BA22",
+    "AW16:BA16",
+    "AW17:BA17",
+    "AW18:BA18",
+    "AW19:BA19",
+    "AW20:BA20",
+    "L12:L13",
+    "M12:M13",
+    "N12:N13",
+    "R12:R13",
+    "Q12:Q13",
+    "P12:P13",
+    "A1:G7",
+    "A9:I10",
+    "A8:I8",
+    "K12:K13",
+    "O12:O13",
+    "T9:V10",
+    "J8:N8",
+    "J9:N10",
+    "O8:S8",
+    "O9:S10",
+    "T8:V8",
+    "AR18:AV18",
+    "A15:H15",
+    "A29:AQ29",
+    "A24:AQ24",
+    "AR22:AV22",
+    "G22:I22",
+    "AR19:AV19",
+    "AR20:AV20",
+    "AR21:AV21",
+    "A21:F21",
+    "E27:AQ27",
+    "A17:I17",
+    "A18:I18",
+    "A23:E23",
+    "F23:AQ23",
+    "A22:F22",
+    "G21:I21",
+    "A16:I16",
+    "A19:I19",
+    "A12:F14",
+    "G12:I13",
+    "G14:I14",
+    "J12:J13",
+    "AJ12:AJ13",
+    "AI12:AI13",
+    "AU8:BA8",
+    "AN14:BA14",
+    "AD12:AD13",
+    "AC12:AC13",
+    "AB12:AB13",
+    "W9:AE10",
+    "S12:S13",
+    "AU9:BA10",
+    "AW12:BA12",
+    "AW13:BA13",
+    "AR12:AV12",
+    "AR13:AV13",
+    "W12:W13",
+    "V12:V13",
+    "U12:U13",
+    "T12:T13",
+    "A11:BA11"
+  ],
+  "placeholders": [
+    {
+      "address": "J9",
+      "currentValue": "OUTDOOR"
+    },
+    {
+      "address": "K9",
+      "currentValue": "OUTDOOR"
+    },
+    {
+      "address": "L9",
+      "currentValue": "OUTDOOR"
+    },
+    {
+      "address": "M9",
+      "currentValue": "OUTDOOR"
+    },
+    {
+      "address": "N9",
+      "currentValue": "OUTDOOR"
+    },
+    {
+      "address": "J10",
+      "currentValue": "OUTDOOR"
+    },
+    {
+      "address": "K10",
+      "currentValue": "OUTDOOR"
+    },
+    {
+      "address": "L10",
+      "currentValue": "OUTDOOR"
+    },
+    {
+      "address": "M10",
+      "currentValue": "OUTDOOR"
+    },
+    {
+      "address": "N10",
+      "currentValue": "OUTDOOR"
+    },
+    {
+      "address": "J14",
+      "currentValue": "S"
+    },
+    {
+      "address": "K14",
+      "currentValue": "T"
+    },
+    {
+      "address": "L14",
+      "currentValue": "Q"
+    },
+    {
+      "address": "M14",
+      "currentValue": "Q"
+    },
+    {
+      "address": "N14",
+      "currentValue": "S"
+    },
+    {
+      "address": "O14",
+      "currentValue": "S"
+    },
+    {
+      "address": "P14",
+      "currentValue": "D"
+    },
+    {
+      "address": "Q14",
+      "currentValue": "S"
+    },
+    {
+      "address": "R14",
+      "currentValue": "T"
+    },
+    {
+      "address": "S14",
+      "currentValue": "Q"
+    },
+    {
+      "address": "T14",
+      "currentValue": "Q"
+    },
+    {
+      "address": "U14",
+      "currentValue": "S"
+    },
+    {
+      "address": "V14",
+      "currentValue": "S"
+    },
+    {
+      "address": "W14",
+      "currentValue": "D"
+    },
+    {
+      "address": "X14",
+      "currentValue": "S"
+    },
+    {
+      "address": "Y14",
+      "currentValue": "T"
+    },
+    {
+      "address": "Z14",
+      "currentValue": "Q"
+    },
+    {
+      "address": "AA14",
+      "currentValue": "Q"
+    },
+    {
+      "address": "AB14",
+      "currentValue": "S"
+    },
+    {
+      "address": "AC14",
+      "currentValue": "S"
+    },
+    {
+      "address": "AD14",
+      "currentValue": "D"
+    },
+    {
+      "address": "AE14",
+      "currentValue": "S"
+    },
+    {
+      "address": "AF14",
+      "currentValue": "T"
+    },
+    {
+      "address": "AG14",
+      "currentValue": "Q"
+    },
+    {
+      "address": "AH14",
+      "currentValue": "Q"
+    },
+    {
+      "address": "AI14",
+      "currentValue": "S"
+    },
+    {
+      "address": "AJ14",
+      "currentValue": "S"
+    },
+    {
+      "address": "AK14",
+      "currentValue": "D"
+    },
+    {
+      "address": "AL14",
+      "currentValue": "S"
+    },
+    {
+      "address": "AM14",
+      "currentValue": "T"
+    }
+  ]
+}

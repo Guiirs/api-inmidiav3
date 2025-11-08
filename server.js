@@ -47,6 +47,7 @@ const relatoriosRoutes = require('./routes/relatoriosRoutes');
 const publicApiRoutes = require('./routes/publicApiRoutes');
 const piRoutes = require('./routes/piRoutes');
 const contratoRoutes = require('./routes/contratoRoutes');
+const scriptRoutes = require('./routes/scriptRoutes');
 
 // --- [CORREÇÃO] Importa a nova rota de registo pública ---
 const publicRegisterRoutes = require('./routes/publicRegisterRoutes');
@@ -84,6 +85,13 @@ app.use('/api/v1/alugueis', aluguelRoutes);
 app.use('/api/v1/relatorios', relatoriosRoutes);
 app.use('/api/v1/pis', piRoutes);
 app.use('/api/v1/contratos', contratoRoutes);
+// Rota para executar scripts internos (apenas para administradores)
+app.use('/api/v1/scripts', scriptRoutes);
+
+// --- Rotas de TESTE (SEM AUTENTICAÇÃO) - REMOVER EM PRODUÇÃO ---
+const testExcelRoutes = require('./routes/testExcelRoutes');
+app.use('/api/v1', testExcelRoutes);
+logger.info('[Routes Test] Rotas de teste de Excel/PDF habilitadas (SEM autenticação)');
 
 // --- Rotas Públicas da API (API Key) ---
 app.use('/api/public', publicApiRoutes);

@@ -129,7 +129,7 @@ class PIService {
             .populate('cliente') // Popula todos os campos do cliente
             .populate({
                 path: 'placas', // Popula as placas
-                select: 'codigo tipo regiao', // Seleciona campos úteis
+                select: 'numero_placa codigo tipo regiao nomeDaRua tamanho', // Incluído nomeDaRua e tamanho para o PDF
                 populate: { path: 'regiao', select: 'nome' } // Popula a região dentro da placa
             })
             .lean();

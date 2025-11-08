@@ -44,9 +44,12 @@ const handleJWTExpiredError = () => new AppError('O seu token expirou. Por favor
  * Envia uma resposta de erro detalhada (para ambiente de desenvolvimento).
  */
 const sendErrorDev = (err, req, res) => {
-    res.status(err.statusCode).json({
-        status: err.status,
-        message: err.message,
+    const statusCode = err.statusCode || 500;
+    const status = err.status || 'error';
+    
+    res.status(statusCode).json({
+        status: status,
+        message: err.message || 'Erro interno do servidor',
         error: err,
         stack: err.stack,
         // Mantém a exibição de erros de validação específicos, se existirem
@@ -59,11 +62,14 @@ const sendErrorDev = (err, req, res) => {
  * Só vaza detalhes de erros operacionais (AppError).
  */
 const sendErrorProd = (err, res) => {
+    const statusCode = err.statusCode || 500;
+    const status = err.status || 'error';
+    
     // A) Erro Operacional (confiável, vindo de um AppError): Envia mensagem ao cliente
     if (err.isOperational) {
-        res.status(err.statusCode).json({
-            status: err.status,
-            message: err.message,
+        res.status(statusCode).json({
+            status: status,
+            message: err.message || 'Erro no servidor',
             // Adiciona erros de validação (ex: do express-validator) se existirem
             ...(err.validationErrors && { errors: err.validationErrors })
         });
