@@ -2,46 +2,29 @@
 const express = require('express');
 const router = express.Router();
 const logger = require('../config/logger');
-// [MELHORIA] Importa validadores de body e param
 const { param } = require('express-validator');
 
-// Importa controllers e middlewares
-let createPlacaController, updatePlacaController, getAllPlacasController, getPlacaByIdController, deletePlacaController, toggleDisponibilidadeController, getPlacaLocationsController, 
-    getPlacasDisponiveisController; // <--- 1. IMPORTAR NOVO CONTROLLER
-let authMiddleware;
-let upload;
-let placaValidationRules, handleValidationErrors, 
-    disponibilidadeValidationRules; // <--- 2. IMPORTAR NOVO VALIDADOR
+// Importa controllers, middlewares e validadores
+const {
+    createPlacaController,
+    updatePlacaController,
+    getAllPlacasController,
+    getPlacaByIdController,
+    deletePlacaController,
+    toggleDisponibilidadeController,
+    getPlacaLocationsController,
+    getPlacasDisponiveisController
+} = require('../controllers/placaController');
 
-try {
-    // Importa as regras de validação (o novo validador 'disponibilidadeValidationRules' será criado depois)
-    ({ placaValidationRules, handleValidationErrors, disponibilidadeValidationRules } = require('../validators/placaValidator'));
-    
-    // Importa os controllers
-    ({
-        createPlacaController, updatePlacaController, getAllPlacasController, getPlacaByIdController, deletePlacaController,
-        toggleDisponibilidadeController, getPlacaLocationsController,
-        getPlacasDisponiveisController // <--- 3. ASSOCIAR O CONTROLLER IMPORTADO
-    } = require('../controllers/placaController'));
+const authMiddleware = require('../middlewares/authMiddleware');
+const { upload } = require('../middlewares/uploadMiddleware');
+const {
+    placaValidationRules,
+    disponibilidadeValidationRules,
+    handleValidationErrors
+} = require('../validators/placaValidator');
 
-    authMiddleware = require('../middlewares/authMiddleware');
-    ({ upload } = require('../middlewares/uploadMiddleware'));
-    
-    // Verificações de integridade (mantidas)
-     if (typeof getAllPlacasController !== 'function' || !upload || typeof upload.single !== 'function') {
-         logger.error('[Routes Placas] ERRO CRÍTICO: Controllers ou Middleware de Placa ausentes/inválidos.');
-         throw new Error('Falha ao carregar componentes de Placa.');
-     }
-    logger.info('[Routes Placas] Componentes carregados com sucesso.');
-} catch (error) {
-    logger.error('[Routes Placas] ERRO CRÍTICO ao carregar dependências:', error);
-    // Permite que o app inicie, mas a rota falhará se o controller não carregar
-    if (error.message.includes('disponibilidadeValidationRules') || error.message.includes('getPlacasDisponiveisController')) {
-        logger.warn('[Routes Placas] Aviso: Controller/Validador de Placas Disponíveis ainda não implementado.');
-    } else {
-        throw new Error('Falha ao carregar dependências de Placa.');
-    }
-}
+logger.info('[Routes Placas] Componentes carregados com sucesso.');
 
 
 // --- Middleware de Autenticação para TODAS as rotas ---
@@ -60,24 +43,30 @@ logger.info('[Routes Placas] Definindo rotas de Placas...');
 router.get('/locations', getPlacaLocationsController);
 logger.debug('[Routes Placas] Rota GET /locations definida (Buscar Localizações).');
 
+// Middleware para normalizar parâmetros de query (camelCase -> snake_case)
+const normalizeQueryParams = (req, res, next) => {
+    logger.debug(`[normalizeQueryParams] Query ANTES: ${JSON.stringify(req.query)}`);
+    if (req.query.dataInicio) {
+        req.query.data_inicio = req.query.dataInicio;
+        logger.debug(`[normalizeQueryParams] ✅ Adicionado data_inicio: ${req.query.data_inicio}`);
+    }
+    if (req.query.dataFim) {
+        req.query.data_fim = req.query.dataFim;
+        logger.debug(`[normalizeQueryParams] ✅ Adicionado data_fim: ${req.query.data_fim}`);
+    }
+    logger.debug(`[normalizeQueryParams] Query DEPOIS: ${JSON.stringify(req.query)}`);
+    next();
+};
 
-// =============================================================================
-// == NOVA ROTA ADICIONADA AQUI ==
-// =============================================================================
 // GET /api/v1/placas/disponiveis - Busca placas disponíveis por período
 router.get(
     '/disponiveis',
-    // Adicionaremos a validação em um passo futuro no 'placaValidator.js'
-    // disponibilidadeValidationRules(), // <--- Descomente quando o validador existir
-    // handleValidationErrors,
-    (req, res, next) => { // Workaround temporário se o controller não carregar
-        if (typeof getPlacasDisponiveisController === 'function') {
-            return getPlacasDisponiveisController(req, res, next);
-        }
-        logger.error('[Routes Placas] getPlacasDisponiveisController não foi carregado.');
-        next(new Error('Controller de placas disponíveis não está pronto.'));
-    }
+    normalizeQueryParams,
+    disponibilidadeValidationRules(),
+    handleValidationErrors,
+    getPlacasDisponiveisController
 );
+logger.debug('[Routes Placas] Rota GET /disponiveis definida (Buscar Placas Disponíveis por Período).');
 logger.debug('[Routes Placas] Rota GET /disponiveis definida (Buscar Placas Disponíveis).');
 // =============================================================================
 

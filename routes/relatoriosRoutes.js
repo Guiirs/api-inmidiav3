@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const relatorioController = require('../controllers/relatorioController');
 const authMiddleware = require('../middlewares/authMiddleware');
+const { reportRateLimiter } = require('../middlewares/rateLimitMiddleware');
 const { query } = require('express-validator');
 const logger = require('../config/logger');
 
@@ -16,18 +17,34 @@ const validateDateRange = [
         .isDate({ format: 'YYYY-MM-DD' }).withMessage('Data de fim inválida. Use o formato YYYY-MM-DD.'),
 ];
 
-// Todas as rotas de relatório requerem autenticação
+// Validação para query params opcionais (filtros de relatórios)
+const validateOptionalFilters = [
+    query('regiao_id')
+        .optional()
+        .isMongoId().withMessage('ID de região inválido.'),
+    query('cliente_id')
+        .optional()
+        .isMongoId().withMessage('ID de cliente inválido.'),
+    query('status')
+        .optional()
+        .isIn(['ativo', 'inativo', 'concluido', 'cancelado', 'vencido']).withMessage('Status inválido.')
+];
+
+// Todas as rotas de relatório requerem autenticação e rate limiting
 router.use(authMiddleware);
+router.use(reportRateLimiter); // 20 req/min por empresa
 
 // 1. Rota para Relatório de Placas por Região
-// GET /api/v1/relatorios/placas-por-regiao
+// GET /api/v1/relatorios/placas-por-regiao?regiao_id=xxx (opcional)
 router.get('/placas-por-regiao', 
+    validateOptionalFilters,
     relatorioController.getPlacasPorRegiao
 );
 
 // 2. Rota para Resumo do Dashboard
 // GET /api/v1/relatorios/dashboard-summary
 router.get('/dashboard-summary', 
+    validateOptionalFilters,
     relatorioController.getDashboardSummary
 );
 

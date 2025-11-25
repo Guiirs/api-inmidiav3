@@ -18,14 +18,22 @@ if (!updateEmpresaRules || !handleValidationErrors) {
     throw new Error('Falha ao carregar validação de Empresa.');
 }
 
-// Rota para buscar a API Key
-router.get('/api-key', authMiddleware, empresaController.getApiKey);
+// ============================================================================
+// ROTAS DE API KEY - DEPRECIADAS
+// ============================================================================
+// As rotas abaixo foram DEPRECIADAS em favor das rotas em /user/me/empresa
+// Mantidas comentadas para referência histórica. Remover em versão futura.
+//
+// USAR:
+//   GET  /api/v1/user/me/empresa (buscar perfil da empresa com api_key_prefix)
+//   POST /api/v1/user/me/empresa/regenerate-api-key (regenerar com validação de senha)
+//
+// router.get('/api-key', authMiddleware, empresaController.getApiKey);
+// router.post('/api-key', authMiddleware, empresaController.regenerateApiKey);
+// ============================================================================
 
-// Rota para regenerar a API Key
-router.post('/api-key', authMiddleware, empresaController.regenerateApiKey);
 
-
-// --- ROTAS NOVAS ADICIONADAS AQUI ---
+// --- ROTAS DE DETALHES DA EMPRESA ---
 
 // Rota para BUSCAR os detalhes da empresa (Nome, Endereço, etc.)
 router.get(

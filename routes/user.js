@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
 const logger = require('../config/logger');
+const { regenerateApiKeyLimiter } = require('../middlewares/rateLimitMiddleware');
 
 // 1. Importa controladores e middlewares
 let userController, authenticateToken, handleValidationErrors;
@@ -87,13 +88,14 @@ logger.debug('[Routes User] Rota PUT /me definida (Atualizar Perfil).');
 // POST /api/v1/user/me/empresa/regenerate-api-key - Regenera API Key
 router.post(
     '/me/empresa/regenerate-api-key',
+    regenerateApiKeyLimiter, // Rate limit específico: 3x por hora
     [
         body('password').notEmpty().withMessage('A sua senha atual é obrigatória para regenerar a chave.')
     ],
     handleValidationErrors, 
     userController.regenerateEmpresaApiKey
 );
-logger.debug('[Routes User] Rota POST /me/empresa/regenerate-api-key definida (Regenerar API Key).');
+logger.debug('[Routes User] Rota POST /me/empresa/regenerate-api-key definida (Regenerar API Key) com rate limit 3/hora.');
 
 logger.info('[Routes User] Rotas de Utilizador definidas com sucesso.');
 

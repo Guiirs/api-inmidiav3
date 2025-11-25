@@ -50,13 +50,13 @@ describe('Rotas de Alugueis (/api/alugueis)', () => {
              password: await bcrypt.hash(adminPassword, 10),
              nome: 'Admin', sobrenome: 'Aluguel', role: 'admin', empresa: empresaId
          });
-        const cliente = await Cliente.create({ nome: 'Cliente Teste Aluguel', empresa: empresaId });
+    const cliente = await Cliente.create({ nome: 'Cliente Teste Aluguel', email: 'cliente_aluguel@test.com', empresa: empresaId });
         clienteId = cliente._id;
         const regiao = await Regiao.create({ nome: 'Região Teste Aluguel', empresa: empresaId });
         regiaoId = regiao._id;
 
         // Login
-        const adminLogin = await request(app).post('/api/auth/login')
+        const adminLogin = await request(app).post('/api/v1/auth/login')
             .send({ email: 'admin_aluguel@test.com', password: adminPassword });
         if (adminLogin.status !== 200 || !adminLogin.body.token) { throw new Error('Login falhou no beforeAll.'); }
         adminToken = adminLogin.body.token;
@@ -81,7 +81,7 @@ describe('Rotas de Alugueis (/api/alugueis)', () => {
     describe('POST /api/alugueis', () => {
         it('deve criar um aluguel futuro e manter a placa disponível', async () => {
             const dataInicio = getDateString(1); const dataFim = getDateString(10);
-            const response = await request(app).post('/api/alugueis').set('Authorization', `Bearer ${adminToken}`)
+            const response = await request(app).post('/api/v1/alugueis').set('Authorization', `Bearer ${adminToken}`)
                 .send({ placa_id: placaIdDisponivel.toString(), cliente_id: clienteId.toString(), data_inicio: dataInicio, data_fim: dataFim });
             expect(response.statusCode).toBe(201); expect(response.body).toHaveProperty('id');
             const placa = await Placa.findById(placaIdDisponivel); expect(placa).toBeDefined(); expect(placa.disponivel).toBe(true);
@@ -89,26 +89,26 @@ describe('Rotas de Alugueis (/api/alugueis)', () => {
 
          it('deve criar um aluguel que começa hoje e marcar placa como indisponível', async () => {
             const dataInicio = getDateString(0); const dataFim = getDateString(5);
-            const response = await request(app).post('/api/alugueis').set('Authorization', `Bearer ${adminToken}`)
+            const response = await request(app).post('/api/v1/alugueis').set('Authorization', `Bearer ${adminToken}`)
                 .send({ placa_id: placaIdDisponivel.toString(), cliente_id: clienteId.toString(), data_inicio: dataInicio, data_fim: dataFim });
             expect(response.statusCode).toBe(201); expect(response.body).toHaveProperty('id');
             const placa = await Placa.findById(placaIdDisponivel); expect(placa).toBeDefined(); expect(placa.disponivel).toBe(false);
         });
 
         it('deve retornar 409 (Conflict) se tentar alugar placa já alugada no período', async () => {
-            const response = await request(app).post('/api/alugueis').set('Authorization', `Bearer ${adminToken}`)
+            const response = await request(app).post('/api/v1/alugueis').set('Authorization', `Bearer ${adminToken}`)
                 .send({ placa_id: placaIdJaAlugada.toString(), cliente_id: clienteId.toString(), data_inicio: getDateString(0), data_fim: getDateString(10) });
             expect(response.statusCode).toBe(409); expect(response.body.message).toContain('já está reservada');
         });
 
          it('deve retornar 400 (Bad Request) se data_fim for <= data_inicio', async () => {
-             const response = await request(app).post('/api/alugueis').set('Authorization', `Bearer ${adminToken}`)
+                         const response = await request(app).post('/api/v1/alugueis').set('Authorization', `Bearer ${adminToken}`)
                 .send({ placa_id: placaIdDisponivel.toString(), cliente_id: clienteId.toString(), data_inicio: getDateString(5), data_fim: getDateString(3) });
              expect(response.statusCode).toBe(400); expect(response.body.message).toMatch(/posterior à data inicial/i);
         });
 
          it('deve retornar 401 (Unauthorized) se não houver token', async () => {
-              const response = await request(app).post('/api/alugueis')
+                  const response = await request(app).post('/api/v1/alugueis')
                  .send({ placa_id: placaIdDisponivel.toString(), cliente_id: clienteId.toString(), data_inicio: getDateString(1), data_fim: getDateString(10) });
               expect(response.statusCode).toBe(401);
          });
@@ -120,7 +120,7 @@ describe('Rotas de Alugueis (/api/alugueis)', () => {
                 { placa: placaIdDisponivel, cliente: clienteId, data_inicio: getDateObject(-10), data_fim: getDateObject(-5), empresa: empresaId },
                 { placa: placaIdDisponivel, cliente: clienteId, data_inicio: getDateObject(1), data_fim: getDateObject(5), empresa: empresaId }
             ]);
-            const response = await request(app).get(`/api/alugueis/placa/${placaIdDisponivel}`).set('Authorization', `Bearer ${adminToken}`);
+            const response = await request(app).get(`/api/v1/alugueis/placa/${placaIdDisponivel}`).set('Authorization', `Bearer ${adminToken}`);
             expect(response.statusCode).toBe(200); expect(response.body).toBeInstanceOf(Array); expect(response.body.length).toBe(2);
             expect(response.body[0]).toHaveProperty('id'); expect(response.body[0].cliente).toBeDefined();
             if (response.body[0].cliente) {
@@ -131,11 +131,11 @@ describe('Rotas de Alugueis (/api/alugueis)', () => {
         });
 
          it('deve retornar 401 (Unauthorized) se não houver token', async () => {
-              const response = await request(app).get(`/api/alugueis/placa/${placaIdDisponivel}`); expect(response.statusCode).toBe(401);
+              const response = await request(app).get(`/api/v1/alugueis/placa/${placaIdDisponivel}`); expect(response.statusCode).toBe(401);
          });
 
          it('deve retornar 400 (Bad Request) se o ID da placa for inválido', async () => {
-              const response = await request(app).get('/api/alugueis/placa/id-invalido').set('Authorization', `Bearer ${adminToken}`);
+              const response = await request(app).get('/api/v1/alugueis/placa/id-invalido').set('Authorization', `Bearer ${adminToken}`);
               expect(response.statusCode).toBe(400); expect(response.body.message).toContain('ID da placa inválido');
          });
     });
@@ -153,7 +153,7 @@ describe('Rotas de Alugueis (/api/alugueis)', () => {
         });
 
         it('deve apagar um aluguel futuro e manter a placa indisponível (devido ao ativo)', async () => {
-            const response = await request(app).delete(`/api/alugueis/${aluguelFuturoId}`).set('Authorization', `Bearer ${adminToken}`);
+            const response = await request(app).delete(`/api/v1/alugueis/${aluguelFuturoId}`).set('Authorization', `Bearer ${adminToken}`);
             expect(response.statusCode).toBe(200); expect(response.body.message).toContain('cancelado com sucesso');
             const deletedAluguel = await Aluguel.findById(aluguelFuturoId); expect(deletedAluguel).toBeNull();
             const placa = await Placa.findById(placaIdParaDelete); expect(placa).toBeDefined(); expect(placa.disponivel).toBe(false);
@@ -161,7 +161,7 @@ describe('Rotas de Alugueis (/api/alugueis)', () => {
 
         it('deve apagar um aluguel ativo e tornar a placa disponível (se não houver outros)', async () => {
              await Aluguel.findByIdAndDelete(aluguelFuturoId);
-             const response = await request(app).delete(`/api/alugueis/${aluguelAtivoId}`).set('Authorization', `Bearer ${adminToken}`);
+             const response = await request(app).delete(`/api/v1/alugueis/${aluguelAtivoId}`).set('Authorization', `Bearer ${adminToken}`);
             expect(response.statusCode).toBe(200);
             const deletedAluguel = await Aluguel.findById(aluguelAtivoId); expect(deletedAluguel).toBeNull();
             const placa = await Placa.findById(placaIdParaDelete); expect(placa).toBeDefined(); expect(placa.disponivel).toBe(true);
@@ -169,19 +169,19 @@ describe('Rotas de Alugueis (/api/alugueis)', () => {
 
         it('deve apagar um aluguel ativo mas manter a placa indisponível se houver outro aluguel ativo', async () => {
              const outroAluguelAtivo = await Aluguel.create({ placa: placaIdParaDelete, cliente: clienteId, data_inicio: getDateObject(-1), data_fim: getDateObject(1), empresa: empresaId });
-             const response = await request(app).delete(`/api/alugueis/${aluguelAtivoId}`).set('Authorization', `Bearer ${adminToken}`);
+             const response = await request(app).delete(`/api/v1/alugueis/${aluguelAtivoId}`).set('Authorization', `Bearer ${adminToken}`);
             expect(response.statusCode).toBe(200);
              const placa = await Placa.findById(placaIdParaDelete); expect(placa).toBeDefined(); expect(placa.disponivel).toBe(false);
              await Aluguel.findByIdAndDelete(outroAluguelAtivo._id);
         });
 
          it('deve retornar 401 (Unauthorized) se não houver token', async () => {
-              const response = await request(app).delete(`/api/alugueis/${aluguelAtivoId}`); expect(response.statusCode).toBe(401);
+              const response = await request(app).delete(`/api/v1/alugueis/${aluguelAtivoId}`); expect(response.statusCode).toBe(401);
          });
 
          it('deve retornar 404 (Not Found) se o aluguel não existir', async () => {
               const idInexistente = new mongoose.Types.ObjectId();
-              const response = await request(app).delete(`/api/alugueis/${idInexistente}`).set('Authorization', `Bearer ${adminToken}`);
+              const response = await request(app).delete(`/api/v1/alugueis/${idInexistente}`).set('Authorization', `Bearer ${adminToken}`);
               // <<< CORREÇÃO (Erro 3): Esperar 404 >>>
               expect(response.statusCode).toBe(404);
               // <<< FIM CORREÇÃO >>>
@@ -189,7 +189,7 @@ describe('Rotas de Alugueis (/api/alugueis)', () => {
           });
 
          it('deve retornar 400 (Bad Request) se o ID do aluguel for inválido', async () => {
-             const response = await request(app).delete('/api/alugueis/id-invalido').set('Authorization', `Bearer ${adminToken}`);
+             const response = await request(app).delete('/api/v1/alugueis/id-invalido').set('Authorization', `Bearer ${adminToken}`);
               expect(response.statusCode).toBe(400); expect(response.body.message).toContain('ID do aluguel inválido');
          });
     });

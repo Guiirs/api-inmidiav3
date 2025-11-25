@@ -4,6 +4,7 @@
 // const mongoose = require('mongoose'); // Não é mais necessário para validação de ID
 const RegiaoService = require('../services/regiaoService'); 
 const logger = require('../config/logger');
+const cacheService = require('../services/cacheService');
 
 // Instancia o serviço fora das funções do controller
 const regiaoService = new RegiaoService();
@@ -20,8 +21,22 @@ exports.getAllRegioes = async (req, res, next) => {
     logger.info(`[RegiaoController] Utilizador ${userId} requisitou getAllRegioes para empresa ${empresa_id}.`);
 
     try {
-        // Chama o serviço
+        // Verificar cache primeiro
+        const cacheKey = `regioes:empresa:${empresa_id}`;
+        const cachedRegioes = await cacheService.get(cacheKey);
+        
+        if (cachedRegioes) {
+            logger.info(`[RegiaoController] Cache HIT para getAllRegioes empresa ${empresa_id}.`);
+            return res.status(200).json(cachedRegioes);
+        }
+
+        // Cache MISS - buscar do banco
+        logger.info(`[RegiaoController] Cache MISS para getAllRegioes empresa ${empresa_id}. Consultando banco...`);
         const regioes = await regiaoService.getAll(empresa_id);
+        
+        // Cachear resultado por 5 minutos
+        await cacheService.set(cacheKey, regioes, 300);
+        
         logger.info(`[RegiaoController] getAllRegioes retornou ${regioes.length} regiões para empresa ${empresa_id}.`);
         res.status(200).json(regioes); // Serviço retorna a lista de objetos simples
     } catch (err) {
@@ -48,6 +63,10 @@ exports.createRegiao = async (req, res, next) => {
     try {
         // Chama o serviço (passa nome validado e sanitizado)
         const novaRegiao = await regiaoService.create(nome, empresa_id);
+        
+        // Invalidar cache de regiões após criação
+        await cacheService.del(`regioes:empresa:${empresa_id}`);
+        
         logger.info(`[RegiaoController] createRegiao bem-sucedida. Nova região ID: ${novaRegiao.id} ('${novaRegiao.nome}').`);
         res.status(201).json(novaRegiao); // Serviço retorna o novo documento
     } catch (err) {
@@ -77,6 +96,9 @@ exports.updateRegiao = async (req, res, next) => {
         // Chama o serviço
         const regiaoAtualizada = await regiaoService.update(regiaoIdToUpdate, novoNome, empresa_id);
         
+        // Invalidar cache de regiões após atualização
+        await cacheService.del(`regioes:empresa:${empresa_id}`);
+        
         logger.info(`[RegiaoController] updateRegiao para ID ${regiaoIdToUpdate} concluído com sucesso.`);
         res.status(200).json(regiaoAtualizada); // Serviço retorna o documento atualizado
     } catch (err) {
@@ -103,6 +125,10 @@ exports.deleteRegiao = async (req, res, next) => {
     try {
         // Chama o serviço (que verifica se está em uso)
         await regiaoService.delete(regiaoIdToDelete, empresa_id);
+        
+        // Invalidar cache de regiões após exclusão
+        await cacheService.del(`regioes:empresa:${empresa_id}`);
+        
         logger.info(`[RegiaoController] deleteRegiao para ID ${regiaoIdToDelete} concluído com sucesso.`);
         res.status(204).send(); // No Content
     } catch (err) {

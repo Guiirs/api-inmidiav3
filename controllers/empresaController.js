@@ -2,6 +2,7 @@
 const logger = require('../config/logger');
 const empresaService = require('../services/empresaService');
 const AppError = require('../utils/AppError'); // --- [CORREÇÃO] Importar AppError
+const cacheService = require('../services/cacheService');
 
 // Função existente (INTACTA)
 const getApiKey = async (req, res, next) => {
@@ -44,7 +45,26 @@ const regenerateApiKey = async (req, res, next) => {
 const getEmpresaDetails = async (req, res, next) => {
     try {
         const empresaId = req.user.empresaId;
+        
+        // Verificar cache primeiro
+        const cacheKey = `empresa:details:${empresaId}`;
+        const cachedEmpresa = await cacheService.get(cacheKey);
+        
+        if (cachedEmpresa) {
+            logger.info(`[EmpresaController] Cache HIT para getEmpresaDetails empresa ${empresaId}.`);
+            return res.status(200).json({
+                status: 'success',
+                data: cachedEmpresa
+            });
+        }
+
+        // Cache MISS - buscar do banco
+        logger.info(`[EmpresaController] Cache MISS para getEmpresaDetails empresa ${empresaId}. Consultando banco...`);
         const empresa = await empresaService.getEmpresaDetails(empresaId);
+        
+        // Cachear por 10 minutos (dados de empresa mudam raramente)
+        await cacheService.set(cacheKey, empresa, 600);
+        
         res.status(200).json({
             status: 'success',
             data: empresa
@@ -61,6 +81,9 @@ const updateEmpresaDetails = async (req, res, next) => {
         const updateData = req.body;
 
         const empresaAtualizada = await empresaService.updateEmpresaDetails(empresaId, updateData);
+        
+        // Invalidar cache após atualização
+        await cacheService.del(`empresa:details:${empresaId}`);
         
         res.status(200).json({
             status: 'success',

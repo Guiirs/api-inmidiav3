@@ -1,16 +1,20 @@
 /**
  * ===================================================
- * ROTAS DE TESTE - EXCEL (SEM AUTENTICAÇÃO)
+ * ROTAS DE TESTE - EXCEL (PROTEGIDAS COM ADMIN)
  * ===================================================
  * 
- * Rotas públicas para testar geração de Excel/PDF
- * REMOVER EM PRODUÇÃO!
+ * Rotas protegidas para testar geração de Excel/PDF
+ * ⚠️ DESABILITAR EM PRODUÇÃO via NODE_ENV
  */
 
 const express = require('express');
 const router = express.Router();
 const excelServiceV2 = require('../services/excelServiceV2');
 const PropostaInterna = require('../models/PropostaInterna');
+const adminAuthMiddleware = require('../middlewares/adminAuthMiddleware');
+
+// Protege todas as rotas de teste com autenticação admin
+router.use(adminAuthMiddleware);
 
 /**
  * GET /test-excel/:piId
@@ -67,10 +71,7 @@ router.get('/test-excel/:piId', async (req, res, next) => {
     
   } catch (error) {
     console.error('ERRO ao gerar Excel de teste:', error);
-    res.status(500).json({ 
-      error: error.message,
-      stack: error.stack 
-    });
+    next(error); // Use o errorHandler global
   }
 });
 
@@ -126,10 +127,7 @@ router.get('/test-excel-pdf/:piId', async (req, res, next) => {
     
   } catch (error) {
     console.error('ERRO ao gerar PDF de teste:', error);
-    res.status(500).json({ 
-      error: error.message,
-      stack: error.stack 
-    });
+    next(error); // Use o errorHandler global
   }
 });
 
@@ -159,7 +157,7 @@ router.get('/list-pis', async (req, res) => {
       }))
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error); // Use o errorHandler global
   }
 });
 

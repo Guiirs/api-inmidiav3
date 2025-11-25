@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
 const logger = require('../config/logger');
+const { authRateLimiter } = require('../middlewares/rateLimitMiddleware');
 // [MELHORIA] Importa validadores e o handler de erros
 const { body, param } = require('express-validator');
 const { handleValidationErrors } = require('../validators/authValidator');
@@ -82,11 +83,12 @@ if (typeof forgotPassword !== 'function') {
 }
 router.post(
     '/forgot-password',
-    validateForgotPassword, // 1. [MELHORIA] Valida o body
-    handleValidationErrors, // 2. [MELHORIA] Trata os erros
+    authRateLimiter,        // 1. Rate limit específico (10/min)
+    validateForgotPassword, // 2. [MELHORIA] Valida o body
+    handleValidationErrors, // 3. [MELHORIA] Trata os erros
     forgotPassword
 );
-logger.debug('[Routes Auth] Rota POST /forgot-password definida com Validação.');
+logger.debug('[Routes Auth] Rota POST /forgot-password definida com Validação e Rate Limit.');
 
 // POST /api/v1/auth/reset-password/:token
 if (typeof resetPassword !== 'function') {
@@ -95,11 +97,12 @@ if (typeof resetPassword !== 'function') {
 }
 router.post(
     '/reset-password/:token',
-    validateResetPassword,  // 1. [MELHORIA] Valida o token (param) e a senha (body)
-    handleValidationErrors, // 2. [MELHORIA] Trata os erros
+    authRateLimiter,        // 1. Rate limit específico (10/min)
+    validateResetPassword,  // 2. [MELHORIA] Valida o token (param) e a senha (body)
+    handleValidationErrors, // 3. [MELHORIA] Trata os erros
     resetPassword
 );
-logger.debug('[Routes Auth] Rota POST /reset-password/:token definida com Validação.');
+logger.debug('[Routes Auth] Rota POST /reset-password/:token definida com Validação e Rate Limit.');
 
 // GET /api/v1/auth/verify-token/:token
 if (typeof verifyResetToken !== 'function') {

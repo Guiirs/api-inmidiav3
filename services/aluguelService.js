@@ -5,6 +5,9 @@ const Placa = require('../models/Placa');
 const Cliente = require('../models/Cliente'); // Modelo Cliente (para populate)
 const logger = require('../config/logger'); 
 const AppError = require('../utils/AppError'); // [MELHORIA] Importa AppError
+const notificationService = require('./notificationService'); // [NOVO] Notificações WebSocket
+const webhookService = require('./webhookService'); // [NOVO] Webhooks
+const sseController = require('../controllers/sseController'); // [NOVO] SSE
 
 // Verifica se está em ambiente de teste (JEST_WORKER_ID é definido pelo Jest)
 const isTestEnvironment = process.env.JEST_WORKER_ID !== undefined;
@@ -155,12 +158,51 @@ class AluguelService {
             // Busca e formata o resultado (usando toJSON)
             const aluguelCriado = await Aluguel.findById(novoAluguelDoc._id)
                                                   .populate('cliente', 'nome logo_url')
+                                                  .populate('placa', 'numero_placa')
                                                   .exec(); 
 
              if (aluguelCriado) {
                  const obj = aluguelCriado.toJSON(); 
                  obj.cliente_nome = obj.cliente?.nome || 'Cliente Apagado';
                  if (!obj.cliente || !obj.cliente.id) obj.cliente = null;
+                 
+                 // [NOVO] Dispara notificações em tempo real
+                 try {
+                     const notificacaoData = {
+                         aluguel_id: obj.id,
+                         placa: obj.placa?.numero_placa || placa_id,
+                         cliente: obj.cliente_nome,
+                         data_inicio: obj.data_inicio,
+                         data_fim: obj.data_fim
+                     };
+
+                     // WebSocket
+                     notificationService.notifyEmpresa(
+                         empresa_id,
+                         notificationService.TYPES.ALUGUEL_CRIADO,
+                         notificacaoData
+                     );
+
+                     // SSE
+                     sseController.notificarEmpresa(
+                         empresa_id,
+                         'aluguel_criado',
+                         notificacaoData
+                     );
+
+                     // Webhook
+                     webhookService.disparar(
+                         empresa_id,
+                         'aluguel_criado',
+                         notificacaoData
+                     ).catch(err => logger.error(`[AluguelService] Erro ao disparar webhook: ${err.message}`));
+
+                     logger.info(`[AluguelService] Notificações disparadas para aluguel ${obj.id}`);
+                 } catch (notifError) {
+                     logger.error(`[AluguelService] Erro ao enviar notificações: ${notifError.message}`);
+                     // Não falha a operação se notificação falhar
+                 }
+                 
                  return obj;
              } else {
                  logger.error(`[AluguelService] ERRO INESPERADO: Aluguel ${novoAluguelDoc._id} não encontrado após criação/commit.`);

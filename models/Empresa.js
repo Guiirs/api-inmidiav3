@@ -36,12 +36,50 @@ const empresaSchema = new Schema({
         trim: true
     },
     
+    // Flag para ativar validação de Bi-Semana (14 dias) em aluguéis/PIs
+    // Se true, as datas devem estar alinhadas com as Bi-Semanas cadastradas
+    // Se false ou ausente, permite datas flexíveis
+    enforce_bi_week_validation: {
+        type: Boolean,
+        default: false,
+        index: true
+    },
+    
     // ---------------------------------
     
     apiKey: {
         type: String,
         unique: true
     },
+    api_key_hash: {
+        type: String
+    },
+    api_key_prefix: {
+        type: String
+    },
+    
+    // Histórico de regeneração de API Key (para auditoria)
+    api_key_history: [{
+        regenerated_by: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+            required: true
+        },
+        regenerated_at: {
+            type: Date,
+            default: Date.now,
+            required: true
+        },
+        ip_address: {
+            type: String,
+            trim: true
+        },
+        user_agent: {
+            type: String,
+            trim: true
+        }
+    }],
+    
     // Referência aos usuários que pertencem a esta empresa
     usuarios: [{
         type: Schema.Types.ObjectId,

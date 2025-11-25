@@ -1,5 +1,5 @@
 // validators/placaValidator.js
-const { body, validationResult } = require('express-validator');
+const { body, query, validationResult } = require('express-validator');
 const mongoose = require('mongoose'); // Importa mongoose para validar ObjectId
 
 // Regras de validação para criar ou atualizar uma placa
@@ -51,7 +51,56 @@ const handleValidationErrors = (req, res, next) => {
     return res.status(400).json({ message: firstError });
 };
 
+// Validação para query params de disponibilidade (data_inicio e data_fim)
+// Aceita tanto camelCase (dataInicio/dataFim) quanto snake_case (data_inicio/data_fim)
+const disponibilidadeValidationRules = () => {
+    return [
+        // Valida dataInicio (camelCase - vem do frontend)
+        query('dataInicio')
+            .optional() // Torna opcional para permitir data_inicio também
+            .isISO8601().withMessage('Data de início deve estar no formato ISO8601 (YYYY-MM-DD).')
+            .toDate(),
+        // Valida data_inicio (snake_case - formato interno/legado)
+        query('data_inicio')
+            .optional() // Torna opcional para permitir dataInicio também
+            .isISO8601().withMessage('Data de início deve estar no formato ISO8601 (YYYY-MM-DD).')
+            .toDate(),
+        // Valida dataFim (camelCase - vem do frontend)
+        query('dataFim')
+            .optional() // Torna opcional para permitir data_fim também
+            .isISO8601().withMessage('Data de fim deve estar no formato ISO8601 (YYYY-MM-DD).')
+            .toDate(),
+        // Valida data_fim (snake_case - formato interno/legado)
+        query('data_fim')
+            .optional() // Torna opcional para permitir dataFim também
+            .isISO8601().withMessage('Data de fim deve estar no formato ISO8601 (YYYY-MM-DD).')
+            .toDate()
+            .custom((dataFim, { req }) => {
+                // Pega o valor de data de início de qualquer fonte (camelCase ou snake_case)
+                const dataInicioValue = req.query.dataInicio || req.query.data_inicio;
+                const dataFimValue = req.query.dataFim || req.query.data_fim;
+                
+                // Validação: pelo menos uma das datas de início deve estar presente
+                if (!dataInicioValue) {
+                    throw new Error('A data de início é obrigatória.');
+                }
+                
+                // Validação: pelo menos uma das datas de fim deve estar presente
+                if (!dataFimValue) {
+                    throw new Error('A data de fim é obrigatória.');
+                }
+                
+                // Validação: data de fim deve ser >= data de início
+                if (dataInicioValue && new Date(dataFimValue) < new Date(dataInicioValue)) {
+                    throw new Error('A data de fim deve ser posterior ou igual à data de início.');
+                }
+                return true;
+            })
+    ];
+};
+
 module.exports = {
     placaValidationRules,
+    disponibilidadeValidationRules,
     handleValidationErrors,
 };

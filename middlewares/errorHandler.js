@@ -44,6 +44,15 @@ const handleJWTExpiredError = () => new AppError('O seu token expirou. Por favor
  * Envia uma resposta de erro detalhada (para ambiente de desenvolvimento).
  */
 const sendErrorDev = (err, req, res) => {
+    // Proteção contra erro undefined ou null
+    if (!err) {
+        return res.status(500).json({
+            status: 'error',
+            message: 'Erro desconhecido ocorreu',
+            error: 'Error object is undefined'
+        });
+    }
+
     const statusCode = err.statusCode || 500;
     const status = err.status || 'error';
     
@@ -95,6 +104,15 @@ const sendErrorProd = (err, res) => {
  * Middleware Global de Tratamento de Erros.
  */
 module.exports = (err, req, res, next) => {
+    // Proteção contra erro undefined ou null
+    if (!err) {
+        logger.error('Error handler recebeu erro undefined');
+        return res.status(500).json({
+            status: 'error',
+            message: 'Erro desconhecido ocorreu'
+        });
+    }
+
     // Define valores padrão para o erro, caso não venham
     err.statusCode = err.statusCode || 500;
     err.status = err.status || 'error';
@@ -104,14 +122,14 @@ module.exports = (err, req, res, next) => {
     // O log original era bom, 
     // mas agora está no topo.
     logger.error(
-        `${err.statusCode} - ${err.message} - ${req.originalUrl} - ${req.method} - IP: ${req.ip}`,
+        `${err.statusCode} - ${err.message || 'Sem mensagem'} - ${req.originalUrl} - ${req.method} - IP: ${req.ip}`,
         // Inclui o stack trace no log (não na resposta ao cliente)
         { stack: err.stack } 
     );
 
     // [MELHORIA] Distingue resposta de Dev e Prod
     if (process.env.NODE_ENV === 'development') {
-        sendErrorDev(err, res);
+        sendErrorDev(err, req, res);
     } else { // 'production' ou qualquer outro
         
         // Em produção, primeiro tentamos converter erros técnicos

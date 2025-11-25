@@ -1,0 +1,198 @@
+{
+  "version": "1.0.0",
+  "description": "Mapeamento de placeholders para células específicas do template CONTRATO.xlsx",
+  "mappings": {
+    "AGENCIA_NOME": {
+      "cells": ["H1"],
+      "description": "Nome da agência no cabeçalho",
+      "format": "text",
+      "merge": true
+    },
+    "AGENCIA_CNPJ": {
+      "cells": ["B3"],
+      "description": "CNPJ da agência",
+      "format": "cnpj"
+    },
+    "AGENCIA_ENDERECO": {
+      "cells": ["B4"],
+      "description": "Endereço completo da agência",
+      "format": "text"
+    },
+    "AGENCIA_TELEFONE": {
+      "cells": ["B5"],
+      "description": "Telefone da agência",
+      "format": "phone"
+    },
+    "CLIENTE_NOME": {
+      "cells": ["B8"],
+      "description": "Razão social do cliente/anunciante",
+      "format": "text"
+    },
+    "CLIENTE_CNPJ": {
+      "cells": ["B9"],
+      "description": "CNPJ ou CPF do cliente",
+      "format": "cnpj"
+    },
+    "CLIENTE_ENDERECO": {
+      "cells": ["B10"],
+      "description": "Endereço completo do cliente",
+      "format": "text"
+    },
+    "CLIENTE_TELEFONE": {
+      "cells": ["B11"],
+      "description": "Telefone(s) do cliente",
+      "format": "phone"
+    },
+    "CLIENTE_RESPONSAVEL": {
+      "cells": ["B12"],
+      "description": "Nome do responsável pelo cliente",
+      "format": "text"
+    },
+    "CLIENTE_SEGMENTO": {
+      "cells": ["B13"],
+      "description": "Segmento/ramo de atividade",
+      "format": "text"
+    },
+    "PI_CODE": {
+      "cells": ["B15", "B16"],
+      "description": "Código da PI",
+      "format": "text"
+    },
+    "TITULO": {
+      "cells": ["B17"],
+      "description": "Título/descrição da campanha",
+      "format": "text"
+    },
+    "PRODUTO": {
+      "cells": ["B18"],
+      "description": "Tipo de produto (OUTDOOR, BACKLIGHT, etc)",
+      "format": "text"
+    },
+    "PERIODO": {
+      "cells": ["B19"],
+      "description": "Período da campanha",
+      "format": "text"
+    },
+    "MES": {
+      "cells": ["B20"],
+      "description": "Mês de referência",
+      "format": "text"
+    },
+    "DATA_INICIO": {
+      "cells": ["B21"],
+      "description": "Data de início da veiculação",
+      "format": "date"
+    },
+    "DATA_FIM": {
+      "cells": ["B22"],
+      "description": "Data de fim da veiculação",
+      "format": "date"
+    },
+    "PERIODO_VEICULACAO": {
+      "cells": ["B23"],
+      "description": "Período completo formatado",
+      "format": "text"
+    },
+    "FORMA_PAGAMENTO": {
+      "cells": ["B24"],
+      "description": "Forma de pagamento",
+      "format": "text"
+    },
+    "VALOR_VEICULACAO": {
+      "cells": ["B26"],
+      "description": "Valor da veiculação",
+      "format": "currency"
+    },
+    "VALOR_PRODUCAO": {
+      "cells": ["B27"],
+      "description": "Valor da produção",
+      "format": "currency"
+    },
+    "VALOR_TOTAL": {
+      "cells": ["B28"],
+      "description": "Valor total do contrato",
+      "format": "currency"
+    },
+    "CONTATO": {
+      "cells": ["B30"],
+      "description": "Nome do contato/atendente",
+      "format": "text"
+    },
+    "AUTORIZACAO": {
+      "cells": ["B31"],
+      "description": "Número de autorização",
+      "format": "text"
+    },
+    "DATA_EMISSAO": {
+      "cells": ["B32"],
+      "description": "Data de emissão do contrato",
+      "format": "date"
+    },
+    "SEGMENTO": {
+      "cells": ["B33"],
+      "description": "Segmento do cliente",
+      "format": "text"
+    },
+    "OBSERVACOES": {
+      "cells": ["B35"],
+      "description": "Observações gerais",
+      "format": "text"
+    }
+  },
+  "placasTable": {
+    "startRow": 40,
+    "columns": {
+      "numero": {
+        "col": 2,
+        "header": "Nº"
+      },
+      "codigo": {
+        "col": 3,
+        "header": "Código"
+      },
+      "endereco": {
+        "col": 4,
+        "header": "Endereço"
+      },
+      "bairro": {
+        "col": 5,
+        "header": "Bairro"
+      },
+      "cidade": {
+        "col": 6,
+        "header": "Cidade"
+      },
+      "valor": {
+        "col": 7,
+        "header": "Valor",
+        "format": "currency"
+      },
+      "observacao": {
+        "col": 8,
+        "header": "Obs"
+      }
+    }
+  },
+  "formatters": {
+    "text": {
+      "type": "string",
+      "transform": null
+    },
+    "cnpj": {
+      "type": "string",
+      "transform": "formatCNPJ"
+    },
+    "phone": {
+      "type": "string",
+      "transform": "formatPhone"
+    },
+    "date": {
+      "type": "string",
+      "transform": "formatDate"
+    },
+    "currency": {
+      "type": "number",
+      "transform": "formatCurrency"
+    }
+  }
+}

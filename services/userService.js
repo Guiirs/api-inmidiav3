@@ -156,7 +156,7 @@ class UserService {
      * @returns {Promise<{fullApiKey: string, newPrefix: string}>} - Nova chave completa e novo prefixo.
      * @throws {AppError} - Lança erro 403, 401, 404 ou 500.
      */
-    async regenerateApiKey(userId, empresaId, userRole, userPassword) {
+    async regenerateApiKey(userId, empresaId, userRole, userPassword, auditData = {}) {
         logger.info(`[UserService] Utilizador ${userId} (Role: ${userRole}) tentando regenerar API Key para empresa ${empresaId}.`);
 
         // 1. Apenas Admins podem regenerar chaves
@@ -190,11 +190,8 @@ class UserService {
             logger.debug(`[UserService] Senha do admin ${userId} verificada com sucesso.`);
 
 
-            // 3. Buscar a empresa para obter o nome (para o prefixo)
-            const empresa = await Empresa.findById(empresaId)
-                                         .select('nome')
-                                         .lean()
-                                         .exec();
+            // 3. Buscar a empresa (não lean, para poder salvar depois)
+            const empresa = await Empresa.findById(empresaId).exec();
             if (!empresa) {
                  // [MELHORIA] Usa AppError
                  throw new AppError('Empresa associada não encontrada.', 404);
@@ -208,15 +205,19 @@ class UserService {
             const newFullApiKey = `${newApiKeyPrefix}_${newApiKeySecret}`;
 
             // 5. Atualizar a empresa com os novos valores
-            const updateResult = await Empresa.updateOne(
-                { _id: empresaId },
-                { $set: { api_key_hash: newApiKeyHash, api_key_prefix: newApiKeyPrefix } }
-            );
+            empresa.api_key_hash = newApiKeyHash;
+            empresa.api_key_prefix = newApiKeyPrefix;
 
-            if (updateResult.matchedCount === 0) {
-                 // [MELHORIA] Usa AppError
-                 throw new AppError('Falha ao encontrar a empresa para atualizar a API Key.', 404);
-            }
+            // 6. Adicionar registro de auditoria
+            empresa.api_key_history.push({
+                regenerated_by: userId,
+                regenerated_at: new Date(),
+                ip_address: auditData.ip_address || null,
+                user_agent: auditData.user_agent || null
+            });
+
+            await empresa.save();
+            
             logger.info(`[UserService] API Key para empresa ${empresaId} regenerada com sucesso por admin ${userId}.`);
 
 

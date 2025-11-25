@@ -5,27 +5,55 @@
  * 
  * Este serviço COPIA o template CONTRATO.xlsx e
  * preenche com os dados da PI, mantendo o layout EXATO
+ * 
+ * V2.1 - Agora usa Schema Loader para mapeamento inteligente
  */
 
 const ExcelJS = require('exceljs');
 const path = require('path');
 const fs = require('fs').promises;
 const puppeteer = require('puppeteer');
+const schemaLoader = require('./schemaLoader');
 
 class ExcelServiceV2 {
   
+  constructor() {
+    this.mappingCache = null;
+  }
+
+  /**
+   * Carrega o mapeamento de placeholders
+   */
+  async loadMapping() {
+    if (this.mappingCache) return this.mappingCache;
+    
+    try {
+      const mappingPath = path.join(__dirname, '../Schema/placeholder_mapping.json');
+      const content = await fs.readFile(mappingPath, 'utf8');
+      this.mappingCache = JSON.parse(content);
+      return this.mappingCache;
+    } catch (error) {
+      console.warn('Mapeamento não encontrado, usando modo fallback');
+      return null;
+    }
+  }
+
   /**
    * Gera Excel COPIANDO o template CONTRATO.xlsx
    * e preenchendo com dados reais da PI
    * 
-   * ESTRATÉGIA: Copiar template inteiro e apenas substituir valores
+   * ESTRATÉGIA V2.1: Usar schema loader para mapeamento inteligente
    */
   async generateContratoExcel(pi, cliente, empresa, user) {
     try {
-      console.log('=== GERANDO EXCEL V2 (COPIA EXATA) ===');
+      console.log('=== GERANDO EXCEL V2.1 (SCHEMA-BASED) ===');
       
-      // 1. Carregar template CONTRATO.xlsx
-      const templatePath = path.join(__dirname, '../CONTRATO.xlsx');
+      // 1. Carregar schema e mapeamento
+      await schemaLoader.loadSchema();
+      const mapping = await this.loadMapping();
+      
+      // 2. Carregar template CONTRATO.xlsx
+      const templatePath = path.join(__dirname, '../Schema/CONTRATO.xlsx');
       const workbook = new ExcelJS.Workbook();
       await workbook.xlsx.readFile(templatePath);
       
@@ -33,14 +61,24 @@ class ExcelServiceV2 {
       console.log(`Template carregado: ${worksheet.name}`);
       console.log(`Células mescladas no template: ${worksheet.model.merges.length}`);
       
-      // 2. Preparar dados
+      // 3. Preparar dados
       const dados = this.prepareData(pi, cliente, empresa, user);
       console.log('Dados preparados:', Object.keys(dados));
       
-      // 3. APENAS substituir valores nas células (sem mexer em estrutura)
-      this.replaceValues(worksheet, dados);
+      // 4. Preencher usando schema (mais eficiente)
+      if (mapping) {
+        this.fillUsingSchema(worksheet, dados, mapping);
+      } else {
+        // Fallback para método antigo
+        this.replaceValues(worksheet, dados);
+      }
       
-      // 4. Gerar buffer
+      // 5. Preencher tabela de placas
+      if (pi.placas && pi.placas.length > 0) {
+        this.fillPlacasTable(worksheet, pi.placas, mapping);
+      }
+      
+      // 6. Gerar buffer
       const buffer = await workbook.xlsx.writeBuffer();
       console.log(`Excel gerado: ${buffer.length} bytes`);
       console.log(`Células mescladas mantidas: ${worksheet.model.merges.length}`);
@@ -80,47 +118,211 @@ class ExcelServiceV2 {
     
     return {
       // AGÊNCIA
-      agenciaNome: empresa.nome || '',
-      agenciaCNPJ: empresa.cnpj || '',
-      agenciaEndereco: empresa.endereco || '',
-      agenciaTelefone: empresa.telefone || '',
+      AGENCIA_NOME: empresa.nome || '',
+      AGENCIA_CNPJ: empresa.cnpj || '',
+      AGENCIA_ENDERECO: empresa.endereco || '',
+      AGENCIA_TELEFONE: empresa.telefone || '',
       
       // CLIENTE/ANUNCIANTE
-      clienteNome: cliente.nome || '',
-      clienteCNPJ: cnpj,
-      clienteEndereco: endereco,
-      clienteTelefone: telefone,
-      clienteResponsavel: cliente.responsavel || '',
-      clienteSegmento: cliente.segmento || '',
+      CLIENTE_NOME: cliente.nome || '',
+      CLIENTE_CNPJ: cnpj,
+      CLIENTE_ENDERECO: endereco,
+      CLIENTE_TELEFONE: telefone,
+      CLIENTE_RESPONSAVEL: cliente.responsavel || '',
+      CLIENTE_SEGMENTO: cliente.segmento || '',
       
       // CONTRATO/PI
-      piCode: pi.pi_code || '',
-      titulo: pi.descricao || cliente.nome || '',
-      produto: pi.produto || 'OUTDOOR',
-      periodo: pi.descricaoPeriodo || '',
-      mes: this.getMesFromData(pi.dataInicio),
-      formaPagamento: pi.formaPagamento || 'BOLETO BANCÁRIO',
-      segmento: cliente.segmento || '',
-      contato: user?.name || empresa.nome || '',
-      autorizacao: pi.pi_code || '',
-      dataEmissao: dataEmissao,
-      dataInicio: dataInicio,
-      dataFim: dataFim,
-      periodoVeiculacao: `${dataInicio} até ${dataFim}`,
+      PI_CODE: pi.pi_code || '',
+      TITULO: pi.descricao || cliente.nome || '',
+      PRODUTO: pi.produto || 'OUTDOOR',
+      PERIODO: pi.descricaoPeriodo || '',
+      MES: this.getMesFromData(pi.dataInicio),
+      FORMA_PAGAMENTO: pi.formaPagamento || 'BOLETO BANCÁRIO',
+      SEGMENTO: cliente.segmento || '',
+      CONTATO: user?.name || empresa.nome || '',
+      AUTORIZACAO: pi.pi_code || '',
+      DATA_EMISSAO: dataEmissao,
+      DATA_INICIO: dataInicio,
+      DATA_FIM: dataFim,
+      PERIODO_VEICULACAO: `${dataInicio} até ${dataFim}`,
       
       // VALORES
-      valorTotal: pi.valorTotal || 0,
-      valorProducao: pi.valorProducao || 0,
-      valorVeiculacao: (pi.valorTotal || 0) - (pi.valorProducao || 0),
+      VALOR_TOTAL: pi.valorTotal || 0,
+      VALOR_PRODUCAO: pi.valorProducao || 0,
+      VALOR_VEICULACAO: (pi.valorTotal || 0) - (pi.valorProducao || 0),
       
       // PLACAS
       placas: pi.placas || [],
       totalPlacas: pi.placas?.length || 0,
       
       // OUTROS
-      descricao: pi.descricao || '',
-      observacoes: pi.observacoes || ''
+      DESCRICAO: pi.descricao || '',
+      OBSERVACOES: pi.observacoes || ''
     };
+  }
+
+  /**
+   * Preenche worksheet usando o schema (método otimizado)
+   */
+  fillUsingSchema(worksheet, dados, mapping) {
+    console.log('Preenchendo usando schema mapping...');
+    let preenchidas = 0;
+
+    // Percorrer mapeamentos
+    Object.keys(mapping.mappings).forEach(key => {
+      const config = mapping.mappings[key];
+      const valor = dados[key];
+
+      if (valor !== undefined && valor !== null && config.cells) {
+        config.cells.forEach(cellAddress => {
+          try {
+            const cell = worksheet.getCell(cellAddress);
+            
+            // Aplicar formatação conforme tipo
+            const valorFormatado = this.formatValue(valor, config.format);
+            
+            // Substituir placeholder ou definir valor diretamente
+            if (cell.value && typeof cell.value === 'string' && cell.value.includes(`{{${key}}}`)) {
+              cell.value = cell.value.replace(`{{${key}}}`, valorFormatado);
+            } else {
+              cell.value = valorFormatado;
+            }
+            
+            preenchidas++;
+            console.log(`${cellAddress}: ${key} = ${valorFormatado}`);
+          } catch (err) {
+            console.warn(`Erro ao preencher célula ${cellAddress}:`, err.message);
+          }
+        });
+      }
+    });
+
+    console.log(`✅ ${preenchidas} células preenchidas usando schema`);
+  }
+
+  /**
+   * Formata valor conforme tipo especificado
+   */
+  formatValue(value, format) {
+    if (value === null || value === undefined) return '';
+
+    switch (format) {
+      case 'currency':
+        return this.formatMoney(value);
+      case 'date':
+        return value; // Já vem formatado
+      case 'cnpj':
+        return this.formatCNPJ(value);
+      case 'phone':
+        return this.formatPhone(value);
+      case 'text':
+      default:
+        return String(value);
+    }
+  }
+
+  /**
+   * Formata CNPJ/CPF
+   */
+  formatCNPJ(value) {
+    if (!value) return '';
+    const cleaned = value.replace(/\D/g, '');
+    
+    if (cleaned.length === 11) {
+      // CPF: 000.000.000-00
+      return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    } else if (cleaned.length === 14) {
+      // CNPJ: 00.000.000/0000-00
+      return cleaned.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    }
+    
+    return value;
+  }
+
+  /**
+   * Formata telefone
+   */
+  formatPhone(value) {
+    if (!value) return '';
+    const cleaned = value.replace(/\D/g, '');
+    
+    if (cleaned.length === 11) {
+      // (00) 00000-0000
+      return cleaned.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    } else if (cleaned.length === 10) {
+      // (00) 0000-0000
+      return cleaned.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+    }
+    
+    return value;
+  }
+
+  /**
+   * Preenche tabela de placas dinamicamente
+   */
+  fillPlacasTable(worksheet, placas, mapping) {
+    console.log(`Preenchendo tabela de placas: ${placas.length} placas`);
+    
+    if (!mapping?.placasTable) {
+      console.warn('Configuração de tabela de placas não encontrada');
+      return;
+    }
+
+    const config = mapping.placasTable;
+    let currentRow = config.startRow;
+
+    placas.forEach((placa, index) => {
+      try {
+        // Número sequencial
+        if (config.columns.numero) {
+          const cell = worksheet.getCell(currentRow, config.columns.numero.col);
+          cell.value = index + 1;
+        }
+
+        // Código da placa
+        if (config.columns.codigo) {
+          const cell = worksheet.getCell(currentRow, config.columns.codigo.col);
+          cell.value = placa.codigo || placa.codPlaca || '';
+        }
+
+        // Endereço
+        if (config.columns.endereco) {
+          const cell = worksheet.getCell(currentRow, config.columns.endereco.col);
+          cell.value = placa.endereco || '';
+        }
+
+        // Bairro
+        if (config.columns.bairro) {
+          const cell = worksheet.getCell(currentRow, config.columns.bairro.col);
+          cell.value = placa.bairro || '';
+        }
+
+        // Cidade
+        if (config.columns.cidade) {
+          const cell = worksheet.getCell(currentRow, config.columns.cidade.col);
+          cell.value = placa.cidade || '';
+        }
+
+        // Valor
+        if (config.columns.valor) {
+          const cell = worksheet.getCell(currentRow, config.columns.valor.col);
+          cell.value = placa.valor || 0;
+          cell.numFmt = 'R$ #,##0.00';
+        }
+
+        // Observação
+        if (config.columns.observacao) {
+          const cell = worksheet.getCell(currentRow, config.columns.observacao.col);
+          cell.value = placa.observacao || '';
+        }
+
+        currentRow++;
+      } catch (err) {
+        console.warn(`Erro ao preencher placa ${index + 1}:`, err.message);
+      }
+    });
+
+    console.log(`✅ ${placas.length} placas preenchidas`);
   }
   
   /**

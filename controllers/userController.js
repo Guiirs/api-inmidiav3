@@ -100,8 +100,14 @@ exports.regenerateEmpresaApiKey = async (req, res, next) => {
     // [MELHORIA] Remove a verificação de validationResult (agora na rota)
 
     try {
-        // Chama o serviço refatorado
-        const result = await userService.regenerateApiKey(userId, empresaId, userRole, password);
+        // Preparar dados de auditoria
+        const auditData = {
+            ip_address: req.ip || req.connection.remoteAddress,
+            user_agent: req.get('user-agent')
+        };
+
+        // Chama o serviço refatorado com dados de auditoria
+        const result = await userService.regenerateApiKey(userId, empresaId, userRole, password, auditData);
 
         logger.info(`[UserController] API Key regenerada com sucesso para empresa ${empresaId} por admin ${userId}.`);
         

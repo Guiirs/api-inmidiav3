@@ -10,6 +10,7 @@ const {
     deleteCliente
 } = require('../services/clienteService');
 const logger = require('../config/logger');
+const cacheService = require('../services/cacheService');
 
 /**
  * Controller para criar um novo cliente.
@@ -28,6 +29,9 @@ exports.createClienteController = async (req, res, next) => {
     try {
         // Chama a função do serviço diretamente (os dados já vêm validados/sanitizados)
         const novoCliente = await createCliente(req.body, req.file, empresaId);
+
+        // Invalidar cache de clientes após criação
+        await cacheService.invalidatePattern(`clientes:empresa:${empresaId}:*`);
 
         logger.info(`[ClienteController] Cliente ${novoCliente.nome} (ID: ${novoCliente.id}) criado com sucesso por ${adminUserId}.`);
         res.status(201).json(novoCliente); // Retorna o documento criado (objeto formatado)
@@ -58,6 +62,9 @@ exports.updateClienteController = async (req, res, next) => {
         // Chama a função do serviço diretamente
         const clienteAtualizado = await updateCliente(clienteIdToUpdate, req.body, req.file, empresaId);
 
+        // Invalidar cache de clientes após atualização
+        await cacheService.invalidatePattern(`clientes:empresa:${empresaId}:*`);
+
         logger.info(`[ClienteController] Cliente ID ${clienteIdToUpdate} atualizado com sucesso por ${adminUserId}.`);
         res.status(200).json(clienteAtualizado); // Retorna o documento atualizado (objeto formatado)
     } catch (error) {
@@ -79,16 +86,28 @@ exports.getAllClientesController = async (req, res, next) => {
     logger.info(`[ClienteController] Utilizador ${userId} requisitou getAllClientes para empresa ${empresaId}.`);
 
     try {
-        // *** CORREÇÃO APLICADA AQUI ***
-        // Passa os query params (page, limit) para o serviço
+        // Gerar chave de cache incluindo page e limit
+        const page = req.query.page || 1;
+        const limit = req.query.limit || 10;
+        const cacheKey = `clientes:empresa:${empresaId}:page:${page}:limit:${limit}`;
+        
+        // Verificar cache primeiro
+        const cachedClientes = await cacheService.get(cacheKey);
+        
+        if (cachedClientes) {
+            logger.info(`[ClienteController] Cache HIT para getAllClientes empresa ${empresaId} (page ${page}).`);
+            return res.status(200).json(cachedClientes);
+        }
+
+        // Cache MISS - buscar do banco
+        logger.info(`[ClienteController] Cache MISS para getAllClientes empresa ${empresaId} (page ${page}). Consultando banco...`);
         const clientesResult = await getAllClientes(empresaId, req.query);
 
-        // O serviço agora retorna { data: [...], pagination: ... }
+        // Cachear resultado por 3 minutos (clientes mudam menos que placas)
+        await cacheService.set(cacheKey, clientesResult, 180);
+
         logger.info(`[ClienteController] getAllClientes retornou ${clientesResult.data.length} clientes para empresa ${empresaId}.`);
-        
-        // Retorna o objeto completo que o frontend espera
         res.status(200).json(clientesResult);
-        // *** FIM DA CORREÇÃO ***
         
     } catch (error) {
         // O erro (que deve ser um AppError do service) é passado para o errorHandler global
@@ -139,6 +158,9 @@ exports.getClienteByIdController = async (req, res, next) => {
 
      try {
          await deleteCliente(clienteIdToDelete, empresaId);
+
+         // Invalidar cache de clientes após exclusão
+         await cacheService.invalidatePattern(`clientes:empresa:${empresaId}:*`);
 
          logger.info(`[ClienteController] Cliente ID ${clienteIdToDelete} apagado com sucesso por ${adminUserId}.`);
          res.status(204).send(); // No content

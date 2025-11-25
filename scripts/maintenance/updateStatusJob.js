@@ -102,15 +102,15 @@ const iniciarCronJobs = () => {
     // Executa imediatamente na inicialização
     updatePlacaStatusJob();
 
-    // Configura para executar a cada 30 minutos
-    const INTERVALO_30_MIN = 30 * 60 * 1000; // 30 minutos em milissegundos
+    // Configura para executar a cada 10 minutos
+    const INTERVALO_10_MIN = 10 * 60 * 1000; // 10 minutos em milissegundos
     
     setInterval(async () => {
-        logger.info('[CRON JOB] ⏰ Executando verificação agendada (a cada 30 minutos)...');
+        logger.info('[CRON JOB] ⏰ Executando verificação agendada (a cada 10 minutos)...');
         await updatePlacaStatusJob();
-    }, INTERVALO_30_MIN);
+    }, INTERVALO_10_MIN);
 
-    logger.info(`[CRON JOB] ✅ Cron jobs configurados! Próxima execução em 30 minutos.`);
+    logger.info(`[CRON JOB] ✅ Cron jobs configurados! Próxima execução em 10 minutos.`);
 };
 
 module.exports = iniciarCronJobs;
