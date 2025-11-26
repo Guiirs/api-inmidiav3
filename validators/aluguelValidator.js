@@ -2,10 +2,15 @@
 const { body, param } = require('express-validator');
 const BiWeek = require('../models/BiWeek');
 const Empresa = require('../models/Empresa');
+const { PeriodType } = require('../utils/periodTypes');
 const logger = require('../config/logger');
 
 /**
- * Validação base para criar aluguel (sem validação de Bi-Semana)
+ * [PERÍODO UNIFICADO] Validação para criar aluguel
+ * Aceita 3 formatos:
+ * 1. Novo formato: { periodType: 'bi-week', biWeekIds: [...] }
+ * 2. Novo formato custom: { periodType: 'custom', startDate, endDate }
+ * 3. Legado: { bi_week_ids: [...] } ou { data_inicio, data_fim }
  */
 exports.validateAluguel = [
     body('placa_id')
@@ -16,21 +21,84 @@ exports.validateAluguel = [
         .notEmpty().withMessage('ID do cliente é obrigatório.')
         .isMongoId().withMessage('ID do cliente inválido.'),
 
+    // [PERÍODO UNIFICADO] Campo novo: periodType
+    body('periodType')
+        .optional()
+        .isIn([PeriodType.BI_WEEK, PeriodType.CUSTOM])
+        .withMessage(`periodType deve ser '${PeriodType.BI_WEEK}' ou '${PeriodType.CUSTOM}'.`),
+
+    // [PERÍODO UNIFICADO] Novos campos para bi-week
+    body('biWeekIds')
+        .optional()
+        .isArray({ min: 1 }).withMessage('biWeekIds deve ser um array com pelo menos 1 elemento.')
+        .custom((value) => {
+            const regex = /^\d{4}-\d{2}$/;
+            const allValid = value.every(id => regex.test(id));
+            if (!allValid) {
+                throw new Error('Formato inválido em biWeekIds. Use YYYY-NN (ex: 2025-01)');
+            }
+            return true;
+        }),
+
+    // [PERÍODO UNIFICADO] Novos campos para custom
+    body('startDate')
+        .optional()
+        .isISO8601().withMessage('startDate inválido (formato YYYY-MM-DD).')
+        .toDate(),
+
+    body('endDate')
+        .optional()
+        .isISO8601().withMessage('endDate inválido (formato YYYY-MM-DD).')
+        .toDate()
+        .custom((value, { req }) => {
+            if (req.body.startDate && value <= req.body.startDate) {
+                throw new Error('endDate deve ser posterior a startDate.');
+            }
+            return true;
+        }),
+
+    // [LEGADO] Compatibilidade com formato antigo - bi_week_ids
+    body('bi_week_ids')
+        .optional()
+        .isArray({ min: 1 }).withMessage('bi_week_ids deve ser um array com pelo menos 1 elemento.')
+        .custom((value) => {
+            const regex = /^\d{4}-\d{2}$/;
+            const allValid = value.every(id => regex.test(id));
+            if (!allValid) {
+                throw new Error('Formato inválido em bi_week_ids. Use YYYY-NN (ex: 2025-01)');
+            }
+            return true;
+        }),
+
+    // [LEGADO] Compatibilidade com formato antigo - data_inicio
     body('data_inicio')
-        .notEmpty().withMessage('Data de início é obrigatória.')
+        .optional()
         .isISO8601().withMessage('Data de início inválida (formato YYYY-MM-DD).')
         .toDate(),
 
+    // [LEGADO] Compatibilidade com formato antigo - data_fim
     body('data_fim')
-        .notEmpty().withMessage('Data final é obrigatória.')
+        .optional()
         .isISO8601().withMessage('Data final inválida (formato YYYY-MM-DD).')
         .toDate()
         .custom((value, { req }) => {
-            if (!req.body.data_inicio || value <= req.body.data_inicio) {
+            if (req.body.data_inicio && value <= req.body.data_inicio) {
                 throw new Error('A data final deve ser posterior à data inicial.');
             }
             return true;
         }),
+
+    // Validação: Pelo menos um formato de período deve ser fornecido
+    body().custom((value, { req }) => {
+        const hasNewFormat = req.body.periodType || req.body.biWeekIds || req.body.startDate || req.body.endDate;
+        const hasLegacyFormat = req.body.bi_week_ids || (req.body.data_inicio && req.body.data_fim);
+        
+        if (!hasNewFormat && !hasLegacyFormat) {
+            throw new Error('É necessário fornecer informações de período: (periodType + biWeekIds/startDate+endDate) ou (bi_week_ids/data_inicio+data_fim)');
+        }
+        
+        return true;
+    }),
 ];
 
 /**

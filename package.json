@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "test": "cross-env NODE_ENV=test jest --testTimeout=10000",
+    "test": "cross-env NODE_ENV=test jest --config=config/jest.config.js --testTimeout=10000",
     "test:migrate": "cross-env NODE_ENV=test npx knex migrate:latest",
     "start": "cross-env NODE_ENV=production node server.js",
     "dev": "cross-env NODE_ENV=development node server.js",

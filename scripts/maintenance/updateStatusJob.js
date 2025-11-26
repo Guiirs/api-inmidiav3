@@ -7,7 +7,9 @@ const Aluguel = require('../../models/Aluguel'); // Modelo Aluguel Mongoose
 // [MELHORIA] Importa o PIService para a nova verificação de status
 const PIService = require('../../services/piService');
 // [NOVO] Importa o PISyncService para validação e sincronização
-const PISyncService = require('../../services/piSyncService'); 
+const PISyncService = require('../../services/piSyncService');
+// [NOVO] Importa o WhatsApp Daily Report scheduler
+const { scheduleWhatsAppReports } = require('../whatsappDailyReport'); 
 
 /**
  * Lógica da tarefa agendada (Cron Job) para atualizar o status das placas E PIs.
@@ -96,7 +98,7 @@ const updatePlacaStatusJob = async () => {
 };
 
 /**
- * Configura e inicia os cron jobs
+ * Inicia os cron jobs no servidor
  */
 const iniciarCronJobs = () => {
     // Executa imediatamente na inicialização
@@ -111,6 +113,13 @@ const iniciarCronJobs = () => {
     }, INTERVALO_10_MIN);
 
     logger.info(`[CRON JOB] ✅ Cron jobs configurados! Próxima execução em 10 minutos.`);
+
+    // [NOVO] Agenda relatórios diários do WhatsApp
+    if (process.env.WHATSAPP_ENABLED === 'true') {
+        scheduleWhatsAppReports();
+    } else {
+        logger.info('[CRON JOB] WhatsApp desabilitado (WHATSAPP_ENABLED não está como true)');
+    }
 };
 
 module.exports = iniciarCronJobs;

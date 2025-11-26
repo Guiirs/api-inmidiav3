@@ -1,0 +1,125 @@
+2025/11/26-12:36:12.158 d78 Reusing MANIFEST I:\API\backstage\BECKEND\whatsapp-session\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/11/26-12:36:12.159 d78 Recovering log #1326
+2025/11/26-12:36:12.263 d78 Reusing old log I:\API\backstage\BECKEND\whatsapp-session\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/001326.log 
+2025/11/26-12:36:12.263 d78 Delete type=2 #1315
+2025/11/26-12:36:12.263 d78 Delete type=2 #1316
+2025/11/26-12:36:12.263 d78 Delete type=2 #1317
+2025/11/26-12:36:12.263 d78 Delete type=2 #1318
+2025/11/26-12:36:12.263 d78 Delete type=2 #1319
+2025/11/26-12:36:12.263 d78 Delete type=2 #1320
+2025/11/26-12:36:12.263 d78 Delete type=2 #1321
+2025/11/26-12:36:12.263 d78 Delete type=2 #1322
+2025/11/26-12:36:12.263 d78 Delete type=2 #1323
+2025/11/26-12:36:12.263 d78 Delete type=2 #1324
+2025/11/26-12:36:12.263 d78 Delete type=2 #1328
+2025/11/26-12:36:16.892 66ac Level-0 table #1350: started
+2025/11/26-12:36:17.021 66ac Level-0 table #1350: 585379 bytes OK
+2025/11/26-12:36:17.062 66ac Delete type=0 #1326
+2025/11/26-12:36:17.062 66ac Manual compaction at level-0 from '\x00D\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00E\x00\x00\x00' @ 0 : 0; will stop at '\x00D\x00\x00\x05' @ 3522850 : 1
+2025/11/26-12:36:17.062 66ac Compacting 1@0 + 0@1 files
+2025/11/26-12:36:17.138 66ac Generated table #1351@0: 13787 keys, 267571 bytes
+2025/11/26-12:36:17.201 66ac Generated table #1352@0: 223 keys, 19513 bytes
+2025/11/26-12:36:17.201 66ac Compacted 1@0 + 0@1 files => 287084 bytes
+2025/11/26-12:36:17.228 66ac compacted to: files[ 0 2 19 0 0 0 0 ]
+2025/11/26-12:36:17.228 66ac Delete type=2 #1350
+2025/11/26-12:36:17.229 66ac Manual compaction at level-0 from '\x00D\x00\x00\x05' @ 3522850 : 1 .. '\x00E\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/11/26-12:36:19.181 66ac Compacting 1@1 + 8@2 files
+2025/11/26-12:36:20.322 66ac Generated table #1353@1: 27080 keys, 2276114 bytes
+2025/11/26-12:36:20.813 66ac Generated table #1354@1: 28208 keys, 2249785 bytes
+2025/11/26-12:36:21.396 66ac Generated table #1355@1: 11461 keys, 2160620 bytes
+2025/11/26-12:36:22.004 66ac Generated table #1356@1: 12106 keys, 2135885 bytes
+2025/11/26-12:36:22.463 66ac Generated table #1357@1: 112137 keys, 2265372 bytes
+2025/11/26-12:36:22.996 66ac Generated table #1358@1: 106787 keys, 2257134 bytes
+2025/11/26-12:36:23.377 66ac Generated table #1359@1: 106559 keys, 2258061 bytes
+2025/11/26-12:36:23.621 66ac Generated table #1360@1: 89267 keys, 1907621 bytes
+2025/11/26-12:36:23.621 66ac Compacted 1@1 + 8@2 files => 17510592 bytes
+2025/11/26-12:36:23.644 66ac compacted to: files[ 0 1 19 0 0 0 0 ]
+2025/11/26-12:36:23.648 66ac Compacting 1@1 + 10@2 files
+2025/11/26-12:36:23.921 66ac Generated table #1361@1: 88880 keys, 2240133 bytes
+2025/11/26-12:36:24.521 66ac Generated table #1362@1: 68301 keys, 2295988 bytes
+2025/11/26-12:36:25.050 66ac Generated table #1363@1: 4668 keys, 2147835 bytes
+2025/11/26-12:36:25.503 66ac Generated table #1364@1: 1678 keys, 2140718 bytes
+2025/11/26-12:36:26.017 66ac Generated table #1365@1: 1908 keys, 2143842 bytes
+2025/11/26-12:36:26.254 66ac Generated table #1366@1: 1795 keys, 2141549 bytes
+2025/11/26-12:36:26.429 66ac Generated table #1367@1: 1949 keys, 2147128 bytes
+2025/11/26-12:36:26.612 66ac Generated table #1368@1: 2236 keys, 2148014 bytes
+2025/11/26-12:36:26.779 66ac Generated table #1369@1: 2344 keys, 2152013 bytes
+2025/11/26-12:36:27.072 66ac Generated table #1370@1: 15341 keys, 2119617 bytes
+2025/11/26-12:36:27.072 66ac Compacted 1@1 + 10@2 files => 21676837 bytes
+2025/11/26-12:36:27.136 66ac compacted to: files[ 0 0 19 0 0 0 0 ]
+2025/11/26-12:36:27.136 66ac Delete type=2 #1330
+2025/11/26-12:36:27.136 66ac Delete type=2 #1331
+2025/11/26-12:36:27.136 66ac Delete type=2 #1332
+2025/11/26-12:36:27.136 66ac Delete type=2 #1333
+2025/11/26-12:36:27.136 66ac Delete type=2 #1334
+2025/11/26-12:36:27.136 66ac Delete type=2 #1335
+2025/11/26-12:36:27.136 66ac Delete type=2 #1336
+2025/11/26-12:36:27.136 66ac Delete type=2 #1337
+2025/11/26-12:36:27.136 66ac Delete type=2 #1352
+2025/11/26-13:07:04.390 5e5c Level-0 table #1372: started
+2025/11/26-13:07:04.626 5e5c Level-0 table #1372: 1306215 bytes OK
+2025/11/26-13:07:04.725 5e5c Delete type=2 #1338
+2025/11/26-13:07:04.725 5e5c Delete type=2 #1339
+2025/11/26-13:07:04.725 5e5c Delete type=2 #1340
+2025/11/26-13:07:04.726 5e5c Delete type=2 #1341
+2025/11/26-13:07:04.726 5e5c Delete type=2 #1342
+2025/11/26-13:07:04.726 5e5c Delete type=2 #1343
+2025/11/26-13:07:04.726 5e5c Delete type=2 #1344
+2025/11/26-13:07:04.726 5e5c Delete type=2 #1345
+2025/11/26-13:07:04.726 5e5c Delete type=2 #1346
+2025/11/26-13:07:04.726 5e5c Delete type=2 #1347
+2025/11/26-13:07:04.726 5e5c Delete type=0 #1349
+2025/11/26-13:07:04.726 5e5c Delete type=2 #1351
+2025/11/26-13:08:00.627 5e5c Compacting 1@0 + 0@1 files
+2025/11/26-13:08:00.759 5e5c Generated table #1373@0: 25501 keys, 569970 bytes
+2025/11/26-13:08:00.810 5e5c Generated table #1374@0: 1542 keys, 87242 bytes
+2025/11/26-13:08:00.810 5e5c Compacted 1@0 + 0@1 files => 657212 bytes
+2025/11/26-13:08:00.843 5e5c compacted to: files[ 0 2 19 0 0 0 0 ]
+2025/11/26-13:08:00.843 5e5c Delete type=2 #1372
+2025/11/26-13:16:27.260 66fc Compacting 1@1 + 10@2 files
+2025/11/26-13:16:27.576 66fc Generated table #1375@1: 88619 keys, 2240321 bytes
+2025/11/26-13:16:27.866 66fc Generated table #1376@1: 70510 keys, 2299399 bytes
+2025/11/26-13:16:28.093 66fc Generated table #1377@1: 7626 keys, 2149823 bytes
+2025/11/26-13:16:28.288 66fc Generated table #1378@1: 1676 keys, 2138990 bytes
+2025/11/26-13:16:28.443 66fc Generated table #1379@1: 1898 keys, 2143182 bytes
+2025/11/26-13:16:28.686 66fc Generated table #1380@1: 1738 keys, 2140096 bytes
+2025/11/26-13:16:28.776 66fc Generated table #1381@1: 1971 keys, 2146166 bytes
+2025/11/26-13:16:28.914 66fc Generated table #1382@1: 2226 keys, 2147410 bytes
+2025/11/26-13:16:29.056 66fc Generated table #1383@1: 2332 keys, 2150143 bytes
+2025/11/26-13:16:29.209 66fc Generated table #1384@1: 12268 keys, 2168890 bytes
+2025/11/26-13:16:29.255 66fc Generated table #1385@1: 3300 keys, 174549 bytes
+2025/11/26-13:16:29.255 66fc Compacted 1@1 + 10@2 files => 21898969 bytes
+2025/11/26-13:16:29.283 66fc compacted to: files[ 0 1 20 0 0 0 0 ]
+2025/11/26-13:16:29.283 66fc Delete type=2 #1361
+2025/11/26-13:16:29.283 66fc Delete type=2 #1362
+2025/11/26-13:16:29.283 66fc Delete type=2 #1363
+2025/11/26-13:16:29.283 66fc Delete type=2 #1364
+2025/11/26-13:16:29.283 66fc Delete type=2 #1365
+2025/11/26-13:16:29.283 66fc Delete type=2 #1366
+2025/11/26-13:16:29.283 66fc Delete type=2 #1367
+2025/11/26-13:16:29.284 66fc Delete type=2 #1368
+2025/11/26-13:16:29.284 66fc Delete type=2 #1369
+2025/11/26-13:16:29.284 66fc Delete type=2 #1370
+2025/11/26-13:16:29.284 66fc Delete type=2 #1373
+2025/11/26-13:53:08.553 66fc Compacting 1@1 + 9@2 files
+2025/11/26-13:53:10.555 66fc Generated table #1386@1: 27352 keys, 2277294 bytes
+2025/11/26-13:53:10.903 66fc Generated table #1387@1: 30759 keys, 2259245 bytes
+2025/11/26-13:53:11.517 66fc Generated table #1388@1: 12486 keys, 2171199 bytes
+2025/11/26-13:53:12.200 66fc Generated table #1389@1: 8233 keys, 2131188 bytes
+2025/11/26-13:53:12.604 66fc Generated table #1390@1: 95002 keys, 2243972 bytes
+2025/11/26-13:53:12.859 66fc Generated table #1391@1: 107019 keys, 2258933 bytes
+2025/11/26-13:53:13.134 66fc Generated table #1392@1: 106493 keys, 2257548 bytes
+2025/11/26-13:53:13.351 66fc Generated table #1393@1: 106647 keys, 2257716 bytes
+2025/11/26-13:53:13.414 66fc Generated table #1394@1: 6194 keys, 146924 bytes
+2025/11/26-13:53:13.414 66fc Compacted 1@1 + 9@2 files => 18004019 bytes
+2025/11/26-13:53:13.441 66fc compacted to: files[ 0 0 20 0 0 0 0 ]
+2025/11/26-13:53:13.442 66fc Delete type=2 #1254
+2025/11/26-13:53:13.442 66fc Delete type=2 #1353
+2025/11/26-13:53:13.442 66fc Delete type=2 #1354
+2025/11/26-13:53:13.442 66fc Delete type=2 #1355
+2025/11/26-13:53:13.442 66fc Delete type=2 #1356
+2025/11/26-13:53:13.442 66fc Delete type=2 #1357
+2025/11/26-13:53:13.442 66fc Delete type=2 #1358
+2025/11/26-13:53:13.442 66fc Delete type=2 #1359
+2025/11/26-13:53:13.442 66fc Delete type=2 #1360
+2025/11/26-13:53:13.442 66fc Delete type=2 #1374

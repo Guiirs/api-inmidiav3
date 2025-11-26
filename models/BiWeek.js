@@ -4,18 +4,18 @@ const { Schema } = mongoose;
 
 /**
  * Modelo para o calendário de Bi-Semanas (períodos de 14 dias) do mercado outdoor.
- * Representa os períodos padronizados de veiculação de outdoor.
+ * Numeradas de 2 em 2: 02, 04, 06, 08... até 52 (26 bi-semanas por ano).
  */
 const BiWeekSchema = new Schema({
-    // Identificador único da Bi-Semana (Ex: '2026-01', '2026-02', etc.)
+    // Identificador único da Bi-Semana (Ex: '2026-02', '2026-04', etc.)
     bi_week_id: {
         type: String,
         required: [true, 'O ID da Bi-Semana é obrigatório.'],
         unique: true,
         index: true,
         trim: true,
-        // Formato esperado: 'YYYY-NN' onde NN é o número da bi-semana (01-26)
-        match: [/^\d{4}-\d{2}$/, 'Formato de bi_week_id inválido. Use YYYY-NN (ex: 2026-01)']
+        // Formato esperado: 'YYYY-NN' onde NN é o número da bi-semana (02, 04, 06... 52)
+        match: [/^\d{4}-\d{2}$/, 'Formato de bi_week_id inválido. Use YYYY-NN (ex: 2026-02)']
     },
     
     // Ano da Bi-Semana
@@ -27,12 +27,18 @@ const BiWeekSchema = new Schema({
         max: [2100, 'Ano inválido.']
     },
     
-    // Número sequencial da Bi-Semana no ano (1-26, pois 52 semanas / 2 ≈ 26 bi-semanas)
+    // Número sequencial da Bi-Semana no ano (02, 04, 06... 52 - numeração de 2 em 2)
     numero: {
         type: Number,
         required: [true, 'O número da Bi-Semana é obrigatório.'],
-        min: [1, 'O número da Bi-Semana deve ser entre 1 e 26.'],
-        max: [26, 'O número da Bi-Semana deve ser entre 1 e 26.']
+        min: [2, 'O número da Bi-Semana deve ser entre 2 e 52.'],
+        max: [52, 'O número da Bi-Semana deve ser entre 2 e 52.'],
+        validate: {
+            validator: function(v) {
+                return v % 2 === 0; // Deve ser par
+            },
+            message: 'O número da bi-semana deve ser par (02, 04, 06... 52)'
+        }
     },
     
     // Data de início da Bi-Semana (00:00:00 UTC)
@@ -84,7 +90,7 @@ BiWeekSchema.pre('save', function(next) {
     
     // Validação: Bi-Semana deve ter aproximadamente 14 dias (tolerância de ±2 dias)
     const diffMs = this.end_date - this.start_date;
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
     
     if (diffDays < 12 || diffDays > 16) {
         return next(new Error(`Uma Bi-Semana deve ter aproximadamente 14 dias. Período atual: ${diffDays} dias.`));
@@ -175,27 +181,32 @@ BiWeekSchema.statics.validatePeriod = async function(startDate, endDate) {
 /**
  * Gera o calendário de Bi-Semanas para um ano específico
  * @param {number} year - Ano para gerar o calendário
- * @returns {Promise<Array>} - Array de Bi-Semanas geradas (não salvas)
+ * @param {string|Date} customStartDate - Data de início customizada (opcional)
+ * @returns {Array} - Array de Bi-Semanas geradas (não salvas)
  */
-BiWeekSchema.statics.generateCalendar = function(year) {
+BiWeekSchema.statics.generateCalendar = function(year, customStartDate = null) {
     const biWeeks = [];
-    const startOfYear = new Date(Date.UTC(year, 0, 1)); // 1º de Janeiro
     
+    // Define data de início: customizada ou padrão (1º de Janeiro)
+    let startOfYear;
+    if (customStartDate) {
+        startOfYear = new Date(customStartDate);
+        startOfYear.setUTCHours(0, 0, 0, 0);
+    } else {
+        startOfYear = new Date(Date.UTC(year, 0, 1)); // 1º de Janeiro
+    }
+    
+    // 26 bi-semanas de 14 dias cada (numeradas 02, 04, 06... 52)
     for (let i = 0; i < 26; i++) {
         const startDate = new Date(startOfYear);
         startDate.setUTCDate(startOfYear.getUTCDate() + (i * 14));
         
         const endDate = new Date(startDate);
-        endDate.setUTCDate(startDate.getUTCDate() + 13); // 14 dias (0-13)
+        endDate.setUTCDate(startDate.getUTCDate() + 13); // Soma 13 dias (dia 0 + 13 = 14 dias total)
         endDate.setUTCHours(23, 59, 59, 999);
         
-        // Ajusta se ultrapassar o final do ano
-        const endOfYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
-        if (endDate > endOfYear) {
-            endDate.setTime(endOfYear.getTime());
-        }
-        
-        const numero = i + 1;
+        // Numeração de 2 em 2: 02, 04, 06, 08... 52
+        const numero = (i + 1) * 2;
         const bi_week_id = `${year}-${String(numero).padStart(2, '0')}`;
         
         biWeeks.push({
@@ -207,11 +218,6 @@ BiWeekSchema.statics.generateCalendar = function(year) {
             descricao: `Bi-Semana ${numero} de ${year}`,
             ativo: true
         });
-        
-        // Para se chegou no final do ano
-        if (endDate.getTime() === endOfYear.getTime()) {
-            break;
-        }
     }
     
     return biWeeks;

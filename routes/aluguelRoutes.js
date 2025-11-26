@@ -48,6 +48,33 @@ router.get(
 );
 logger.debug('[Routes Aluguel] Rota GET /placa/:placaId definida (Listar por Placa).');
 
+// [BI-WEEK SYNC] Rota para buscar aluguéis por bi-semana
+// GET /api/v1/alugueis/bi-week/:biWeekId
+router.get(
+    '/bi-week/:biWeekId',
+    authenticateToken,
+    aluguelController.getAlugueisByBiWeek
+);
+logger.debug('[Routes Aluguel] Rota GET /bi-week/:biWeekId definida (Listar por Bi-Semana).');
+
+// [BI-WEEK SYNC] Rota para buscar placas disponíveis em uma bi-semana
+// GET /api/v1/alugueis/bi-week/:biWeekId/disponiveis
+router.get(
+    '/bi-week/:biWeekId/disponiveis',
+    authenticateToken,
+    aluguelController.getPlacasDisponiveisByBiWeek
+);
+logger.debug('[Routes Aluguel] Rota GET /bi-week/:biWeekId/disponiveis definida (Placas Disponíveis).');
+
+// [BI-WEEK SYNC] Rota para gerar relatório de ocupação por bi-semana
+// GET /api/v1/alugueis/bi-week/:biWeekId/relatorio
+router.get(
+    '/bi-week/:biWeekId/relatorio',
+    authenticateToken,
+    aluguelController.getRelatorioOcupacaoBiWeek
+);
+logger.debug('[Routes Aluguel] Rota GET /bi-week/:biWeekId/relatorio definida (Relatório de Ocupação).');
+
 logger.info('[Routes Aluguel] Rotas de Alugueis definidas com sucesso.');
 
 // [CORREÇÃO] Exporta o router diretamente

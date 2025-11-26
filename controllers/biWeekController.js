@@ -143,8 +143,8 @@ exports.deleteBiWeek = async (req, res, next) => {
  * Gera automaticamente o calendário para um ano
  */
 exports.generateCalendar = async (req, res, next) => {
-    const { ano, overwrite } = req.body;
-    logger.info(`[BiWeekController] Requisição para gerar calendário do ano ${ano}.`);
+    const { ano, overwrite, start_date } = req.body;
+    logger.info(`[BiWeekController] Requisição para gerar calendário do ano ${ano}${start_date ? `, com data inicial: ${start_date}` : ''}.`);
     
     try {
         if (!ano) {
@@ -154,7 +154,7 @@ exports.generateCalendar = async (req, res, next) => {
             });
         }
         
-        const result = await biWeekService.generateCalendar(ano, overwrite);
+        const result = await biWeekService.generateCalendar(ano, overwrite, start_date);
         
         res.status(201).json({
             success: true,

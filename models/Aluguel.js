@@ -1,6 +1,7 @@
 // models/Aluguel.js
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
+const { createPeriodSchema } = require('../utils/periodTypes');
 
 const AluguelSchema = new Schema({
     // [CORREÇÃO] Campo renomeado de 'placa_id' para 'placa'
@@ -25,15 +26,29 @@ const AluguelSchema = new Schema({
         required: [true, 'A empresa é obrigatória.'],
         index: true,
     },
-    // [CORREÇÃO] Campo renomeado de 'dataInicio' para 'data_inicio'
+
+    // [PERÍODO UNIFICADO] Campos padronizados de período
+    ...createPeriodSchema(),
+
+    // [LEGADO - MANTER PARA COMPATIBILIDADE] Campos antigos
+    // Serão removidos em versão futura após migração completa
+    // [LEGADO] Campos antigos - removido index inline para evitar duplicação
+    bi_week_ids: [{
+        type: String,
+        sparse: true
+    }],
+    bi_weeks: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'BiWeek',
+        sparse: true
+    }],
     data_inicio: {
         type: Date,
-        required: [true, 'A data de início é obrigatória.'],
+        required: false, // Não mais obrigatório (usa startDate agora)
     },
-    // [CORREÇÃO] Campo renomeado de 'dataFim' para 'data_fim'
     data_fim: {
         type: Date,
-        required: [true, 'A data de fim é obrigatória.'],
+        required: false, // Não mais obrigatório (usa endDate agora)
     },
     // [NOVO] Código de vinculação com PI - UUID único para garantir sincronização
     pi_code: {
@@ -59,15 +74,16 @@ const AluguelSchema = new Schema({
     },
 }, { timestamps: true });
 
-// [MELHORIA] Índice composto para otimizar a verificação de conflitos de datas
+// [PERÍODO UNIFICADO] Índices para novo sistema
+AluguelSchema.index({ placa: 1, startDate: 1, endDate: 1 });
+AluguelSchema.index({ empresa: 1, endDate: 1 });
+AluguelSchema.index({ periodType: 1, empresa: 1 });
+AluguelSchema.index({ biWeekIds: 1, empresa: 1 });
+
+// [LEGADO] Índices antigos mantidos para compatibilidade
 AluguelSchema.index({ placa: 1, data_inicio: 1, data_fim: 1 });
-
-// [MELHORIA] Índice composto para relatórios (o original estava em empresa_id e createdAt)
-// Este é mais útil para buscar aluguéis que estão terminando.
 AluguelSchema.index({ empresa: 1, data_fim: 1 });
-
-// [NOVO] Índice composto para sincronização PI ↔ Aluguéis
-AluguelSchema.index({ pi_code: 1, proposta_interna: 1 });
-AluguelSchema.index({ tipo: 1, empresa: 1 });
+AluguelSchema.index({ bi_week_ids: 1, empresa: 1 });
+AluguelSchema.index({ bi_weeks: 1 });
 
 module.exports = mongoose.model('Aluguel', AluguelSchema);

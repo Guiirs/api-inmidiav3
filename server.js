@@ -5,7 +5,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const helmet = require('helmet');
 const swaggerUi = require('swagger-ui-express');
-const swaggerConfig = require('./swaggerConfig'); 
+const swaggerConfig = require('./config/swaggerConfig'); 
 const connectDB = require('./config/dbMongo');
 const logger = require('./config/logger');
 const errorHandler = require('./middlewares/errorHandler');
@@ -16,12 +16,33 @@ const { globalRateLimiter } = require('./middlewares/rateLimitMiddleware');
 const sanitizeMiddleware = require('./middlewares/sanitizeMiddleware');
 const socketAuthMiddleware = require('./middlewares/socketAuthMiddleware');
 const notificationService = require('./services/notificationService');
+const whatsappService = require('./services/whatsappService'); // [NOVO] WhatsApp Service
+const { initBiWeeks, getBiWeekStats } = require('./scripts/initBiWeeks'); // [BI-WEEK SYNC] Auto-init
 
 // Carrega variáveis de ambiente
 require('dotenv').config();
 
-// Conecta à Base de Dados
-connectDB();
+// Conecta à Base de Dados e inicializa bi-semanas automaticamente
+connectDB().then(async () => {
+    // [BI-WEEK SYNC] Inicializa bi-semanas automaticamente após conectar ao DB
+    try {
+        logger.info('[BiWeek Init] 🔄 Inicializando bi-semanas automaticamente...');
+        await initBiWeeks();
+        const stats = await getBiWeekStats();
+        if (stats) {
+            logger.info(`[BiWeek Init] 📊 Total: ${stats.total} bi-semanas cadastradas (${stats.ativas} ativas)`);
+            const anosInfo = Object.entries(stats.porAno).map(([ano, count]) => `${ano}: ${count}`).join(', ');
+            logger.info(`[BiWeek Init] 📅 Por ano: ${anosInfo}`);
+        }
+        logger.info('[BiWeek Init] ✅ Sistema de bi-semanas pronto!');
+    } catch (error) {
+        logger.warn(`[BiWeek Init] ⚠️ Falha na inicialização automática: ${error.message}`);
+        logger.warn('[BiWeek Init] Servidor continuará normalmente.');
+    }
+}).catch(err => {
+    logger.error(`[DB] Erro ao conectar: ${err.message}`);
+    process.exit(1);
+});
 
 // Inicializa cache Redis (se configurado)
 cacheService.initializeRedis().catch(err => {
@@ -40,7 +61,10 @@ app.use('/api', globalRateLimiter);
 // Dizemos ao CORS para aceitar explicitamente a URL do frontend
 // que está no seu ficheiro .env.example
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173'
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 // *** FIM DA CORREÇÃO ***
 
@@ -72,6 +96,7 @@ const healthController = require('./controllers/healthController');
 const biWeekRoutes = require('./routes/biWeeks');
 const webhookRoutes = require('./routes/webhookRoutes'); // [NOVO] Webhooks
 const sseRoutes = require('./routes/sseRoutes'); // [NOVO] Server-Sent Events
+const whatsappRoutes = require('./routes/whatsappRoutes'); // [NOVO] WhatsApp
 
 // --- [CORREÇÃO] Importa a nova rota de registo pública ---
 const publicRegisterRoutes = require('./routes/publicRegisterRoutes');
@@ -130,6 +155,8 @@ app.use('/api/v1/bi-weeks', biWeekRoutes);
 app.use('/api/v1/webhooks', webhookRoutes);
 // [NOVO] Rotas de Server-Sent Events (tempo real)
 app.use('/api/v1/sse', sseRoutes);
+// [NOVO] Rotas de WhatsApp (apenas admins)
+app.use('/api/v1/whatsapp', whatsappRoutes);
 
 // --- Rotas de TESTE (PROTEGIDAS COM ADMIN) ---
 // ⚠️ ATENÇÃO: Estas rotas devem ser desabilitadas em produção
@@ -212,6 +239,16 @@ if (process.env.NODE_ENV !== 'test') {
     // Inicializa serviço de notificações com a instância do Socket.IO
     notificationService.initialize(io);
     logger.info('[Socket.IO] ✅ Socket.IO configurado e pronto');
+
+    // [NOVO] Inicializa WhatsApp Service (se habilitado)
+    if (process.env.WHATSAPP_ENABLED === 'true') {
+        whatsappService.initialize().catch(err => {
+            logger.error(`[WhatsApp] Erro ao inicializar: ${err.message}`);
+            logger.warn('[WhatsApp] Continuando sem WhatsApp...');
+        });
+    } else {
+        logger.info('[WhatsApp] WhatsApp desabilitado (WHATSAPP_ENABLED não está como true)');
+    }
 
     server.listen(PORT, () => {
         logger.info(`Servidor a correr em modo ${process.env.NODE_ENV || 'development'} na porta ${PORT}`);

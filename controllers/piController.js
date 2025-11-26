@@ -5,6 +5,7 @@ const logger = require('../config/logger');
 const piService = new PIService();
 
 // Cria PI
+// [PERÍODO UNIFICADO] Aceita novo formato (periodType, startDate, endDate, biWeekIds) e legado (tipoPeriodo, dataInicio, dataFim)
 exports.createPI = async (req, res, next) => {
     const empresaId = req.user.empresaId;
     logger.info(`[PiController] createPI requisitado por empresa ${empresaId}.`);
@@ -15,6 +16,7 @@ exports.createPI = async (req, res, next) => {
         const piData = { ...req.body, cliente: req.body.clienteId }; // Ajusta o nome do campo
         logger.debug(`[PiController] piData que será enviado ao service: ${JSON.stringify(piData, null, 2)}`);
         
+        // [PERÍODO UNIFICADO] PeriodService processa automaticamente no PIService
         const novaPI = await piService.create(piData, empresaId);
         
         logger.info(`[PiController] PI criada com sucesso. ID: ${novaPI._id}, Placas: ${novaPI.placas?.length || 0}`);
@@ -52,12 +54,14 @@ exports.getPIById = async (req, res, next) => {
 };
 
 // Atualiza PI
+// [PERÍODO UNIFICADO] Aceita novos campos de período
 exports.updatePI = async (req, res, next) => {
     const empresaId = req.user.empresaId;
     const { id } = req.params;
     logger.info(`[PiController] updatePI ${id} requisitado por empresa ${empresaId}.`);
     try {
         const piData = { ...req.body, cliente: req.body.clienteId };
+        // [PERÍODO UNIFICADO] PeriodService processa automaticamente no PIService se período atualizado
         const piAtualizada = await piService.update(id, piData, empresaId);
         res.status(200).json(piAtualizada);
     } catch (err) {

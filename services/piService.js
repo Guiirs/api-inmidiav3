@@ -8,6 +8,7 @@ const Aluguel = require('../models/Aluguel'); // Para criar aluguéis automatica
 const AppError = require('../utils/AppError');
 const logger = require('../config/logger');
 const pdfService = require('./pdfService'); // Importa o novo serviço de PDF
+const PeriodService = require('./periodService'); // [PERÍODO UNIFICADO] Service centralizado
 const { v4: uuidv4 } = require('uuid'); // Para gerar códigos únicos
 
 class PIService {
@@ -23,8 +24,9 @@ class PIService {
 
     /**
      * Cria aluguéis automaticamente para as placas da PI
+     * [PERÍODO UNIFICADO] Recebe objeto period completo
      */
-    async _criarAlugueisParaPI(piId, piCode, clienteId, placaIds, dataInicio, dataFim, empresaId) {
+    async _criarAlugueisParaPI(piId, piCode, clienteId, placaIds, period, empresaId) {
         if (!placaIds || placaIds.length === 0) {
             logger.debug(`[PIService] Nenhuma placa para criar aluguéis`);
             return;
@@ -39,8 +41,18 @@ class PIService {
             placa: placaId,
             cliente: clienteIdFinal,
             empresa: empresaId,
-            data_inicio: dataInicio,
-            data_fim: dataFim,
+            // [PERÍODO UNIFICADO] Novos campos
+            periodType: period.periodType,
+            startDate: period.startDate,
+            endDate: period.endDate,
+            biWeekIds: period.biWeekIds,
+            biWeeks: period.biWeeks ? period.biWeeks.map(bw => bw._id) : [],
+            // [LEGADO] Mantido para compatibilidade
+            data_inicio: period.startDate,
+            data_fim: period.endDate,
+            bi_week_ids: period.biWeekIds,
+            bi_weeks: period.biWeeks ? period.biWeeks.map(bw => bw._id) : [],
+            // PI sync
             pi_code: piCode,
             proposta_interna: piId,
             tipo: 'pi'
@@ -49,6 +61,11 @@ class PIService {
         try {
             const alugueisCreated = await Aluguel.insertMany(alugueis);
             logger.info(`[PIService] ${alugueisCreated.length} aluguéis criados com sucesso para PI ${piId}`);
+            
+            // NOTA: Não modificamos o campo 'disponivel' das placas aqui
+            // A disponibilidade é gerenciada pela verificação de conflitos de datas
+            // O campo 'disponivel: false' é reservado para manutenção manual
+            
             return alugueisCreated;
         } catch (error) {
             logger.error(`[PIService] Erro ao criar aluguéis para PI ${piId}: ${error.message}`);
@@ -69,6 +86,7 @@ class PIService {
 
     /**
      * Cria uma nova PI
+     * [PERÍODO UNIFICADO] Processa período usando PeriodService
      */
     async create(piData, empresaId) {
         logger.info(`[PIService] Criando PI para empresa ${empresaId}`);
@@ -79,6 +97,22 @@ class PIService {
         // Note que piData.cliente é o ID.
         await this._validateCliente(piData.cliente, empresaId);
 
+        // [PERÍODO UNIFICADO] Processar período usando PeriodService
+        let period;
+        try {
+            logger.debug('[PIService] Processando período com PeriodService...');
+            period = await PeriodService.processPeriodInput(piData);
+            
+            logger.info(`[PIService] Período processado: Tipo=${period.periodType}`);
+            logger.info(`[PIService] Datas: ${PeriodService.formatDate(period.startDate)} - ${PeriodService.formatDate(period.endDate)}`);
+            if (period.biWeekIds && period.biWeekIds.length > 0) {
+                logger.info(`[PIService] Bi-semanas: ${period.biWeekIds.join(', ')}`);
+            }
+        } catch (periodError) {
+            logger.error(`[PIService] Erro ao processar período: ${periodError.message}`);
+            throw periodError; // PeriodService já lança AppError
+        }
+
         // Gera código único de sincronização
         const piCode = this._generatePICode();
         logger.info(`[PIService] Código de sincronização gerado: ${piCode}`);
@@ -87,7 +121,17 @@ class PIService {
             ...piData,
             empresa: empresaId,
             pi_code: piCode,
-            status: 'em_andamento' // Garante o status inicial
+            status: 'em_andamento', // Garante o status inicial
+            // [PERÍODO UNIFICADO] Novos campos
+            periodType: period.periodType,
+            startDate: period.startDate,
+            endDate: period.endDate,
+            biWeekIds: period.biWeekIds,
+            biWeeks: period.biWeeks ? period.biWeeks.map(bw => bw._id) : [],
+            // [LEGADO] Mantido para compatibilidade
+            dataInicio: period.startDate,
+            dataFim: period.endDate,
+            tipoPeriodo: period.periodType === 'bi-week' ? 'quinzenal' : 'customizado'
         });
 
         logger.debug(`[PIService] Documento PI antes de salvar: ${JSON.stringify(novaPI.toObject(), null, 2)}`);
@@ -104,8 +148,7 @@ class PIService {
                     piCode,
                     novaPI.cliente,
                     novaPI.placas,
-                    novaPI.dataInicio,
-                    novaPI.dataFim,
+                    period, // [PERÍODO UNIFICADO] Passa objeto period completo
                     empresaId
                 );
             }
@@ -187,6 +230,7 @@ class PIService {
 
     /**
      * Atualiza uma PI
+     * [PERÍODO UNIFICADO] Processa período se fornecido
      */
     async update(piId, updateData, empresaId) {
         if (updateData.cliente) {
@@ -201,6 +245,24 @@ class PIService {
 
         const placasAntigas = piAtual.placas?.map(p => p.toString()) || [];
         const placasNovas = updateData.placas?.map(p => p.toString()) || [];
+
+        // [PERÍODO UNIFICADO] Processar período se fornecido
+        let period = null;
+        const hasPeriodUpdate = updateData.periodType || updateData.startDate || updateData.endDate || 
+                                updateData.biWeekIds || updateData.dataInicio || updateData.dataFim;
+        
+        if (hasPeriodUpdate) {
+            try {
+                logger.debug('[PIService] Processando novo período com PeriodService...');
+                period = await PeriodService.processPeriodInput(updateData);
+                
+                logger.info(`[PIService] Novo período processado: Tipo=${period.periodType}`);
+                logger.info(`[PIService] Datas: ${PeriodService.formatDate(period.startDate)} - ${PeriodService.formatDate(period.endDate)}`);
+            } catch (periodError) {
+                logger.error(`[PIService] Erro ao processar período: ${periodError.message}`);
+                throw periodError;
+            }
+        }
 
         // <-- CORREÇÃO CRÍTICA DE SEGURANÇA (MASS ASSIGNMENT) -->
         // Desestruture explicitamente APENAS os campos que podem ser atualizados.
@@ -219,14 +281,24 @@ class PIService {
         // Crie um objeto limpo para a atualização
         const dadosParaAtualizar = {
             cliente,
-            tipoPeriodo,
-            dataInicio,
-            dataFim,
             valorTotal,
             descricao,
             placas,
             formaPagamento
         };
+
+        // [PERÍODO UNIFICADO] Adiciona campos de período se processado
+        if (period) {
+            dadosParaAtualizar.periodType = period.periodType;
+            dadosParaAtualizar.startDate = period.startDate;
+            dadosParaAtualizar.endDate = period.endDate;
+            dadosParaAtualizar.biWeekIds = period.biWeekIds;
+            dadosParaAtualizar.biWeeks = period.biWeeks ? period.biWeeks.map(bw => bw._id) : [];
+            // [LEGADO] Compatibilidade
+            dadosParaAtualizar.dataInicio = period.startDate;
+            dadosParaAtualizar.dataFim = period.endDate;
+            dadosParaAtualizar.tipoPeriodo = period.periodType === 'bi-week' ? 'quinzenal' : 'customizado';
+        }
 
         // Remove quaisquer chaves 'undefined'
         Object.keys(dadosParaAtualizar).forEach(key => 
@@ -270,28 +342,45 @@ class PIService {
 
                 // Cria aluguéis para placas adicionadas
                 if (placasAdicionadas.length > 0) {
+                    // [PERÍODO UNIFICADO] Usa período da PI atualizada
+                    const periodParaAlugueis = {
+                        periodType: piAtualizada.periodType || 'custom',
+                        startDate: piAtualizada.startDate || piAtualizada.dataInicio,
+                        endDate: piAtualizada.endDate || piAtualizada.dataFim,
+                        biWeekIds: piAtualizada.biWeekIds || piAtualizada.bi_week_ids || [],
+                        biWeeks: piAtualizada.biWeeks || []
+                    };
+                    
                     await this._criarAlugueisParaPI(
                         piId,
                         piAtualizada.pi_code,
                         clienteId,
                         placasAdicionadas,
-                        piAtualizada.dataInicio,
-                        piAtualizada.dataFim,
+                        periodParaAlugueis, // [PERÍODO UNIFICADO] Passa objeto period
                         empresaId
                     );
                 }
             }
 
-            // Se as datas mudaram, atualiza todos os aluguéis usando pi_code
-            if (updateData.dataInicio || updateData.dataFim) {
+            // [PERÍODO UNIFICADO] Se as datas mudaram, atualiza todos os aluguéis usando pi_code
+            if (period) {
                 const updated = await Aluguel.updateMany(
                     {
                         pi_code: piAtualizada.pi_code
                     },
                     {
                         $set: {
-                            data_inicio: piAtualizada.dataInicio,
-                            data_fim: piAtualizada.dataFim
+                            // Novos campos
+                            periodType: period.periodType,
+                            startDate: period.startDate,
+                            endDate: period.endDate,
+                            biWeekIds: period.biWeekIds,
+                            biWeeks: period.biWeeks ? period.biWeeks.map(bw => bw._id) : [],
+                            // Legado
+                            data_inicio: period.startDate,
+                            data_fim: period.endDate,
+                            bi_week_ids: period.biWeekIds,
+                            bi_weeks: period.biWeeks ? period.biWeeks.map(bw => bw._id) : []
                         }
                     }
                 );
@@ -337,6 +426,10 @@ class PIService {
                 pi_code: pi.pi_code
             });
             logger.info(`[PIService] PI ${piId} deletada. ${alugueisRemovidos.deletedCount} aluguéis removidos (pi_code: ${pi.pi_code})`);
+            
+            // NOTA: Não modificamos o campo 'disponivel' das placas ao deletar
+            // O campo 'disponivel' é apenas para manutenção manual
+            // A disponibilidade real é calculada pela verificação de conflitos de datas
             
         } catch (error) {
             logger.error(`[PIService] Erro ao deletar PI ${piId}: ${error.message}`, { stack: error.stack });

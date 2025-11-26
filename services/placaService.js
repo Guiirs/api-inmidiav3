@@ -202,15 +202,20 @@ exports.getAllPlacas = async (empresaId, queryParams) => {
         const placaIds = placas.map(p => p.id).filter(id => id); 
 
         if (placaIds.length > 0) {
+            // Busca QUALQUER aluguel (presente ou futuro) para mostrar status correto
+            // Ordena por data_inicio para pegar o mais próximo
             const alugueisAtivos = await Aluguel.find({
                 placa: { $in: placaIds }, 
                 empresa: empresaId,
-                data_inicio: { $lte: hoje },
-                data_fim: { $gte: hoje }
-            }).populate('cliente', 'nome').lean(); 
+                data_fim: { $gte: hoje } // Apenas alugueis que ainda não terminaram
+            }).sort({ data_inicio: 1 }).populate('cliente', 'nome').lean(); 
 
+            // Agrupa alugueis por placa (pega o primeiro = mais próximo)
             const aluguelMap = alugueisAtivos.reduce((map, aluguel) => {
-                map[aluguel.placa.toString()] = aluguel;
+                const placaId = aluguel.placa.toString();
+                if (!map[placaId]) {
+                    map[placaId] = aluguel;
+                }
                 return map;
             }, {});
 
@@ -221,8 +226,11 @@ exports.getAllPlacas = async (empresaId, queryParams) => {
                     placa.aluguel_data_inicio = aluguel.data_inicio;
                     placa.aluguel_data_fim = aluguel.data_fim;
                     placa.aluguel_ativo = true;
+                    // Indica se o aluguel é futuro (ainda não começou)
+                    placa.aluguel_futuro = aluguel.data_inicio > hoje;
                 } else {
                     placa.aluguel_ativo = false;
+                    placa.aluguel_futuro = false;
                 }
             });
         }
@@ -261,21 +269,20 @@ exports.getPlacaById = async (id, empresaId) => {
         
         logger.info(`[PlacaService] Placa ${placa.numero_placa} (ID: ${id}) encontrada.`);
 
-        if (!placa.disponivel) {
-            const hoje = new Date();
-            const aluguelAtivo = await Aluguel.findOne({
-                placa: placa.id, 
-                empresa: empresaId,
-                data_inicio: { $lte: hoje },
-                data_fim: { $gte: hoje }
-            }).populate('cliente', 'nome').lean(); 
+        // Busca qualquer aluguel válido (presente ou futuro)
+        const hoje = new Date();
+        const aluguelAtivo = await Aluguel.findOne({
+            placa: placa.id, 
+            empresa: empresaId,
+            data_fim: { $gte: hoje } // Não terminou ainda
+        }).sort({ data_inicio: 1 }).populate('cliente', 'nome').lean(); 
 
-            if (aluguelAtivo && aluguelAtivo.cliente) {
-                placa.cliente_nome = aluguelAtivo.cliente.nome;
-                placa.aluguel_data_fim = aluguelAtivo.data_fim;
-            } else {
-                 placa.status_manutencao = true; 
-            }
+        if (aluguelAtivo && aluguelAtivo.cliente) {
+            placa.cliente_nome = aluguelAtivo.cliente.nome;
+            placa.aluguel_data_inicio = aluguelAtivo.data_inicio;
+            placa.aluguel_data_fim = aluguelAtivo.data_fim;
+            placa.aluguel_ativo = true;
+            placa.aluguel_futuro = aluguelAtivo.data_inicio > hoje;
         }
 
         return placa;
@@ -449,7 +456,10 @@ exports.getPlacasDisponiveis = async (empresaId, dataInicio, dataFim, queryParam
         }).select('placa').lean();
         
         const idsAlugadas = alugueisOcupados.map(a => a.placa.toString());
-        logger.debug(`[PlacaService] ${idsAlugadas.length} placas em aluguéis no período.`);
+        logger.info(`[PlacaService] ${idsAlugadas.length} placas em aluguéis no período ${dataInicio} a ${dataFim}.`);
+        if (idsAlugadas.length > 0) {
+            logger.debug(`[PlacaService] IDs de placas alugadas: ${idsAlugadas.slice(0, 5).join(', ')}${idsAlugadas.length > 5 ? '...' : ''}`);
+        }
 
         // 2. Encontrar IDs de placas em PIs que conflitam
         const piQuery = {
@@ -481,12 +491,12 @@ exports.getPlacasDisponiveis = async (empresaId, dataInicio, dataFim, queryParam
         
         // *** INÍCIO DA CORREÇÃO ***
         // 4.1. Define a query base
-        // NOTA: Removido o filtro 'disponivel: true' porque o campo 'disponivel'
-        // é usado apenas para manutenção manual. A disponibilidade para PIs/Aluguéis
-        // é gerenciada pela lógica de verificação de datas e conflitos.
+        // IMPORTANTE: Filtra por 'disponivel: true' E também verifica conflitos de datas
+        // Isso garante que placas manualmente indisponibilizadas não apareçam
         const finalQuery = {
             empresa: empresaId,
-            _id: { $nin: placasOcupadasIds } 
+            disponivel: true, // Apenas placas disponíveis
+            _id: { $nin: placasOcupadasIds } // E sem conflitos de data
         };
 
         // 4.2. Adiciona filtro de REGIÃO (se fornecido)

@@ -5,6 +5,7 @@ const AppError = require('../utils/AppError');
 
 /**
  * Service para gerenciamento do calendário de Bi-Semanas (períodos de 14 dias).
+ * Numeradas de 2 em 2: 02, 04, 06... 52 (26 bi-semanas por ano).
  */
 class BiWeekService {
     constructor() {}
@@ -185,20 +186,22 @@ class BiWeekService {
      * Gera automaticamente o calendário de Bi-Semanas para um ano
      * @param {number} ano - Ano para gerar
      * @param {boolean} overwrite - Se true, substitui Bi-Semanas existentes
+     * @param {string|Date} customStartDate - Data de início customizada (opcional)
      * @returns {Promise<object>} - { created: Number, skipped: Number }
      */
-    async generateCalendar(ano, overwrite = false) {
-        logger.info(`[BiWeekService] Gerando calendário para o ano ${ano} (overwrite: ${overwrite}).`);
+    async generateCalendar(ano, overwrite = false, customStartDate = null) {
+        logger.info(`[BiWeekService] Gerando calendário para o ano ${ano} (overwrite: ${overwrite}, customStartDate: ${customStartDate}).`);
         
         try {
             const anoInt = parseInt(ano, 10);
             
-            if (isNaN(anoInt) || anoInt < 2026 || anoInt > 2100) {
-                throw new AppError('Ano inválido. Use um ano entre 2026 e 2100.', 400);
+            if (isNaN(anoInt) || anoInt < 2020 || anoInt > 2100) {
+                throw new AppError('Ano inválido. Use um ano entre 2020 e 2100.', 400);
             }
             
-            // Gera o calendário usando o método estático do model
-            const biWeeksData = BiWeek.generateCalendar(anoInt);
+            // Gera o calendário usando o método estático do model com data customizada
+            const biWeeksData = BiWeek.generateCalendar(anoInt, customStartDate);
+            logger.info(`[BiWeekService] Calendário gerado pelo model: ${biWeeksData.length} bi-semanas`);
             
             let created = 0;
             let skipped = 0;
@@ -218,6 +221,7 @@ class BiWeekService {
                         data,
                         { runValidators: true }
                     );
+                    created++;
                     logger.debug(`[BiWeekService] Bi-Semana ${data.bi_week_id} atualizada (overwrite).`);
                 } else {
                     await BiWeek.create(data);

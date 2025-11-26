@@ -1,6 +1,7 @@
 // models/PropostaInterna.js
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
+const { createPeriodSchema } = require('../utils/periodTypes');
 
 const propostaInternaSchema = new Schema({
     empresa: { type: Schema.Types.ObjectId, ref: 'Empresa', required: true, index: true },
@@ -13,14 +14,19 @@ const propostaInternaSchema = new Schema({
         unique: true,
         index: true,
     },
-    
+
+    // [PERÍODO UNIFICADO] Campos padronizados de período
+    ...createPeriodSchema(),
+
+    // [LEGADO - MANTER PARA COMPATIBILIDADE] Campos antigos
+    // Serão removidos em versão futura após migração completa
     tipoPeriodo: { 
         type: String, 
-        required: true, 
+        required: false, // Não mais obrigatório (usa periodType agora)
         enum: ['quinzenal', 'mensal'] 
     },
-    dataInicio: { type: Date, required: true },
-    dataFim: { type: Date, required: true },
+    dataInicio: { type: Date, required: false }, // Usa startDate agora
+    dataFim: { type: Date, required: false }, // Usa endDate agora
     
     valorTotal: { type: Number, required: true },
     descricao: { type: String, required: true, trim: true },    
@@ -80,5 +86,13 @@ const propostaInternaSchema = new Schema({
 }, {
   timestamps: true
 });
+
+// [PERÍODO UNIFICADO] Índices para novo sistema
+propostaInternaSchema.index({ periodType: 1, empresa: 1 });
+propostaInternaSchema.index({ startDate: 1, endDate: 1 });
+propostaInternaSchema.index({ biWeekIds: 1 });
+
+// [LEGADO] Índices antigos mantidos para compatibilidade
+propostaInternaSchema.index({ dataInicio: 1, dataFim: 1 });
 
 module.exports = mongoose.model('PropostaInterna', propostaInternaSchema);
