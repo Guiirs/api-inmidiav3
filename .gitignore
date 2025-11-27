@@ -28,5 +28,7 @@ build
 db/database/*.db3
 
 /backups
-whatsapp-sessions
-_old_js
+whatsapp-session/
+whatsapp-sessions/
+_old_js/
+.wwebjs_cache/
