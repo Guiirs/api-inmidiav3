@@ -1,3 +1,2 @@
-2025/11/26-11:20:03.222 647c Reusing MANIFEST I:\API\backstage\BECKEND\whatsapp-session\session\Default\shared_proto_db\metadata/MANIFEST-000001
-2025/11/26-11:20:03.230 647c Recovering log #3
-2025/11/26-11:20:03.231 647c Reusing old log I:\API\backstage\BECKEND\whatsapp-session\session\Default\shared_proto_db\metadata/000003.log 
+2025/11/26-18:08:03.991 351c Creating DB I:\API\backstage\BECKEND\whatsapp-session\session\Default\shared_proto_db\metadata since it was missing.
+2025/11/26-18:08:04.099 351c Reusing MANIFEST I:\API\backstage\BECKEND\whatsapp-session\session\Default\shared_proto_db\metadata/MANIFEST-000001

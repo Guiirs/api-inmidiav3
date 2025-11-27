@@ -1,14 +1,18 @@
 {
   "name": "api",
   "version": "1.0.0",
-  "main": "server.js",
+  "main": "dist/server.js",
   "scripts": {
+    "build": "tsc",
+    "start": "cross-env NODE_ENV=production node dist/server.js",
+    "dev": "cross-env NODE_ENV=development nodemon --exec ts-node src/server.ts",
+    "dev:old": "cross-env NODE_ENV=development ts-node-dev --respawn --transpile-only --ignore-watch node_modules src/server.ts",
     "test": "cross-env NODE_ENV=test jest --config=config/jest.config.js --testTimeout=10000",
     "test:migrate": "cross-env NODE_ENV=test npx knex migrate:latest",
-    "start": "cross-env NODE_ENV=production node server.js",
-    "dev": "cross-env NODE_ENV=development node server.js",
     "migrate": "knex migrate:latest",
-    "bkp": "node scripts/backupManual.js"
+    "bkp": "node scripts/backupManual.js",
+    "lint": "eslint src --ext .ts",
+    "type-check": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
@@ -22,7 +26,6 @@
     "cors": "^2.8.5",
     "cross-env": "^7.0.3",
     "dotenv": "^17.2.2",
-    "exceljs": "^4.4.0",
     "express": "^5.1.0",
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^8.1.0",
@@ -48,8 +51,25 @@
     "xlsx-preview": "^1.0.4"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.5",
+    "@types/jest": "^30.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.10",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^24.10.1",
+    "@types/supertest": "^6.0.3",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
+    "@types/uuid": "^10.0.0",
     "jest": "^29.7.0",
     "mongodb-memory-server": "^10.2.3",
-    "supertest": "^6.3.3"
+    "nodemon": "^3.1.11",
+    "supertest": "^6.3.3",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.9.3"
   }
 }

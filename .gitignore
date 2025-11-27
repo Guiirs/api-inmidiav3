@@ -28,4 +28,5 @@ build
 db/database/*.db3
 
 /backups
-/beckend/whatsapp-sessions
+whatsapp-sessions
+_old_js
